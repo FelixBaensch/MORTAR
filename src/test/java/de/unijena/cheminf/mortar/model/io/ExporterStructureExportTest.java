@@ -33,6 +33,7 @@ import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.io.iterator.IteratingSDFReader;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
@@ -175,7 +176,7 @@ public class ExporterStructureExportTest {
         List<MoleculeDataModel> tmpList = new ArrayList<>(this.getMolecules());
         tmpList.addAll(this.getFragments());
         File tmpFile = aTempDir.resolve("structures.sdf").toFile();
-        List<String> tmpFailed = tmpExporter.exportStructuresAsSDFile(tmpFile, tmpList);
+        List<String> tmpFailed = tmpExporter.exportStructuresAsSDFile(tmpFile, tmpList, true);
         Assertions.assertNotNull(tmpFailed);
         Assertions.assertTrue(tmpFailed.isEmpty());
         List<IAtomContainer> tmpReadStructures = new ArrayList<>();
@@ -294,6 +295,73 @@ public class ExporterStructureExportTest {
                 Exporter.removeDuplicatedFileExtension(new File(tmpDirectory, "Overview.csv.sdf"), ".sdf"));
         Assertions.assertEquals(new File(tmpDirectory, "Overview"),
                 Exporter.removeDuplicatedFileExtension(new File(tmpDirectory, "Overview"), ".csv"));
+    }
+    //
+    /**
+     * Tests exporting structures to a single SD file without the generation of 2D atom coordinates: all atom
+     * coordinates are 0.
+     *
+     * @param aTempDir temporary directory provided by JUnit
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testExportStructuresAsSDFileWithoutCoordinates(@TempDir Path aTempDir) throws Exception {
+        Exporter tmpExporter = new Exporter(new SettingsContainer());
+        File tmpFile = aTempDir.resolve("structures.sdf").toFile();
+        List<String> tmpFailed = tmpExporter.exportStructuresAsSDFile(tmpFile, this.getMolecules(), false);
+        Assertions.assertNotNull(tmpFailed);
+        Assertions.assertTrue(tmpFailed.isEmpty());
+        int tmpNumberOfStructures = 0;
+        try (IteratingSDFReader tmpReader = new IteratingSDFReader(new FileReader(tmpFile), SilentChemObjectBuilder.getInstance())) {
+            while (tmpReader.hasNext()) {
+                IAtomContainer tmpStructure = tmpReader.next();
+                tmpNumberOfStructures++;
+                for (IAtom tmpAtom : tmpStructure.atoms()) {
+                    Assertions.assertTrue(tmpAtom.getPoint2d() == null
+                            || (tmpAtom.getPoint2d().x == 0.0 && tmpAtom.getPoint2d().y == 0.0));
+                    Assertions.assertTrue(tmpAtom.getPoint3d() == null
+                            || (tmpAtom.getPoint3d().x == 0.0 && tmpAtom.getPoint3d().y == 0.0 && tmpAtom.getPoint3d().z == 0.0));
+                }
+            }
+        }
+        Assertions.assertEquals(2, tmpNumberOfStructures);
+    }
+    //
+    /**
+     * Tests that the file chosen in the save dialog gets the file extension exactly once: appended if missing (case
+     * ignored), and a duplicated extension removed.
+     */
+    @Test
+    public void testGetFileWithExtension() {
+        File tmpDirectory = new File("exports");
+        Assertions.assertEquals(new File(tmpDirectory, "Export.csv"), Exporter.getFileWithExtension(new File(tmpDirectory, "Export"), ".csv"));
+        Assertions.assertEquals(new File(tmpDirectory, "Export.csv"), Exporter.getFileWithExtension(new File(tmpDirectory, "Export.csv"), ".csv"));
+        Assertions.assertEquals(new File(tmpDirectory, "Export.CSV"), Exporter.getFileWithExtension(new File(tmpDirectory, "Export.CSV"), ".csv"));
+        Assertions.assertEquals(new File(tmpDirectory, "Export.sdf"), Exporter.getFileWithExtension(new File(tmpDirectory, "Export.sdf.sdf"), ".sdf"));
+        Assertions.assertEquals(new File(tmpDirectory, "Export.csv.sdf"), Exporter.getFileWithExtension(new File(tmpDirectory, "Export.csv"), ".sdf"));
+    }
+    //
+    /**
+     * Tests that a confirmation to replace an existing file is needed if, and only if, the file to export to differs
+     * from the file chosen in the save dialog (which has checked only the chosen file) and already exists.
+     *
+     * @param aTempDir temporary directory provided by JUnit
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testIsReplaceConfirmationNeeded(@TempDir Path aTempDir) throws Exception {
+        File tmpExistingFile = Files.createFile(aTempDir.resolve("Export.sdf")).toFile();
+        //duplicated extension of the macOS save dialog removed: the existing file would be overwritten without warning
+        File tmpChosenFile = new File(aTempDir.toFile(), "Export.sdf.sdf");
+        Assertions.assertTrue(Exporter.isReplaceConfirmationNeeded(tmpChosenFile, Exporter.getFileWithExtension(tmpChosenFile, ".sdf")));
+        //extension appended to the chosen name
+        tmpChosenFile = new File(aTempDir.toFile(), "Export");
+        Assertions.assertTrue(Exporter.isReplaceConfirmationNeeded(tmpChosenFile, Exporter.getFileWithExtension(tmpChosenFile, ".sdf")));
+        //name unchanged: the save dialog has already asked
+        Assertions.assertFalse(Exporter.isReplaceConfirmationNeeded(tmpExistingFile, Exporter.getFileWithExtension(tmpExistingFile, ".sdf")));
+        //changed name of a file that does not exist
+        tmpChosenFile = new File(aTempDir.toFile(), "New.sdf.sdf");
+        Assertions.assertFalse(Exporter.isReplaceConfirmationNeeded(tmpChosenFile, Exporter.getFileWithExtension(tmpChosenFile, ".sdf")));
     }
     //</editor-fold>
     //

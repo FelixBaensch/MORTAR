@@ -39,6 +39,7 @@ import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 
 import de.unijena.cheminf.mortar.controller.TabNames;
+import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
@@ -52,6 +53,7 @@ import de.unijena.cheminf.mortar.model.util.MiscUtil;
 
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.control.ButtonType;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -135,7 +137,7 @@ public class Exporter {
         /**
          * enum value for molecules single sd file.
          */
-        MOLECULE_SD_FILE;
+        MOLECULE_SD_FILE,
         /**
          * enum value for histogram CSV file.
          */
@@ -350,81 +352,45 @@ public class Exporter {
      * @param aParentStage Stage
      * @param anExportType enum ExportType specifies file type
      * @param aFragmentationName String for name of fragmentation to be used as file name proposal
-     * @return the chosen file or directory or null if the user chose to cancel the export in the file chooser dialog
+     * @return the chosen file (with file extension, see {@link #chooseFileWithExtension(Stage, String, FileExtension, String)})
+     * or directory or null if the user chose to cancel the export in the file chooser dialog or not to replace an
+     * existing file
      */
     public File openFileChooserForExportFileOrDir(Stage aParentStage, ExportTypes anExportType, String aFragmentationName){
         Objects.requireNonNull(aParentStage, "aParentStage must not be null");
-        File tmpFile;
-        String tmpFileName;
         String tmpFragmentationName = aFragmentationName.replaceAll("\\s+", "_").trim();
-        tmpFile = switch (anExportType) {
-            case ExportTypes.FRAGMENT_CSV_FILE -> {
-                tmpFileName = "Fragments_" + tmpFragmentationName;
-                tmpFile = this.chooseFile(aParentStage, "CSV", FileExtension.CSV.toString(), tmpFileName);
-                if (tmpFile != null && !tmpFile.getName().toLowerCase(Locale.ROOT).endsWith(FileExtension.CSV.extension.toLowerCase(Locale.ROOT))) {
-                    tmpFile = new File(tmpFile.getAbsolutePath() + FileExtension.CSV);
-                }
-                yield tmpFile;
-            }
-            case ExportTypes.HISTOGRAM_CSV_FILE -> {
-                tmpFileName = "Histogram_" + tmpFragmentationName;
-                tmpFile = this.chooseFile(aParentStage, "CSV", FileExtension.CSV.toString(), tmpFileName);
-                if (tmpFile != null && !tmpFile.getName().toLowerCase(Locale.ROOT).endsWith(FileExtension.CSV.extension.toLowerCase(Locale.ROOT))) {
-                    tmpFile = new File(tmpFile.getAbsolutePath() + FileExtension.CSV);
-                }
-                yield tmpFile;
-            }
+        return switch (anExportType) {
+            case ExportTypes.FRAGMENT_CSV_FILE ->
+                    this.chooseFileWithExtension(aParentStage, "CSV", FileExtension.CSV, "Fragments_" + tmpFragmentationName);
+            case ExportTypes.HISTOGRAM_CSV_FILE ->
+                    this.chooseFileWithExtension(aParentStage, "CSV", FileExtension.CSV, "Histogram_" + tmpFragmentationName);
             case ExportTypes.FRAGMENT_PDB_FILE, ExportTypes.FRAGMENT_MULTIPLE_SD_FILES ->
                     this.chooseDirectory(aParentStage);
-            case ExportTypes.FRAGMENT_PDF_FILE -> {
-                tmpFileName = "Fragments_" + tmpFragmentationName;
-                tmpFile = this.chooseFile(aParentStage, "PDF", FileExtension.PDF.toString(), tmpFileName);
-                if (tmpFile != null && !tmpFile.getName().toLowerCase(Locale.ROOT).endsWith(FileExtension.PDF.extension.toLowerCase(Locale.ROOT))) {
-                    tmpFile = new File(tmpFile.getAbsolutePath() + FileExtension.PDF);
-                }
-                yield tmpFile;
-            }
-            case ExportTypes.FRAGMENT_SINGLE_SD_FILE -> {
-                tmpFileName = "Fragments_Export_" + tmpFragmentationName;
-                tmpFile = this.chooseFile(aParentStage, "SD-File", FileExtension.SDF.toString(), tmpFileName);
-                if (tmpFile != null && !tmpFile.getName().toLowerCase(Locale.ROOT).endsWith(FileExtension.SDF.extension.toLowerCase(Locale.ROOT))) {
-                    tmpFile = new File(tmpFile.getAbsolutePath() + FileExtension.SDF);
-                }
-                yield tmpFile;
-            }
-            case ExportTypes.ITEM_CSV_FILE -> {
-                tmpFileName = "Items_" + tmpFragmentationName;
-                tmpFile = this.chooseFile(aParentStage, "CSV", FileExtension.CSV.toString(), tmpFileName);
-                if (tmpFile != null && !tmpFile.getName().toLowerCase(Locale.ROOT).endsWith(FileExtension.CSV.extension.toLowerCase(Locale.ROOT))) {
-                    tmpFile = new File(tmpFile.getAbsolutePath() + FileExtension.CSV);
-                }
-                yield tmpFile;
-            }
-            case ExportTypes.ITEM_PDF_FILE -> {
-                tmpFileName = "Items_" + tmpFragmentationName;
-                tmpFile = this.chooseFile(aParentStage, "PDF", FileExtension.PDF.toString(), tmpFileName);
-                if (tmpFile != null && !tmpFile.getName().toLowerCase(Locale.ROOT).endsWith(FileExtension.PDF.extension.toLowerCase(Locale.ROOT))) {
-                    tmpFile = new File(tmpFile.getAbsolutePath() + FileExtension.PDF);
-                }
-                yield tmpFile;
-            }
+            case ExportTypes.FRAGMENT_PDF_FILE ->
+                    this.chooseFileWithExtension(aParentStage, "PDF", FileExtension.PDF, "Fragments_" + tmpFragmentationName);
+            case ExportTypes.FRAGMENT_SINGLE_SD_FILE ->
+                    this.chooseFileWithExtension(aParentStage, "SD-File", FileExtension.SDF, "Fragments_Export_" + tmpFragmentationName);
+            case ExportTypes.ITEM_CSV_FILE ->
+                    this.chooseFileWithExtension(aParentStage, "CSV", FileExtension.CSV, "Items_" + tmpFragmentationName);
+            case ExportTypes.ITEM_PDF_FILE ->
+                    this.chooseFileWithExtension(aParentStage, "PDF", FileExtension.PDF, "Items_" + tmpFragmentationName);
             case ExportTypes.MOLECULE_CSV_FILE, ExportTypes.MOLECULE_SD_FILE ->
                     this.openFileChooserForStructureExportFile(aParentStage, anExportType, "Molecules_" + tmpFragmentationName);
             default ->
                     throw new UnsupportedOperationException(String.format("Unsupported export type: %s", anExportType));
         };
-        return tmpFile;
     }
     //
     /**
      * Opens a FileChooser to enable the user to choose an export destination file for a structure export
      * (molecules or fragments) as CSV or SD file. The appropriate file extension is appended if the user did not
-     * give it.
+     * give it (see {@link #chooseFileWithExtension(Stage, String, FileExtension, String)}).
      *
      * @param aParentStage Stage
      * @param anExportType either {@link ExportTypes#MOLECULE_CSV_FILE} or {@link ExportTypes#MOLECULE_SD_FILE}
      * @param aFileNameProposal initial file name to suggest to the user, without the file extension
-     * @return the chosen file or null if the user chose to cancel the export in the file chooser dialog
+     * @return the chosen file or null if the user chose to cancel the export in the file chooser dialog or not to
+     * replace an existing file
      * @throws NullPointerException if the stage or export type is null
      * @throws UnsupportedOperationException if the export type is not a structure export type
      */
@@ -447,11 +413,7 @@ public class Exporter {
             default ->
                     throw new UnsupportedOperationException(String.format("Unsupported export type: %s", anExportType));
         }
-        File tmpFile = this.chooseFile(aParentStage, tmpDescription, tmpExtension.toString(), tmpFileName);
-        if (tmpFile != null && !tmpFile.getName().toLowerCase(Locale.ROOT).endsWith(tmpExtension.extension.toLowerCase(Locale.ROOT))) {
-            tmpFile = new File(tmpFile.getAbsolutePath() + tmpExtension);
-        }
-        return tmpFile;
+        return this.chooseFileWithExtension(aParentStage, tmpDescription, tmpExtension, tmpFileName);
     }
     //
     /**
@@ -548,8 +510,9 @@ public class Exporter {
     //
     /**
      * Exports the given structures (molecules or fragments) into a single MDL SD file. Since MORTAR holds all
-     * structures as SMILES codes only, the atom containers are re-created from the SMILES codes and 2D atom coordinates
-     * are generated for layout purposes; no 3D information of the originally imported file is retained. The structure
+     * structures as SMILES codes only, the atom containers are re-created from the SMILES codes and, optionally, 2D atom
+     * coordinates are generated for layout purposes (otherwise, all atom coordinates are 0); no 3D information of the
+     * originally imported file is retained. The structure
      * name (for fragments without name, their ID) is used as title of the respective record and the MORTAR ID is
      * written to the data field {@link #ID_PROPERTY_KEY}. Whether the MDL V3000 format is always used depends on the
      * alwaysMDLV3000FormatAtExportSetting of the instance's settingsContainer. If a structure could not be exported in
@@ -558,10 +521,13 @@ public class Exporter {
      *
      * @param aFile the file to export to; method returns null if the file is null
      * @param aStructureList list of molecules and/or fragments to export
+     * @param aGenerate2dAtomCoordinates whether 2D atom coordinates should be generated; if false or if the generation
+     *                                   fails for a structure, all its atom coordinates are 0
      * @return List {@literal <}String {@literal >} SMILES codes of the structures that caused an error
      * @throws IOException if sth goes wrong
      */
-    public List<String> exportStructuresAsSDFile(File aFile, List<MoleculeDataModel> aStructureList) throws IOException {
+    public List<String> exportStructuresAsSDFile(File aFile, List<MoleculeDataModel> aStructureList,
+                                                 boolean aGenerate2dAtomCoordinates) throws IOException {
         if (aFile == null || aStructureList == null) {
             return null;
         }
@@ -586,11 +552,13 @@ public class Exporter {
                     //cloned to not alter a possibly cached atom container of the data model
                     IAtomContainer tmpAtomContainer = tmpStructure.getAtomContainer().clone();
                     this.setNameAndID(tmpAtomContainer, tmpStructure);
-                    try {
-                        ChemUtil.generate2DCoordinates(tmpAtomContainer);
-                    } catch (CDKException anException) {
-                        //exported without atom coordinates (all set to 0)
-                        Exporter.LOGGER.log(Level.WARNING, String.format("%s molecule name: %s", anException.toString(), tmpStructure.getName()), anException);
+                    if (aGenerate2dAtomCoordinates) {
+                        try {
+                            ChemUtil.generate2DCoordinates(tmpAtomContainer);
+                        } catch (CDKException anException) {
+                            //exported without atom coordinates (all set to 0)
+                            Exporter.LOGGER.log(Level.WARNING, String.format("%s molecule name: %s", anException.toString(), tmpStructure.getName()), anException);
+                        }
                     }
                     try {
                         tmpSDFWriter.write(tmpAtomContainer);
@@ -1566,11 +1534,79 @@ public class Exporter {
                 tmpNonExistingFilePath.lastIndexOf(File.separator) + 1));
         File tmpFile = tmpFileChooser.showSaveDialog(aParentStage);
         if (tmpFile != null) {
-            //the native save dialog (observed on macOS) may append the extension although the name already has it
-            tmpFile = Exporter.removeDuplicatedFileExtension(tmpFile, anExtension);
             this.settingsContainer.setRecentDirectoryPathSetting(tmpFile.getParent() + File.separator);
         }
         return tmpFile;
+    }
+    //
+    /**
+     * Opens a FileChooser to be able to save a file of the given type (see
+     * {@link #chooseFile(Stage, String, String, String)}) and returns the chosen file with the given file extension,
+     * see {@link #getFileWithExtension(File, String)}. The save dialog only asks whether to replace an existing file
+     * for the file it returns itself. If the name was changed here (extension appended or duplicated extension
+     * removed) and a file with the changed name already exists, the user is therefore asked whether to replace it.
+     *
+     * @param aParentStage Stage where the FileChooser should be shown
+     * @param aDescription file type description to be used in the dialog (not the file extension), e.g. "CSV"
+     * @param anExtension  file extension of the export file
+     * @param aFileName    initial file name to suggest to the user in the dialog, without the file extension
+     * @return the chosen file with the given extension or null if the user cancelled the dialog or chose not to
+     * replace an existing file
+     * @throws NullPointerException if the given stage or extension is null
+     */
+    private File chooseFileWithExtension(Stage aParentStage, String aDescription, FileExtension anExtension, String aFileName)
+            throws NullPointerException {
+        Objects.requireNonNull(anExtension, "anExtension (instance of FileExtension) is null");
+        File tmpChosenFile = this.chooseFile(aParentStage, aDescription, anExtension.toString(), aFileName);
+        if (tmpChosenFile == null) {
+            return null;
+        }
+        File tmpFile = Exporter.getFileWithExtension(tmpChosenFile, anExtension.toString());
+        if (Exporter.isReplaceConfirmationNeeded(tmpChosenFile, tmpFile)
+                && GuiUtil.guiConfirmationAlert(
+                        Message.get("Exporter.ReplaceFileConfirmation.title"),
+                        Message.get("Exporter.ReplaceFileConfirmation.header"),
+                        String.format(Message.get("Exporter.ReplaceFileConfirmation.text"), tmpFile.getName())) != ButtonType.OK) {
+            return null;
+        }
+        return tmpFile;
+    }
+    //
+    /**
+     * Returns the given file with the given file extension: a duplicated extension, which the native save dialog may
+     * append although the name already has it (observed on macOS), is removed (see
+     * {@link #removeDuplicatedFileExtension(File, String)}), and the extension is appended if the name does not end
+     * with it. The comparison ignores the case.
+     *
+     * @param aFile file chosen in the save dialog
+     * @param anExtension file extension including the dot, e.g. ".sdf"
+     * @return the file with the extension; the given file if its name already ends with the extension only once
+     * @throws NullPointerException if a parameter is null
+     */
+    static File getFileWithExtension(File aFile, String anExtension) throws NullPointerException {
+        Objects.requireNonNull(aFile, "aFile (instance of File) is null");
+        Objects.requireNonNull(anExtension, "anExtension (instance of String) is null");
+        File tmpFile = Exporter.removeDuplicatedFileExtension(aFile, anExtension);
+        if (!tmpFile.getName().toLowerCase(Locale.ROOT).endsWith(anExtension.toLowerCase(Locale.ROOT))) {
+            tmpFile = new File(tmpFile.getParentFile(), tmpFile.getName() + anExtension);
+        }
+        return tmpFile;
+    }
+    //
+    /**
+     * Returns whether the user must be asked to replace the file to export to: the save dialog has checked the chosen
+     * file only, so a confirmation is needed if the file to export to differs from it (name changed by
+     * {@link #getFileWithExtension(File, String)}) and already exists.
+     *
+     * @param aChosenFile file returned by the save dialog
+     * @param anExportFile file the data will be exported to
+     * @return true if the export file differs from the chosen file and already exists
+     * @throws NullPointerException if a parameter is null
+     */
+    static boolean isReplaceConfirmationNeeded(File aChosenFile, File anExportFile) throws NullPointerException {
+        Objects.requireNonNull(aChosenFile, "aChosenFile (instance of File) is null");
+        Objects.requireNonNull(anExportFile, "anExportFile (instance of File) is null");
+        return !anExportFile.equals(aChosenFile) && anExportFile.exists();
     }
     //
     /**

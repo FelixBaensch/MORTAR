@@ -43,6 +43,13 @@ import javafx.scene.control.SeparatorMenuItem;
  * @version 1.0.0.0
  */
 public class MainMenuBar extends MenuBar {
+    //<editor-fold desc="private static final class constants" defaultstate="collapsed">
+    /**
+     * Message key of the text of the CSV export menu items.
+     */
+    private static final String CSV_EXPORT_MENU_ITEM_TEXT_KEY = "MainView.menuBar.fileMenu.exportMenu.CSV.text";
+    //</editor-fold>
+    //
     //<editor-fold desc="private final class constants" defaultstate="collapsed">
     /**
      * FileMenu.
@@ -184,12 +191,12 @@ public class MainMenuBar extends MenuBar {
         //moleculesExportMenu
         this.moleculesExportMenu = new Menu(Message.get("MainView.menuBar.fileMenu.exportMenu.moleculesExportMenu.text"));
         //components
-        this.moleculesExportToCSVMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.CSV.text"));
+        this.moleculesExportToCSVMenuItem = new MenuItem(Message.get(MainMenuBar.CSV_EXPORT_MENU_ITEM_TEXT_KEY));
         this.moleculesExportToSDFMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.SDF.text"));
         //fragmentsExportMenu
         this.fragmentsExportMenu = new Menu(Message.get("MainView.menuBar.fileMenu.exportMenu.fragmentsExportMenu.text"));
         //components
-        this.fragmentsExportToCSVMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.CSV.text"));
+        this.fragmentsExportToCSVMenuItem = new MenuItem(Message.get(MainMenuBar.CSV_EXPORT_MENU_ITEM_TEXT_KEY));
         this.fragmentsExportToPDBMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.PDB.text"));
         this.fragmentsExportToPDFMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.PDF.text"));
         this.fragmentsExportToSDFMenu = new Menu(Message.get("MainView.menuBar.fileMenu.exportMenu.SDF.text"));
@@ -198,7 +205,7 @@ public class MainMenuBar extends MenuBar {
         //itemsExportMenu
         this.itemsExportMenu = new Menu(Message.get("MainView.menuBar.fileMenu.exportMenu.itemsExportMenu.text"));
         //components
-        this.itemsExportToCSVMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.CSV.text"));
+        this.itemsExportToCSVMenuItem = new MenuItem(Message.get(MainMenuBar.CSV_EXPORT_MENU_ITEM_TEXT_KEY));
         this.itemsExportToPDFMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.PDF.text"));
         //</editor-fold>
         this.exitMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exitMenuItem.text"));

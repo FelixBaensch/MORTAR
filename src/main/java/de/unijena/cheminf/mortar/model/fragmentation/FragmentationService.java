@@ -295,7 +295,9 @@ public class FragmentationService {
         this.currentFragmentationName = tmpFragmentationName;
         this.fragments = this.startFragmentation(aListOfMolecules, aNumberOfTasks, this.selectedFragmenter, tmpFragmentationName, isStereoChemistryRegarded);
         FragmentationService.LOGGER.log(Level.INFO, "Number of different fragments extracted: {0}", this.fragments == null ? 0 : this.fragments.size());
-        this.fragments = FragmentationService.sortFragmentsAndAssignIDs(this.fragments, tmpFragmentationName);
+        if (this.fragments != null) {
+            this.fragments = FragmentationService.sortFragmentsAndAssignIDs(this.fragments, tmpFragmentationName);
+        }
     }
     //
     /**
@@ -596,14 +598,14 @@ public class FragmentationService {
      * and the 1-based rank of the fragment in this order, e.g. "Ertl_algorithm_17" or "Ertl_algorithm_1_17" for the
      * second fragmentation with the same algorithm. The fragments are returned in a map that preserves this order.
      *
-     * @param aFragmentsMap map of unique SMILES codes to fragments; null is returned if it is null
+     * @param aFragmentsMap map of unique SMILES codes to fragments
      * @param aFragmentationName name of the fragmentation the fragments resulted from
      * @return map of unique SMILES codes to fragments with the fragments in the sorted order
+     * @throws NullPointerException if the given map is null
      */
-    public static Map<String, FragmentDataModel> sortFragmentsAndAssignIDs(Map<String, FragmentDataModel> aFragmentsMap, String aFragmentationName) {
-        if (aFragmentsMap == null) {
-            return null;
-        }
+    public static Map<String, FragmentDataModel> sortFragmentsAndAssignIDs(Map<String, FragmentDataModel> aFragmentsMap, String aFragmentationName)
+            throws NullPointerException {
+        Objects.requireNonNull(aFragmentsMap, "aFragmentsMap (instance of Map) is null");
         List<FragmentDataModel> tmpSortedFragments = new ArrayList<>(aFragmentsMap.values());
         tmpSortedFragments.sort(Comparator.comparingInt(FragmentDataModel::getMoleculeFrequency).reversed()
                 .thenComparing(FragmentDataModel::getUniqueSmiles));

@@ -92,6 +92,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
@@ -616,12 +617,7 @@ public class MainViewController {
     private void exportFile(Exporter.ExportTypes anExportType) {
         //safety net: without any tab, there is no data to export (the export menu should be disabled in this case)
         if (this.mainTabPane.getSelectionModel().getSelectedItem() == null) {
-            GuiUtil.guiMessageAlert(
-                    Alert.AlertType.INFORMATION,
-                    Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
-                    Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
-                    null
-            );
+            GuiUtil.guiNoDataToExportAlert();
             return;
         }
         boolean tmpIsMoleculeExport = anExportType == Exporter.ExportTypes.MOLECULE_CSV_FILE
@@ -641,12 +637,7 @@ public class MainViewController {
                 if (this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS) == null ||
                         this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS).isEmpty() ||
                         ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle() == null) {
-                    GuiUtil.guiMessageAlert(
-                            Alert.AlertType.INFORMATION,
-                            Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
-                            Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
-                            null
-                    );
+                    GuiUtil.guiNoDataToExportAlert();
                     return;
                 }
                 break;
@@ -655,20 +646,20 @@ public class MainViewController {
                         this.getItemsListOfSelectedFragmentationByTabId(TabNames.ITEMIZATION).isEmpty() ||
                         this.moleculeDataModelList == null || this.moleculeDataModelList.isEmpty() ||
                         ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle() == null) {
-                    GuiUtil.guiMessageAlert(
-                            Alert.AlertType.INFORMATION,
-                            Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
-                            Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
-                            null
-                    );
+                    GuiUtil.guiNoDataToExportAlert();
                     return;
                 }
                 break;
             case Exporter.ExportTypes.MOLECULE_CSV_FILE, Exporter.ExportTypes.MOLECULE_SD_FILE:
-                if (!this.isMoleculeExportPossibleAndConfirmed(tmpSelectedMolecules)) {
+                if (!this.isMoleculeExportPossible(tmpSelectedMolecules)) {
                     return;
                 }
                 break;
+        }
+        //the confirmation is shown before the destination is chosen; empty if the user cancelled the export
+        Optional<Boolean> tmpGenerate2dAtomCoordinates = this.confirmStructureExport(anExportType, tmpSelectedMolecules.size());
+        if (tmpGenerate2dAtomCoordinates.isEmpty()) {
+            return;
         }
         Exporter tmpExporter = new Exporter(this.settingsContainer);
         if (this.isExportRunningProperty.get()) {
@@ -681,28 +672,8 @@ public class MainViewController {
         if (tmpExportFile == null) {
             return;
         }
-        boolean tmpGenerate2dAtomCoordinates = false;
-        if ((anExportType.equals(Exporter.ExportTypes.FRAGMENT_PDB_FILE)
-                || anExportType.equals(Exporter.ExportTypes.FRAGMENT_SINGLE_SD_FILE)
-                || anExportType.equals(Exporter.ExportTypes.FRAGMENT_MULTIPLE_SD_FILES))
-                && (!ChemUtil.checkMoleculeListForCoordinates(this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS)))) {
-            ButtonType tmpConfirmationResult = GuiUtil.guiYesNoCancelConfirmationAlert(
-                    Message.get("Exporter.FragmentsTab.ConfirmationAlert.No3dInformationAvailable.title"),
-                    Message.get("Exporter.FragmentsTab.ConfirmationAlert.No3dInformationAvailable.header"),
-                    Message.get("Exporter.FragmentsTab.ConfirmationAlert.No3dInformationAvailable.text")
-            );
-            /*
-            yes -> generate coordinates
-            no -> export but do not generate coordinates
-            cancel -> abort export
-             */
-            if (tmpConfirmationResult == ButtonType.CANCEL) {
-                return;
-            }
-            tmpGenerate2dAtomCoordinates = tmpConfirmationResult == ButtonType.YES;
-        }
         //reassigned because variable needs to be effectively final to be used in the inner classes below
-        boolean tmpGenerate2dAtomCoordinatesFinal = tmpGenerate2dAtomCoordinates;
+        boolean tmpGenerate2dAtomCoordinatesFinal = tmpGenerate2dAtomCoordinates.get();
         this.exportTask = new Task<>() {
             @Override
             protected List<String> call() throws Exception {
@@ -768,7 +739,8 @@ public class MainViewController {
                     );
                     case Exporter.ExportTypes.MOLECULE_SD_FILE -> tmpExporter.exportStructuresAsSDFile(
                             tmpExportFile,
-                            tmpSelectedMolecules
+                            tmpSelectedMolecules,
+                            tmpGenerate2dAtomCoordinatesFinal
                     );
                     default -> throw new UnsupportedOperationException("Unknown export type.");
                 };
@@ -829,26 +801,64 @@ public class MainViewController {
     }
     //
     /**
-     * Checks whether molecules are selected for the molecule export and, if so, shows the molecule export hint
-     * including the number of selected molecules. If no molecules are selected, the user is informed that there is
-     * no data to export.
+     * Checks whether molecules are available and selected for the molecule export. If there are no molecules, the user
+     * is informed that there is no data to export; if there are molecules but none is selected, the user is informed
+     * that only the selected molecules are exported.
      *
      * @param aSelectedMolecules molecules selected in the molecules tab
-     * @return true if molecules are selected and the user confirmed the export
+     * @return true if molecules are selected
      */
-    private boolean isMoleculeExportPossibleAndConfirmed(List<MoleculeDataModel> aSelectedMolecules) {
+    private boolean isMoleculeExportPossible(List<MoleculeDataModel> aSelectedMolecules) {
+        if (this.moleculeDataModelList == null || this.moleculeDataModelList.isEmpty()) {
+            GuiUtil.guiNoDataToExportAlert();
+            return false;
+        }
         if (aSelectedMolecules.isEmpty()) {
             GuiUtil.guiMessageAlert(
                     Alert.AlertType.INFORMATION,
-                    Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
-                    Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
-                    null
+                    Message.get("Exporter.MessageAlert.NoMoleculesSelected.title"),
+                    Message.get("Exporter.MessageAlert.NoMoleculesSelected.header"),
+                    Message.get("Exporter.MessageAlert.NoMoleculesSelected.text")
             );
             return false;
         }
-        return GuiUtil.guiMoleculeExportConfirmationAlert(String.format(
-                Message.get("Exporter.ConfirmationAlert.MoleculeExport.selectionText"),
-                aSelectedMolecules.size(), this.moleculeDataModelList.size()));
+        return true;
+    }
+    //
+    /**
+     * Shows the confirmation alert before a structure export, see
+     * {@link GuiUtil#guiStructureExportConfirmationAlert(String, String, String, boolean)}, if it is needed for the
+     * given export type: for molecule exports, the hint that MORTAR holds all structures as SMILES codes only,
+     * including the number of selected molecules; for fragment exports into SD or PDB files, the hint that fragments
+     * have no atom coordinates, if at least one fragment has none. SD and PDB exports offer the generation of 2D atom
+     * coordinates.
+     *
+     * @param anExportType type of the export
+     * @param aNumberOfSelectedMolecules number of molecules selected for a molecule export
+     * @return empty if the user cancelled the export; otherwise, whether 2D atom coordinates should be generated
+     * (false if no alert is needed)
+     */
+    private Optional<Boolean> confirmStructureExport(Exporter.ExportTypes anExportType, int aNumberOfSelectedMolecules) {
+        return switch (anExportType) {
+            case Exporter.ExportTypes.MOLECULE_CSV_FILE, Exporter.ExportTypes.MOLECULE_SD_FILE ->
+                    GuiUtil.guiStructureExportConfirmationAlert(
+                            Message.get("Exporter.ConfirmationAlert.MoleculeExport.title"),
+                            Message.get("Exporter.ConfirmationAlert.MoleculeExport.header"),
+                            GuiUtil.getStructureExportConfirmationText(true, true, String.format(
+                                    Message.get("Exporter.ConfirmationAlert.MoleculeExport.selectionText"),
+                                    aNumberOfSelectedMolecules, this.moleculeDataModelList.size())),
+                            anExportType == Exporter.ExportTypes.MOLECULE_SD_FILE);
+            case Exporter.ExportTypes.FRAGMENT_PDB_FILE, Exporter.ExportTypes.FRAGMENT_SINGLE_SD_FILE,
+                 Exporter.ExportTypes.FRAGMENT_MULTIPLE_SD_FILES ->
+                    ChemUtil.checkMoleculeListForCoordinates(this.getItemsListOfSelectedFragmentationByTabId(TabNames.FRAGMENTS))
+                            ? Optional.of(false)
+                            : GuiUtil.guiStructureExportConfirmationAlert(
+                                    Message.get("Exporter.ConfirmationAlert.FragmentExport.title"),
+                                    Message.get("Exporter.ConfirmationAlert.FragmentExport.header"),
+                                    GuiUtil.getStructureExportConfirmationText(false, false, null),
+                                    true);
+            default -> Optional.of(false);
+        };
     }
     //
     /**
@@ -980,10 +990,12 @@ public class MainViewController {
                     if (!(this.mainTabPane.getSelectionModel().getSelectedItem().getId().equals(TabNames.MOLECULES.toString())))
                         //should not happen
                         throw new IllegalStateException();
+                    //the name of the imported file is part of the title, like the fragmentation name for fragments
                     this.viewToolsManager.openOverviewView(
                             this.primaryStage,
                             aDataSource,
-                            ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle(),
+                            ((GridTabForTableView) mainTabPane.getSelectionModel().getSelectedItem()).getTitle()
+                                    + " - " + this.getImportedFileNameWithoutExtension(),
                             getItemsListOfSelectedFragmentationByTabId(TabNames.MOLECULES)
                     );
                 }

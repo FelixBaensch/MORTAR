@@ -74,6 +74,6 @@ public class FragmentationServiceFragmentIDTest {
         Assertions.assertEquals("Ertl_algorithm_1_4", tmpSorted.get("CN").getId());
         //fragments without name return their ID as name
         Assertions.assertEquals("Ertl_algorithm_1_1", tmpSorted.get("CCO").getName());
-        Assertions.assertNull(FragmentationService.sortFragmentsAndAssignIDs(null, "Ertl algorithm"));
+        Assertions.assertThrows(NullPointerException.class, () -> FragmentationService.sortFragmentsAndAssignIDs(null, "Ertl algorithm"));
     }
 }

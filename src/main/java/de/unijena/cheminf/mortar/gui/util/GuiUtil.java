@@ -36,10 +36,13 @@ import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
+import de.unijena.cheminf.mortar.model.util.LogUtil;
 
+import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Control;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
@@ -60,6 +63,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
@@ -200,25 +204,20 @@ public class GuiUtil {
     //
     /**
      * Creates and shows an information alert telling the user that an export was finished successfully. The given
-     * export destination is shown as a hyperlink that opens its location in the explorer equivalent of the OS.
+     * export destination is shown as a hyperlink that opens its location in the explorer equivalent of the OS (see
+     * {@link #openFilePathInExplorerInBackground(File)}). The hyperlink text is wrapped, so that a long path does not
+     * widen the alert.
      *
      * @param anExportDestination file or directory the exported data was written to
+     * @throws NullPointerException if the given export destination is null
      */
-    public static void guiExportFinishedAlert(File anExportDestination) {
+    public static void guiExportFinishedAlert(File anExportDestination) throws NullPointerException {
+        Objects.requireNonNull(anExportDestination, "anExportDestination (instance of File) is null");
         Hyperlink tmpHyperlink = new Hyperlink(anExportDestination.getAbsolutePath());
         tmpHyperlink.setTooltip(GuiUtil.createTooltip(Message.get("Exporter.ExportFinished.linkTooltip")));
-        tmpHyperlink.setOnAction(anActionEvent -> {
-            try {
-                FileUtil.openFilePathInExplorer(anExportDestination);
-            } catch (IllegalArgumentException | SecurityException anException) {
-                GuiUtil.LOGGER.log(Level.WARNING, anException.toString(), anException);
-                GuiUtil.guiExceptionAlert(
-                        Message.get("Error.ExceptionAlert.Title"),
-                        Message.get("Exporter.ExportFinished.openError.header"),
-                        anExportDestination.getAbsolutePath(),
-                        anException);
-            }
-        });
+        tmpHyperlink.setWrapText(true);
+        tmpHyperlink.setPrefWidth(GuiDefinitions.GUI_ALERT_CONTENT_WIDTH_VALUE);
+        tmpHyperlink.setOnAction(anActionEvent -> GuiUtil.openFilePathInExplorerInBackground(anExportDestination));
         GuiUtil.guiMessageAlertWithHyperlink(
                 Alert.AlertType.INFORMATION,
                 Message.get("Exporter.ExportFinished.title"),
@@ -227,25 +226,118 @@ public class GuiUtil {
     }
     //
     /**
-     * Creates and shows a confirmation alert before a molecule export informing the user that MORTAR holds all
-     * structures as SMILES codes only (so no 3D structures, stereo elements, etc. are exported) and that only the
-     * molecules but not their fragments are exported (for which the items tab export should be used).
+     * Opens the location of the given file or directory in the file explorer of the operating system (see
+     * {@link FileUtil#openFilePathInExplorer(File)}) in a background thread, because the {@link java.awt.Desktop} API
+     * used for it may block the JavaFX application thread. If the location cannot be opened, an exception alert is
+     * shown on the JavaFX application thread.
      *
-     * @param anAdditionalText optional text shown before the final question, e.g. on which molecules are exported; may be null
-     * @return true if the user confirmed the export with "OK", false otherwise
+     * @param aFileOrDirectory file or directory whose location should be opened
+     * @throws NullPointerException if the given file is null
      */
-    public static boolean guiMoleculeExportConfirmationAlert(String anAdditionalText) {
+    public static void openFilePathInExplorerInBackground(File aFileOrDirectory) throws NullPointerException {
+        Objects.requireNonNull(aFileOrDirectory, "aFileOrDirectory (instance of File) is null");
+        Thread tmpThread = new Thread(() -> {
+            try {
+                FileUtil.openFilePathInExplorer(aFileOrDirectory);
+            } catch (IllegalArgumentException | SecurityException anException) {
+                GuiUtil.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                Platform.runLater(() -> GuiUtil.guiExceptionAlert(
+                        Message.get("Error.ExceptionAlert.Title"),
+                        Message.get("GuiUtil.openInExplorer.error.header"),
+                        aFileOrDirectory.getAbsolutePath(),
+                        anException));
+            }
+        }, "MORTAR-OpenInExplorer");
+        tmpThread.setDaemon(true);
+        tmpThread.setUncaughtExceptionHandler(LogUtil.getUncaughtExceptionHandler());
+        tmpThread.start();
+    }
+    //
+    /**
+     * Creates and shows an information alert telling the user that there is no data available to export.
+     */
+    public static void guiNoDataToExportAlert() {
+        GuiUtil.guiMessageAlert(
+                Alert.AlertType.INFORMATION,
+                Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
+                Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
+                null);
+    }
+    //
+    /**
+     * Creates and shows a confirmation alert before a structure export (molecules and/or fragments) that informs the
+     * user about the exported data, e.g. that MORTAR holds all structures as SMILES codes only. It is shown before the
+     * destination is chosen. For exports with atom coordinates (SD and PDB files), the alert contains a check box to
+     * choose whether 2D atom coordinates are generated for layout purposes (selected by default); otherwise, all atom
+     * coordinates are set to 0.
+     * TODO: when PR #214 is merged, this alert needs a "do not show this again" check box.
+     *
+     * @param aTitle title of the alert
+     * @param aHeaderText header of the alert
+     * @param aContentText text of the alert, e.g. composed of the texts of
+     *                     {@link #getStructureExportConfirmationText(boolean, boolean, String)}
+     * @param anIsCoordinateOptionShown true to show the check box for the generation of 2D atom coordinates
+     * @return empty if the user cancelled the export; otherwise, whether 2D atom coordinates should be generated
+     * (always false if the check box is not shown)
+     */
+    public static Optional<Boolean> guiStructureExportConfirmationAlert(String aTitle, String aHeaderText, String aContentText,
+                                                                        boolean anIsCoordinateOptionShown) {
+        Alert tmpAlert = new Alert(Alert.AlertType.CONFIRMATION);
+        tmpAlert.setTitle(aTitle);
+        tmpAlert.setHeaderText(aHeaderText);
+        Label tmpTextLabel = new Label(aContentText);
+        tmpTextLabel.setWrapText(true);
+        tmpTextLabel.setPrefWidth(GuiDefinitions.GUI_ALERT_CONTENT_WIDTH_VALUE);
+        VBox tmpContentBox = new VBox(GuiDefinitions.GUI_INSETS_VALUE, tmpTextLabel);
+        CheckBox tmpCoordinatesCheckBox = new CheckBox(Message.get("Exporter.ConfirmationAlert.StructureExport.coordinatesCheckBox.text"));
+        tmpCoordinatesCheckBox.setTooltip(GuiUtil.createTooltip(Message.get("Exporter.ConfirmationAlert.StructureExport.coordinatesCheckBox.tooltip")));
+        tmpCoordinatesCheckBox.setWrapText(true);
+        tmpCoordinatesCheckBox.setPrefWidth(GuiDefinitions.GUI_ALERT_CONTENT_WIDTH_VALUE);
+        tmpCoordinatesCheckBox.setSelected(true);
+        if (anIsCoordinateOptionShown) {
+            tmpContentBox.getChildren().add(tmpCoordinatesCheckBox);
+        }
+        tmpAlert.getDialogPane().setContent(tmpContentBox);
+        tmpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+        tmpAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
+        Stage tmpAlertStage = (Stage) tmpAlert.getDialogPane().getScene().getWindow();
+        String tmpIconURL = GuiUtil.class.getClassLoader().getResource(
+                GuiUtil.CONFIGURATION.getProperty("mortar.imagesFolder") + GuiUtil.CONFIGURATION.getProperty("mortar.logo.icon.name")).toExternalForm();
+        tmpAlertStage.getIcons().add(new Image(tmpIconURL));
+        if (tmpAlert.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) {
+            return Optional.empty();
+        }
+        return Optional.of(anIsCoordinateOptionShown && tmpCoordinatesCheckBox.isSelected());
+    }
+    //
+    /**
+     * Returns the text of the confirmation alert before a structure export, see
+     * {@link #guiStructureExportConfirmationAlert(String, String, String, boolean)}: for molecules, that MORTAR holds
+     * all structures as SMILES codes only (so no 3D structures and possibly no stereochemistry are exported) and,
+     * optionally, that only the molecules but not their fragments are exported; for fragments only, that they are
+     * held as SMILES codes without atom coordinates. The given additional text and the final question follow.
+     *
+     * @param anIsMoleculeExport true if molecules are exported (possibly with fragments), false if only fragments
+     * @param anIsItemsHintShown true to add the hint that the molecules are exported without their fragments, for
+     *                           which the items tab export should be used; only used for molecule exports
+     * @param anAdditionalText optional text shown before the final question, e.g. on which molecules are exported; may be null
+     * @return text of the confirmation alert
+     */
+    public static String getStructureExportConfirmationText(boolean anIsMoleculeExport, boolean anIsItemsHintShown, String anAdditionalText) {
         StringBuilder tmpText = new StringBuilder();
-        tmpText.append(Message.get("Exporter.ConfirmationAlert.MoleculeExport.smilesText")).append("\n\n")
-                .append(Message.get("Exporter.ConfirmationAlert.MoleculeExport.itemsText")).append("\n\n");
+        if (anIsMoleculeExport) {
+            tmpText.append(Message.get("Exporter.ConfirmationAlert.MoleculeExport.smilesText")).append("\n\n");
+            if (anIsItemsHintShown) {
+                tmpText.append(Message.get("Exporter.ConfirmationAlert.MoleculeExport.itemsText")).append("\n\n");
+            }
+        } else {
+            tmpText.append(Message.get("Exporter.ConfirmationAlert.FragmentExport.text")).append("\n\n");
+        }
         if (anAdditionalText != null && !anAdditionalText.isBlank()) {
             tmpText.append(anAdditionalText).append("\n\n");
         }
-        tmpText.append(Message.get("Exporter.ConfirmationAlert.MoleculeExport.question"));
-        return GuiUtil.guiConfirmationAlert(
-                Message.get("Exporter.ConfirmationAlert.MoleculeExport.title"),
-                Message.get("Exporter.ConfirmationAlert.MoleculeExport.header"),
-                tmpText.toString()) == ButtonType.OK;
+        tmpText.append(Message.get("Exporter.ConfirmationAlert.StructureExport.question"));
+        return tmpText.toString();
     }
     //
     /**
