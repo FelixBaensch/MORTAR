@@ -636,7 +636,7 @@ public class CDKCircularFragmenter implements IMoleculeFragmenter {
             //to restore the value should the include smaller radii setting be active and an exception be thrown
             this.circularFragmenterInstance.setRadius(this.radiusSetting.get());
             throw new IllegalArgumentException("An error occurred during fragmentation: " + anException.toString()
-                    + " Molecule Name: " + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
+                    + " Molecule Name: " + aMolecule.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY), anException);
         }
         return tmpFragments;
     }
