@@ -372,22 +372,22 @@ public class Exporter {
      * @param aSeparator             the separator for the csv file
      * @param aTabName               TabName to identify type of tab
      * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
-     * @throws FileNotFoundException if the given file cannot be found
+     * @throws IOException if the given file cannot be found or an error occurs while writing to it
      */
     public List<String> exportCsvFile(File aFile,
                                       List<MoleculeDataModel> aMoleculeDataModelList,
                                       String aFragmentationName,
                                       char aSeparator,
                                       TabNames aTabName)
-            throws FileNotFoundException {
+            throws IOException {
         if (aFile == null) {
             return null;
         }
         if (aTabName.equals(TabNames.FRAGMENTS)) {
-            //can throw FileNotFoundException, gets handled in setOnFailed()
+            //can throw IOException, gets handled in setOnFailed()
             return this.createFragmentsTabCsvFile(aFile, aMoleculeDataModelList, aSeparator);
         } else if (aTabName.equals(TabNames.ITEMIZATION)) {
-            //can throw FileNotFoundException, gets handled in setOnFailed()
+            //can throw IOException, gets handled in setOnFailed()
             return this.createItemizationTabCsvFile(aFile, aMoleculeDataModelList, aFragmentationName, aSeparator);
         }
         return new ArrayList<>(0);
@@ -403,14 +403,14 @@ public class Exporter {
      *                                    be used, false for the header of the molecule frequency
      * @throws NullPointerException if the file, the SMILES list, or the frequency list is null
      * @throws IllegalArgumentException if the SMILES list and the frequency list differ in size
-     * @throws FileNotFoundException if given file cannot be found
+     * @throws IOException if given file cannot be found or an error occurs while writing to it
      */
     public void exportHistogramCsvFile(File aFile,
                                        List<String> aSmilesList,
                                        List<Integer> aFrequencyList,
                                        char aSeparator,
                                        boolean anIsAbsoluteFrequencyHeader)
-            throws NullPointerException, IllegalArgumentException, FileNotFoundException {
+            throws NullPointerException, IllegalArgumentException, IOException {
         Objects.requireNonNull(aFile, "aFile must not be null.");
         Objects.requireNonNull(aSmilesList, "aSmilesList must not be null.");
         Objects.requireNonNull(aFrequencyList, "aFrequencyList must not be null.");
@@ -523,13 +523,13 @@ public class Exporter {
      * @param aFragmentationName     fragmentation name to retrieve the specific set of fragments from the molecule data models
      * @param aSeparator             the separator for the csv file
      * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
-     * @throws FileNotFoundException if given file cannot be found
+     * @throws IOException if given file cannot be found or an error occurs while writing to it
      * @author Betül Sevindik
      */
     private List<String> createItemizationTabCsvFile(File aCsvFile,
                                              List<MoleculeDataModel> aMoleculeDataModelList,
                                              String aFragmentationName,
-                                             char aSeparator) throws FileNotFoundException {
+                                             char aSeparator) throws IOException {
         if (aCsvFile == null || aMoleculeDataModelList == null || aFragmentationName == null) {
             return null;
         }
@@ -579,6 +579,7 @@ public class Exporter {
                     }
                 }
             }
+            Exporter.closeAndCheckForWriteErrors(tmpWriter, aCsvFile);
             return tmpFailedExportFragments;
         }
     }
@@ -589,11 +590,11 @@ public class Exporter {
      * @param aList a list of FragmentDataModel instances to export
      * @param aSeparator the separator for the csv file
      * @return List {@literal <}String {@literal >} SMILES codes of the molecules that caused an error
-     * @throws FileNotFoundException if given file cannot be found
+     * @throws IOException if given file cannot be found or an error occurs while writing to it
      * @author Betül Sevindik
      */
     private List<String> createFragmentsTabCsvFile(File aCsvFile, List<MoleculeDataModel> aList, char aSeparator)
-            throws FileNotFoundException {
+            throws IOException {
         if (aCsvFile == null || aList == null) {
             return null;
         }
@@ -623,6 +624,7 @@ public class Exporter {
                     //continue;
                 }
             }
+            Exporter.closeAndCheckForWriteErrors(tmpWriter, aCsvFile);
             return tmpFailedExportFragments;
         }
     }
@@ -635,14 +637,14 @@ public class Exporter {
      * @param aSeparator the separator for the CSV file
      * @param anIsAbsoluteFrequencyHeader true if the frequency column header for the absolute fragment frequency should
      *                                    be used, false for the header of the molecule frequency
-     * @throws FileNotFoundException if given file cannot be found
+     * @throws IOException if given file cannot be found or an error occurs while writing to it
      */
     private void createHistogramCsvFile(File aCsvFile,
                                         List<String> aSmilesList,
                                         List<Integer> aFrequencyList,
                                         char aSeparator,
                                         boolean anIsAbsoluteFrequencyHeader)
-            throws FileNotFoundException {
+            throws IOException {
         try (PrintWriter tmpWriter = new PrintWriter(aCsvFile.getPath())) {
             String tmpFrequencyHeader = Message.get(anIsAbsoluteFrequencyHeader ? "Exporter.fragmentationTab.csvHeader.frequency" : "Exporter.fragmentationTab.csvHeader.moleculeFrequency");
             String tmpHistogramCsvHeader = Message.get("Exporter.fragmentationTab.csvHeader.smiles") + aSeparator + tmpFrequencyHeader;
@@ -650,6 +652,25 @@ public class Exporter {
             for (int i = 0; i < aSmilesList.size(); i++) {
                 tmpWriter.printf("%n%s%s%d", aSmilesList.get(i), aSeparator, aFrequencyList.get(i));
             }
+            Exporter.closeAndCheckForWriteErrors(tmpWriter, aCsvFile);
+        }
+    }
+    //
+    /**
+     * Closes the given writer and throws an IOException if it encountered an error at any point while writing,
+     * flushing, or closing. This is necessary because PrintWriter never throws IOExceptions itself but only sets an
+     * internal error flag, so without this check, a failed export (e.g. because the disk is full) would be reported
+     * as successful. Closing an already closed PrintWriter has no effect, so the writer can still be managed by a
+     * try-with-resources statement.
+     *
+     * @param aWriter the writer to close and check
+     * @param aFile the file the writer writes to, used in the exception message
+     * @throws IOException if the writer encountered an error
+     */
+    private static void closeAndCheckForWriteErrors(PrintWriter aWriter, File aFile) throws IOException {
+        aWriter.close();
+        if (aWriter.checkError()) {
+            throw new IOException(String.format("An error occurred while writing to file %s.", aFile.getPath()));
         }
     }
     //
@@ -918,9 +939,10 @@ public class Exporter {
         List<String> tmpFailedExportFragments = new LinkedList<>();
         int tmpExportedFragmentsCounter = 0;
         int tmpFailedFragmentExportCounter = 0;
+        //note: no PrintWriter in between, because it would swallow IOExceptions (e.g. disk full) and the export would
+        // then be reported as successful
         try (
-                PrintWriter tmpWriter = new PrintWriter(aFile.getPath());
-                BufferedWriter tmpBufferedWriter = new BufferedWriter(tmpWriter);
+                BufferedWriter tmpBufferedWriter = Files.newBufferedWriter(aFile.toPath());
                 SDFWriter tmpSDFWriter = new SDFWriter(tmpBufferedWriter);
         ) {
             //specifying format of export
@@ -1038,10 +1060,9 @@ public class Exporter {
                 String tmpSDFilePathName = FileUtil.getNonExistingFilePath(tmpSDFilesDirectory
                         + File.separator + tmpMolecularFormula, ".sdf");
                 File tmpSDFile = new File(tmpSDFilePathName);
-                //writing to file
+                //writing to file; no PrintWriter in between, because it would swallow IOExceptions (e.g. disk full)
                 try (
-                        PrintWriter tmpWriter = new PrintWriter(tmpSDFile);
-                        BufferedWriter tmpBufferedWriter = new BufferedWriter(tmpWriter);
+                        BufferedWriter tmpBufferedWriter = Files.newBufferedWriter(tmpSDFile.toPath());
                         SDFWriter tmpSDFWriter = new SDFWriter(tmpBufferedWriter);
                 ) {
                     //specifying format of export
