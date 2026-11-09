@@ -36,6 +36,7 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -169,37 +170,46 @@ public class FragmentationTask implements Callable<FragmentationTaskResult> {
                     tmpMoleculeProducedNoFragmentsCounter++;
                     continue;
                 }
-                // list of all fragments for this molecule
-                List<FragmentDataModel> tmpFragmentsOfMolList = new ArrayList<>(tmpFragmentsList.size());
+                int tmpInitialCapacity = CollectionUtil.calculateInitialHashCollectionCapacity(tmpFragmentsList.size());
+                // phase 1: everything that can fail (SMILES generation, data model creation) only touches local
+                // collections, so that a molecule whose processing throws leaves no traces in the fragments shared by
+                // all molecules (frequencies, parent molecules) that would disagree with its own empty result
+                // candidate data model per distinct fragment SMILES of this molecule, in order of first occurrence
+                LinkedHashMap<String, FragmentDataModel> tmpNewFragmentsOfMolMap = new LinkedHashMap<>(tmpInitialCapacity);
                 // map of the frequency with which this molecule contains a specific fragment
-                HashMap<String, Integer> tmpFragmentFrequenciesOfMoleculeMap = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(tmpFragmentsList.size()));
-                // iterate through list of resulting fragments
+                HashMap<String, Integer> tmpFragmentFrequenciesOfMoleculeMap = new HashMap<>(tmpInitialCapacity);
                 for (IAtomContainer tmpFragment : tmpFragmentsList) {
                     String tmpSmiles = ChemUtil.createUniqueSmiles(tmpFragment, this.isStereochemistryRegarded);
                     if (tmpSmiles == null) {
                         tmpFragmentFailedSmilesGenerationCounter++;
                         continue;
                     }
-                    // create new FragmentDataModel
-                    FragmentDataModel tmpNewFragmentDataModel =  new FragmentDataModel(tmpSmiles, tmpFragment.getTitle(), tmpFragment.getProperties());
-                    // putIfAbsent returns null if key is not present in the map, else previous value associated with this key
-                    // operation must be atomic (HashMap) or synchronised (HashTable); we are currently using ConcurrentHashMap
-                    FragmentDataModel tmpFragmentDataModel = this.fragmentsHashTable.putIfAbsent(tmpSmiles,  tmpNewFragmentDataModel);
-                    if (tmpFragmentDataModel == null) {
-                        tmpFragmentDataModel = tmpNewFragmentDataModel;
+                    if (!tmpNewFragmentsOfMolMap.containsKey(tmpSmiles)) {
+                        tmpNewFragmentsOfMolMap.put(tmpSmiles, new FragmentDataModel(tmpSmiles, tmpFragment.getTitle(), tmpFragment.getProperties()));
                     }
-                    // increment the absolute frequency of this fragment - operation is atomic!
-                    tmpFragmentDataModel.incrementAbsoluteFrequency();
+                    tmpFragmentFrequenciesOfMoleculeMap.merge(tmpSmiles, 1, Integer::sum);
+                }
+                // phase 2: register the fragments in the shared map and update their counts; these operations do not
+                // fail in practice, so the shared state stays consistent with this molecule's results
+                List<FragmentDataModel> tmpFragmentsOfMolList = new ArrayList<>(tmpNewFragmentsOfMolMap.size());
+                for (Map.Entry<String, FragmentDataModel> tmpEntry : tmpNewFragmentsOfMolMap.entrySet()) {
+                    String tmpSmiles = tmpEntry.getKey();
+                    // putIfAbsent returns null if key is not present in the map, else previous value associated with
+                    // this key; operation is atomic because we are currently using a ConcurrentHashMap
+                    FragmentDataModel tmpFragmentDataModel = this.fragmentsHashTable.putIfAbsent(tmpSmiles, tmpEntry.getValue());
+                    if (tmpFragmentDataModel == null) {
+                        tmpFragmentDataModel = tmpEntry.getValue();
+                    }
+                    // increment the absolute frequency of this fragment once per occurrence - operation is atomic!
+                    int tmpFrequencyInMolecule = tmpFragmentFrequenciesOfMoleculeMap.get(tmpSmiles);
+                    for (int i = 0; i < tmpFrequencyInMolecule; i++) {
+                        tmpFragmentDataModel.incrementAbsoluteFrequency();
+                    }
+                    // increment molecule frequency of this fragment - operation is atomic!
+                    tmpFragmentDataModel.incrementMoleculeFrequency();
                     // add the initial molecule as a parent molecule
                     tmpFragmentDataModel.getParentMolecules().add(tmpMolecule);
-                    if (tmpFragmentsOfMolList.contains(tmpFragmentDataModel)) {
-                        tmpFragmentFrequenciesOfMoleculeMap.replace(tmpSmiles, tmpFragmentFrequenciesOfMoleculeMap.get(tmpSmiles) + 1);
-                    } else {
-                        // increment molecule frequency of this fragment - operation is atomic!
-                        tmpFragmentDataModel.incrementMoleculeFrequency();
-                        tmpFragmentsOfMolList.add(tmpFragmentDataModel);
-                        tmpFragmentFrequenciesOfMoleculeMap.put(tmpSmiles, 1);
-                    }
+                    tmpFragmentsOfMolList.add(tmpFragmentDataModel);
                 }
                 tmpMolecule.getFragmentFrequencies().put(this.fragmentationName, tmpFragmentFrequenciesOfMoleculeMap);
                 tmpMolecule.getAllFragments().put(this.fragmentationName, tmpFragmentsOfMolList);
