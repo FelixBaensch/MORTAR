@@ -243,7 +243,7 @@ public class MainViewController {
         this.fragmentationService = new FragmentationService();
         this.fragmentationService.reloadFragmenterSettings();
         this.fragmentationService.reloadActiveFragmenterAndPipeline();
-        this.viewToolsManager = new ViewToolsManager(this.configuration);
+        this.viewToolsManager = new ViewToolsManager(this.configuration, this.settingsContainer);
         this.viewToolsManager.reloadViewToolsSettings();
         //<editor-fold desc="show MainView inside primaryStage" defaultstate="collapsed">
         this.mainTabPane = new TabPane();
@@ -256,7 +256,6 @@ public class MainViewController {
         this.scene.getStylesheets().add(tmpStyleSheetURL);
         this.primaryStage.setTitle(Message.get("Title.text"));
         this.primaryStage.setScene(this.scene);
-        this.primaryStage.show();
         this.primaryStage.setMinHeight(GuiDefinitions.GUI_MAIN_VIEW_HEIGHT_VALUE);
         this.primaryStage.setMinWidth(GuiDefinitions.GUI_MAIN_VIEW_WIDTH_VALUE);
         String tmpIconURL = this.getClass().getClassLoader().getResource(
@@ -269,6 +268,7 @@ public class MainViewController {
         this.threadList = new CopyOnWriteArrayList<>();
         this.addListener();
         this.addFragmentationAlgorithmCheckMenuItems();
+        this.primaryStage.show();
     }
     //
     //<editor-fold desc="private methods" defaultstate="collapsed">
@@ -516,10 +516,11 @@ public class MainViewController {
         this.clearGuiAndCollections();
         boolean tmpIsRegardStereo = this.settingsContainer.getRegardStereochemistrySetting();
         boolean tmpIsFillOpenValences = this.settingsContainer.getAddImplicitHydrogensAtImportSetting();
+        boolean tmpIsKekulizationEnforced = this.settingsContainer.getImportAromaticsAsKekuleStructuresSetting();
         this.importTask = new Task<>() {
             @Override
             protected List<MoleculeDataModel> call() throws Exception {
-                List<MoleculeDataModel> tmpSet = tmpImporter.importMoleculeFile(aFile, tmpIsRegardStereo, tmpIsFillOpenValences);
+                List<MoleculeDataModel> tmpSet = tmpImporter.importMoleculeFile(aFile, tmpIsRegardStereo, tmpIsFillOpenValences, tmpIsKekulizationEnforced);
                 return tmpSet;
             }
         };
@@ -595,6 +596,16 @@ public class MainViewController {
      * @param anExportType Enum to specify what type of file to export
      */
     private void exportFile(Exporter.ExportTypes anExportType) {
+        //safety net: without any tab, there is no data to export (the export menu should be disabled in this case)
+        if (this.mainTabPane.getSelectionModel().getSelectedItem() == null) {
+            GuiUtil.guiMessageAlert(
+                    Alert.AlertType.INFORMATION,
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
+                    null
+            );
+            return;
+        }
         if ((this.mainTabPane.getSelectionModel().getSelectedItem()).getId().equals(TabNames.MOLECULES.toString())) {
             GuiUtil.guiConfirmationAlert(Message.get("Exporter.confirmationAlert.moleculesTabSelected.title"),
                     Message.get("Exporter.confirmationAlert.moleculesTabSelected.header"),
@@ -804,7 +815,9 @@ public class MainViewController {
         for (MoleculeDataModel tmpMolecule : tmpMoleculesList) {
             tmpFragmentsList.add((FragmentDataModel) tmpMolecule);
         }
-        this.viewToolsManager.openHistogramView(this.primaryStage, tmpFragmentsList);
+        String tmpFragmentationName = ((GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem())
+                .getFragmentationNameOutOfTitle();
+        this.viewToolsManager.openHistogramView(this.primaryStage, tmpFragmentsList, tmpFragmentationName);
     }
     //
     /**
@@ -1368,13 +1381,21 @@ public class MainViewController {
     }
     //
     /**
-     * Clears the gui and all collections.
+     * Clears the gui and all collections. The menu items that need the removed tabs (export, histogram, and overview
+     * view) are disabled, since they would otherwise stay enabled without any tab, e.g. if the following import fails.
+     * They are enabled again after a successful import or fragmentation. The window title is reset to the one at
+     * start-up, since it would otherwise still name the previously imported file.
      */
     private void clearGuiAndCollections() {
         this.moleculeDataModelList.clear();
         this.mapOfFragmentDataModelLists.clear();
         this.moleculesDataTableView = null;
         this.mainTabPane.getTabs().clear();
+        this.importedFileName = null;
+        this.primaryStage.setTitle(Message.get("Title.text"));
+        this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
+        this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
+        this.mainView.getMainMenuBar().getOverviewViewMenuItem().setDisable(true);
     }
     //
     /**

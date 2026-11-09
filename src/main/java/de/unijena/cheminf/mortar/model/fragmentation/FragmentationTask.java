@@ -36,6 +36,7 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -50,7 +51,7 @@ import java.util.logging.Logger;
  * @author Jonas Schaub
  * @version 1.0.0.0
  */
-public class FragmentationTask implements Callable<Integer> {
+public class FragmentationTask implements Callable<FragmentationTaskResult> {
     //<editor-fold desc="private static final class constants" defaultstate="collapsed">
     /**
      * Lock to be used when updating the shared fragmentsHashTable. Needs to be static to be shared between all task
@@ -84,10 +85,6 @@ public class FragmentationTask implements Callable<Integer> {
      * Whether stereochemistry in the fragments should be regarded when creating their SMILES codes.
      */
     private final boolean isStereochemistryRegarded;
-    /**
-     * Integer to count possible exceptions which could occur during fragmentation.
-     */
-    private int exceptionsCounter;
     //</editor-fold>
     //
     /**
@@ -111,7 +108,6 @@ public class FragmentationTask implements Callable<Integer> {
         this.fragmentsHashTable = aHashtableOfFragments;
         this.fragmentationName = aFragmentationName;
         this.isStereochemistryRegarded = isStereo;
-        this.exceptionsCounter = 0;
     }
     //
     /**
@@ -122,15 +118,27 @@ public class FragmentationTask implements Callable<Integer> {
      * @throws Exception if unable to compute a result (copied from doc in Callable interface)
      */
     @Override
-    public Integer call() throws Exception {
+    public FragmentationTaskResult call() throws Exception {
+        int tmpExceptionsCounter = 0;
+        int tmpMoleculeProducedNoFragmentsCounter = 0;
+        int tmpMoleculeProducedFragmentsCounter = 0;
+        int tmpMoleculeFailedGetAtomContainerCounter = 0;
+        int tmpFilteredMoleculesCounter = 0;
+        int tmpFragmentFailedSmilesGenerationCounter = 0;
+        int tmpUnexpectedExceptionsCounter = 0;
         for (MoleculeDataModel tmpMolecule : this.moleculesList) {
+            // checked at the start of every iteration, so that the various "continue" statements below cannot skip it
+            if (Thread.currentThread().isInterrupted()) {
+                FragmentationTask.LOGGER.log(Level.INFO, "Thread interrupted");
+                return null;
+            }
             try {
                 IAtomContainer tmpAtomContainer;
                 try {
                     tmpAtomContainer = tmpMolecule.getAtomContainer();
                 }
                 catch(CDKException anException) {
-                    this.exceptionsCounter++;
+                    tmpMoleculeFailedGetAtomContainerCounter++;
                     Logger.getLogger(MoleculeDataModel.class.getName()).log(
                             Level.SEVERE, String.format("%s Molecule name: %s", anException.toString(), tmpMolecule.getName()), anException);
                     continue;
@@ -139,6 +147,7 @@ public class FragmentationTask implements Callable<Integer> {
                 if (this.fragmenter.shouldBeFiltered(tmpAtomContainer)) {
                     tmpMolecule.getAllFragments().put(this.fragmentationName, new ArrayList<>(0));
                     tmpMolecule.getFragmentFrequencies().put(this.fragmentationName, new HashMap<>(0));
+                    tmpFilteredMoleculesCounter++;
                     continue;
                 }
                 if (this.fragmenter.shouldBePreprocessed(tmpAtomContainer)) {
@@ -150,48 +159,65 @@ public class FragmentationTask implements Callable<Integer> {
                 }
                 catch (NullPointerException | IllegalArgumentException | CloneNotSupportedException anException) {
                     FragmentationTask.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-                    this.exceptionsCounter++;
+                    tmpExceptionsCounter++;
                     tmpMolecule.getAllFragments().put(this.fragmentationName, new ArrayList<>(0));
                     tmpMolecule.getFragmentFrequencies().put(this.fragmentationName, new HashMap<>(0));
                     continue;
                 }
-                // list of all fragments for this molecule
-                List<FragmentDataModel> tmpFragmentsOfMolList = new ArrayList<>(tmpFragmentsList.size());
+                if (tmpFragmentsList.isEmpty()) {
+                    tmpMolecule.getAllFragments().put(this.fragmentationName, new ArrayList<>(0));
+                    tmpMolecule.getFragmentFrequencies().put(this.fragmentationName, new HashMap<>(0));
+                    tmpMoleculeProducedNoFragmentsCounter++;
+                    continue;
+                }
+                int tmpInitialCapacity = CollectionUtil.calculateInitialHashCollectionCapacity(tmpFragmentsList.size());
+                // phase 1: everything that can fail (SMILES generation, data model creation) only touches local
+                // collections, so that a molecule whose processing throws leaves no traces in the fragments shared by
+                // all molecules (frequencies, parent molecules) that would disagree with its own empty result
+                // candidate data model per distinct fragment SMILES of this molecule, in order of first occurrence
+                LinkedHashMap<String, FragmentDataModel> tmpNewFragmentsOfMolMap = new LinkedHashMap<>(tmpInitialCapacity);
                 // map of the frequency with which this molecule contains a specific fragment
-                HashMap<String, Integer> tmpFragmentFrequenciesOfMoleculeMap = new HashMap<>(CollectionUtil.calculateInitialHashCollectionCapacity(tmpFragmentsList.size()));
-                // iterate through list of resulting fragments
+                HashMap<String, Integer> tmpFragmentFrequenciesOfMoleculeMap = new HashMap<>(tmpInitialCapacity);
                 for (IAtomContainer tmpFragment : tmpFragmentsList) {
                     String tmpSmiles = ChemUtil.createUniqueSmiles(tmpFragment, this.isStereochemistryRegarded);
                     if (tmpSmiles == null) {
-                        this.exceptionsCounter++;
+                        tmpFragmentFailedSmilesGenerationCounter++;
                         continue;
                     }
-                    // create new FragmentDataModel
-                    FragmentDataModel tmpNewFragmentDataModel =  new FragmentDataModel(tmpSmiles, tmpFragment.getTitle(), tmpFragment.getProperties());
-                    // putIfAbsent returns null if key is not present in the map, else previous value associated with this key
-                    // operation must be atomic (HashMap) or synchronised (HashTable); we are currently using ConcurrentHashMap
-                    FragmentDataModel tmpFragmentDataModel = this.fragmentsHashTable.putIfAbsent(tmpSmiles,  tmpNewFragmentDataModel);
-                    if (tmpFragmentDataModel == null) {
-                        tmpFragmentDataModel = tmpNewFragmentDataModel;
+                    if (!tmpNewFragmentsOfMolMap.containsKey(tmpSmiles)) {
+                        tmpNewFragmentsOfMolMap.put(tmpSmiles, new FragmentDataModel(tmpSmiles, tmpFragment.getTitle(), tmpFragment.getProperties()));
                     }
-                    // increment the absolute frequency of this fragment - operation is atomic!
-                    tmpFragmentDataModel.incrementAbsoluteFrequency();
+                    tmpFragmentFrequenciesOfMoleculeMap.merge(tmpSmiles, 1, Integer::sum);
+                }
+                // phase 2: register the fragments in the shared map and update their counts; these operations do not
+                // fail in practice, so the shared state stays consistent with this molecule's results
+                List<FragmentDataModel> tmpFragmentsOfMolList = new ArrayList<>(tmpNewFragmentsOfMolMap.size());
+                for (Map.Entry<String, FragmentDataModel> tmpEntry : tmpNewFragmentsOfMolMap.entrySet()) {
+                    String tmpSmiles = tmpEntry.getKey();
+                    // putIfAbsent returns null if key is not present in the map, else previous value associated with
+                    // this key; operation is atomic because we are currently using a ConcurrentHashMap
+                    FragmentDataModel tmpFragmentDataModel = this.fragmentsHashTable.putIfAbsent(tmpSmiles, tmpEntry.getValue());
+                    if (tmpFragmentDataModel == null) {
+                        tmpFragmentDataModel = tmpEntry.getValue();
+                    }
+                    // increment the absolute frequency of this fragment once per occurrence - operation is atomic!
+                    int tmpFrequencyInMolecule = tmpFragmentFrequenciesOfMoleculeMap.get(tmpSmiles);
+                    for (int i = 0; i < tmpFrequencyInMolecule; i++) {
+                        tmpFragmentDataModel.incrementAbsoluteFrequency();
+                    }
+                    // increment molecule frequency of this fragment - operation is atomic!
+                    tmpFragmentDataModel.incrementMoleculeFrequency();
                     // add the initial molecule as a parent molecule
                     tmpFragmentDataModel.getParentMolecules().add(tmpMolecule);
-                    if (tmpFragmentsOfMolList.contains(tmpFragmentDataModel)) {
-                        tmpFragmentFrequenciesOfMoleculeMap.replace(tmpSmiles, tmpFragmentFrequenciesOfMoleculeMap.get(tmpSmiles) + 1);
-                    } else {
-                        // increment molecule frequency of this fragment - operation is atomic!
-                        tmpFragmentDataModel.incrementMoleculeFrequency();
-                        tmpFragmentsOfMolList.add(tmpFragmentDataModel);
-                        tmpFragmentFrequenciesOfMoleculeMap.put(tmpSmiles, 1);
-                    }
+                    tmpFragmentsOfMolList.add(tmpFragmentDataModel);
                 }
                 tmpMolecule.getFragmentFrequencies().put(this.fragmentationName, tmpFragmentFrequenciesOfMoleculeMap);
                 tmpMolecule.getAllFragments().put(this.fragmentationName, tmpFragmentsOfMolList);
-            }
-            catch(Exception anException) {
-                this.exceptionsCounter++;
+                // counted only after the results have been stored, so that a molecule whose result processing throws
+                // is counted as an unexpected exception only and not additionally as having produced fragments
+                tmpMoleculeProducedFragmentsCounter++;
+            } catch (Exception anException) {
+                tmpUnexpectedExceptionsCounter++;
                 FragmentationTask.LOGGER.log(Level.SEVERE, String.format("Exception while fragmenting molecule with name: %s", tmpMolecule.getName()), anException);
                 if (tmpMolecule.getAllFragments() != null && !tmpMolecule.getAllFragments().containsKey(this.fragmentationName)) {
                     tmpMolecule.getAllFragments().put(this.fragmentationName, new ArrayList<>(0));
@@ -200,11 +226,15 @@ public class FragmentationTask implements Callable<Integer> {
                     tmpMolecule.getFragmentFrequencies().put(this.fragmentationName, new HashMap<>(0));
                 }
             }
-            if (Thread.currentThread().isInterrupted()) {
-                FragmentationTask.LOGGER.log(Level.INFO, "Thread interrupted");
-                return null;
-            }
         }
-        return this.exceptionsCounter;
+        return new FragmentationTaskResult(
+                tmpExceptionsCounter,
+                tmpMoleculeProducedNoFragmentsCounter,
+                tmpMoleculeProducedFragmentsCounter,
+                tmpMoleculeFailedGetAtomContainerCounter,
+                tmpFilteredMoleculesCounter,
+                tmpFragmentFailedSmilesGenerationCounter,
+                tmpUnexpectedExceptionsCounter
+        );
     }
 }

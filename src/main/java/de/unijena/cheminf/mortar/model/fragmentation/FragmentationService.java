@@ -29,6 +29,8 @@ import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
+import de.unijena.cheminf.mortar.model.fragmentation.algorithm.CDKCircularFragmenter;
+import de.unijena.cheminf.mortar.model.fragmentation.algorithm.CDKExhaustiveFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.ErtlFunctionalGroupsFinderFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.IMoleculeFragmenter;
 import de.unijena.cheminf.mortar.model.fragmentation.algorithm.MolWURCSFragmenter;
@@ -200,6 +202,16 @@ public class FragmentationService {
     private final IMoleculeFragmenter molWURCSF;
     //
     /**
+     * CDK Circular fragmenter.
+     */
+    private final IMoleculeFragmenter cdkCircularF;
+    //
+    /**
+     * Exhaustive fragmenter.
+     */
+    private final IMoleculeFragmenter cdkEF;
+    //
+    /**
      * Property of display name of selected fragmenter.
      */
     private final SimpleStringProperty selectedFragmenterDisplayNameProperty;
@@ -211,7 +223,7 @@ public class FragmentationService {
      */
     public FragmentationService() {
         //Note: Every fragmenter class should only be added once to the array or there will be problems with setting persistence!
-        this.fragmenters = new IMoleculeFragmenter[4];
+        this.fragmenters = new IMoleculeFragmenter[6];
         this.ertlFGF = new ErtlFunctionalGroupsFinderFragmenter();
         this.fragmenters[0] = this.ertlFGF;
         this.sugarRUF = new SugarRemovalUtilityFragmenter();
@@ -220,6 +232,10 @@ public class FragmentationService {
         this.fragmenters[2] = this.scaffoldGF;
         this.molWURCSF = new MolWURCSFragmenter();
         this.fragmenters[3] = this.molWURCSF;
+        this.cdkCircularF = new CDKCircularFragmenter();
+        this.fragmenters[4] = this.cdkCircularF;
+        this.cdkEF = new CDKExhaustiveFragmenter();
+        this.fragmenters[5] = this.cdkEF;
         //
         this.selectedFragmenterDisplayNameProperty = new SimpleStringProperty();
         try {
@@ -1040,23 +1056,35 @@ public class FragmentationService {
                 tmpToIndex = aListOfMolecules.size();
             }
         }
-        List<Future<Integer>> tmpFuturesList;
+        List<Future<FragmentationTaskResult>> tmpFuturesList;
         long tmpMemoryConsumption = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024*1024);
         FragmentationService.LOGGER.log(Level.INFO, "Fragmentation \"{0}\" ({1}) starting. Current memory consumption: {2} MB",
                 new Object[]{aFragmentationName, aFragmenter.getFragmentationAlgorithmDisplayName(), tmpMemoryConsumption});
         long tmpStartTime = System.currentTimeMillis();
         int tmpExceptionsCounter = 0;
+        int tmpMoleculeProducedNoFragmentsCounter = 0;
+        int tmpMoleculeProducedFragmentsCounter = 0;
+        int tmpMoleculeFailedGetAtomContainerCounter = 0;
+        int tmpFilteredMoleculesCounter = 0;
+        int tmpFragmentFailedSmilesGenerationCounter = 0;
+        int tmpUnexpectedExceptionsCounter = 0;
         tmpFuturesList = this.executorService.invokeAll(tmpFragmentationTaskList);
         if (this.executorService.isShutdown() || this.executorService.isTerminated()) {
             FragmentationService.LOGGER.log(Level.INFO, "Fragmentation cancelled");
             return null;
         }
         List<Exception> tmpFutureExceptionsList = new ArrayList<>(tmpFuturesList.size());
-        for (Future<Integer> tmpFuture : tmpFuturesList) {
+        for (Future<FragmentationTaskResult> tmpFuture : tmpFuturesList) {
             try {
-                Integer tmpResult = tmpFuture.get();
+                FragmentationTaskResult tmpResult = tmpFuture.get();
                 if (!Objects.isNull(tmpResult)) {
-                    tmpExceptionsCounter += tmpFuture.get();
+                    tmpExceptionsCounter += tmpResult.exceptionsCount();
+                    tmpMoleculeProducedNoFragmentsCounter += tmpResult.moleculeProducedNoFragmentsCount();
+                    tmpMoleculeProducedFragmentsCounter += tmpResult.moleculeProducedFragmentsCount();
+                    tmpMoleculeFailedGetAtomContainerCounter += tmpResult.moleculeFailedGetAtomContainerCount();
+                    tmpFilteredMoleculesCounter += tmpResult.filteredMoleculesCount();
+                    tmpFragmentFailedSmilesGenerationCounter += tmpResult.fragmentFailedSmilesGenerationCount();
+                    tmpUnexpectedExceptionsCounter += tmpResult.unexpectedExceptionsCount();
                 } else {
                     // go to catch
                     throw new ExecutionException(new MORTARException("Result of parallel computation task was null for unknown reason."));
@@ -1108,9 +1136,45 @@ public class FragmentationService {
         } else {
             FragmentationService.LOGGER.log(Level.WARNING, "Sum of absolute frequencies of fragments was 0! Percentages could not be calculated.");
         }
+        FragmentationService.LOGGER.log(Level.INFO,
+                "{0} molecules produced fragments and {1} molecules produced no(!) fragments in fragmentation \"{2}\" ({3}).",
+                new Object[]{tmpMoleculeProducedFragmentsCounter, tmpMoleculeProducedNoFragmentsCounter, aFragmentationName, aFragmenter.getFragmentationAlgorithmDisplayName()});
+        FragmentationService.LOGGER.log(Level.INFO,
+                "{0} molecules were filtered according to the fragmentation algorithm rules.",
+                new Object[]{tmpFilteredMoleculesCounter});
+        if (tmpMoleculeFailedGetAtomContainerCounter > 0) {
+            FragmentationService.LOGGER.log(Level.WARNING,
+                    "{0} molecules could not produce a valid atom container.",
+                    new Object[]{tmpMoleculeFailedGetAtomContainerCounter});
+        }
         if (tmpExceptionsCounter > 0) {
-            FragmentationService.LOGGER.log(Level.WARNING, "Fragmentation \"{0}\" ({1}) caused {2} exceptions",
-                    new Object[]{aFragmentationName, aFragmenter.getFragmentationAlgorithmDisplayName(), tmpExceptionsCounter});
+            FragmentationService.LOGGER.log(Level.WARNING,
+                    "{0} molecules caused exceptions during fragmentation.",
+                    new Object[]{tmpExceptionsCounter});
+        }
+        if (tmpUnexpectedExceptionsCounter > 0) {
+            FragmentationService.LOGGER.log(Level.WARNING,
+                    "{0} molecules caused unexpected exceptions somewhere in the fragmentation process.",
+                    new Object[]{tmpUnexpectedExceptionsCounter});
+        }
+        if (tmpFragmentFailedSmilesGenerationCounter > 0) {
+            FragmentationService.LOGGER.log(Level.WARNING,
+                    "{0} fragments could not be parsed to SMILES codes.",
+                    new Object[]{tmpFragmentFailedSmilesGenerationCounter});
+        }
+        int tmpUnaccountedMoleculesNr = aListOfMolecules.size()
+                - tmpMoleculeProducedNoFragmentsCounter
+                - tmpMoleculeProducedFragmentsCounter
+                - tmpFilteredMoleculesCounter
+                - tmpExceptionsCounter
+                - tmpUnexpectedExceptionsCounter
+                - tmpMoleculeFailedGetAtomContainerCounter;
+        if (tmpUnaccountedMoleculesNr > 0) {
+            FragmentationService.LOGGER.log(Level.WARNING,
+                    "The relevant fragmentation counters do not sum up to " +
+                    "the total nr. of molecules that were submitted for fragmentation! " +
+                    "{0} molecules are unaccounted for!",
+                    new Object[]{tmpUnaccountedMoleculesNr});
         }
         this.executorService.shutdown();
         tmpMemoryConsumption = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024*1024);

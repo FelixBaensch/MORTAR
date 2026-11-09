@@ -31,19 +31,27 @@ import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.OverviewView;
 import de.unijena.cheminf.mortar.message.Message;
+import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
+import de.unijena.cheminf.mortar.model.io.Exporter;
+import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
+import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
+import de.unijena.cheminf.mortar.model.util.FileUtil;
 
 import javafx.application.Platform;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ChangeListener;
+import javafx.concurrent.Task;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
@@ -52,6 +60,7 @@ import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
@@ -68,14 +77,24 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 import org.openscience.cdk.exception.CDKException;
 
+import javax.imageio.ImageIO;
+
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.io.File;
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -127,11 +146,13 @@ public class OverviewViewController implements IViewToolController {
     /**
      * Minimum value for the width of structure images displayed in the overview view.
      */
-    public static final double OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_WIDTH = 30.0;
+    //see the height below; should be quadratic
+    public static final double OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_WIDTH = BasicDefinitions.DEFAULT_IMAGE_TEXT_LABEL_HEIGHT * 2.0;
     /**
      * Minimum value for the height of structure images displayed in the overview view.
      */
-    public static final double OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_HEIGHT = 20.0;
+    //to make sure the text label always fits in the image
+    public static final double OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_HEIGHT = BasicDefinitions.DEFAULT_IMAGE_TEXT_LABEL_HEIGHT * 2.0;
     /**
      * Default value for columns of structure images per overview view page.
      */
@@ -167,6 +188,10 @@ public class OverviewViewController implements IViewToolController {
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(OverviewViewController.class.getName());
+    /**
+     * Decimal format for fragment frequencies in the display.
+     */
+    private static final String FRAGMENT_FREQUENCIES_DECIMAL_FORMAT = "#.##";
     //</editor-fold>
     //
     //<editor-fold desc="private final class constants" defaultstate="collapsed">
@@ -174,6 +199,10 @@ public class OverviewViewController implements IViewToolController {
      * Configuration class to read resource file paths from.
      */
     private final IConfiguration configuration;
+    /**
+     * Settings container class to get settings like the recent directory path from.
+     */
+    private final SettingsContainer settingsContainer;
     /**
      * Integer property that holds the number of rows of structure images to be displayed per page.
      */
@@ -263,9 +292,13 @@ public class OverviewViewController implements IViewToolController {
      * Constructor, initialises all settings with their default values. Does *not* open the view.
      *
      * @param aConfiguration configuration instance to read resource file paths from
+     * @param aSettingsContainer settings container instance to get settings like the recent directory path from
      */
-    public OverviewViewController(IConfiguration aConfiguration) {
+    public OverviewViewController(IConfiguration aConfiguration, SettingsContainer aSettingsContainer) {
+        Objects.requireNonNull(aConfiguration, "MORTAR configuration instance is null, this should never happen!");
+        Objects.requireNonNull(aSettingsContainer, "Settings container instance is null, this should never happen!");
         this.configuration = aConfiguration;
+        this.settingsContainer = aSettingsContainer;
         this.settings = new ArrayList<>(2);
         this.rowsPerPageSetting = new SimpleIntegerProperty(this,
                 //the name could be displayed but is not used for that currently
@@ -360,7 +393,7 @@ public class OverviewViewController implements IViewToolController {
     @Override
     public boolean canBeUsedOnTab(TabNames aTabNameEnumConstant) {
         return switch (aTabNameEnumConstant) {
-            case MOLECULES, FRAGMENTS -> true;
+            case TabNames.MOLECULES, TabNames.FRAGMENTS -> true;
             default -> false;
         };
     }
@@ -387,7 +420,7 @@ public class OverviewViewController implements IViewToolController {
         Objects.requireNonNull(aMoleculeDataModelList, "aMoleculeDataModelList (list of MoleculeDataModel instances) is null");
         //</editor-fold>
         switch (aDataSource) {
-            case MOLECULES_TAB, FRAGMENTS_TAB -> {
+            case DataSources.MOLECULES_TAB, DataSources.FRAGMENTS_TAB -> {
                 Objects.requireNonNull(aTabName, "aTabName (instance of String) is null");
                 if (aTabName.isBlank()) {
                     OverviewViewController.LOGGER.log(Level.WARNING, "aTabName (instance of String) is blank");
@@ -400,7 +433,7 @@ public class OverviewViewController implements IViewToolController {
                 this.withShowInMainViewOption = true;
                 this.withFirstStructureHighlight = false;
             }
-            case PARENT_MOLECULES_SAMPLE -> {
+            case DataSources.PARENT_MOLECULES_SAMPLE -> {
                 this.overviewViewTitle = Message.get("OverviewView.titleOfDataSource.parentMolecules") +
                         " - " + Message.get("OverviewView.nameOfView") +
                         " - " + (aMoleculeDataModelList.size() - 1) +  " " +
@@ -409,7 +442,7 @@ public class OverviewViewController implements IViewToolController {
                 this.withShowInMainViewOption = false;
                 this.withFirstStructureHighlight = true;
             }
-            case ITEM_WITH_FRAGMENTS_SAMPLE -> {
+            case DataSources.ITEM_WITH_FRAGMENTS_SAMPLE -> {
                 this.overviewViewTitle = Message.get("OverviewView.titleOfDataSource.itemsTab") +
                         " - " + Message.get("OverviewView.nameOfView") +
                         " - " + (aMoleculeDataModelList.size() - 1) + " " +
@@ -505,6 +538,9 @@ public class OverviewViewController implements IViewToolController {
         //
         //close button listener
         this.overviewView.getCloseButton().setOnAction(actionEvent -> this.closeOverviewViewEvent());
+        //
+        //screenshot button listener
+        this.overviewView.getScreenshotButton().setOnAction(actionEvent -> this.takeScreenshotOfStructureGridPane());
         //
         //listener to distinguish a drag from a click event (on the image views)
         /*
@@ -684,6 +720,193 @@ public class OverviewViewController implements IViewToolController {
     }
     //
     /**
+     * Takes a snapshot of the structure grid pane, opens a save-file dialog, and writes the result as a PNG file
+     * to the location chosen by the user.
+     *
+     * <p>
+     *     The {@link javax.imageio.ImageIO#write} call is executed in a background {@link Task} so that
+     *     encoding and disk I/O do not block the JavaFX event thread for large grid snapshots.
+     *     Success and error alerts are shown back on the FX thread via the task's
+     *     {@code onSucceeded}/{@code onFailed} callbacks, which JavaFX dispatches on the application thread.
+     *     The screenshot button and the stage reference are captured into local {@code final} variables
+     *     before the task is started, so the callbacks remain safe even if the user closes the Overview
+     *     window while the write is still running (which would null {@code this.overviewView} and
+     *     {@code this.overviewViewStage} via {@code clearGUICachesAtClosing()}).  Each callback checks
+     *     that the stage is still showing before it touches any UI element.
+     * </p>
+     */
+    private void takeScreenshotOfStructureGridPane() {
+        File tmpRecentDirectory = new File(this.settingsContainer.getRecentDirectoryPathSetting());
+        if (!tmpRecentDirectory.isDirectory()) {
+            tmpRecentDirectory = new File(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
+            this.settingsContainer.setRecentDirectoryPathSetting(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
+            OverviewViewController.LOGGER.log(Level.INFO, "Recent directory could not be read, resetting to default.");
+        }
+        //get the title of the overview without the number of molecules for the initial file name
+        String tmpBaseName = this.overviewViewTitle;
+        int tmpLastSeparatorIndex = tmpBaseName.lastIndexOf(" - ");
+        if (tmpLastSeparatorIndex > 0) {
+            tmpBaseName = tmpBaseName.substring(0, tmpLastSeparatorIndex);
+        }
+        tmpBaseName = tmpBaseName.replaceAll("\\s+", "").trim();
+        if (tmpBaseName.isEmpty()) {
+            tmpBaseName = "Overview_Screenshot";
+        } else {
+            tmpBaseName = FileUtil.replaceIllegalFileNameCharacters(tmpBaseName, "_");
+        }
+        String tmpNonExistingFilePath = FileUtil.getNonExistingFilePath(
+                tmpRecentDirectory + File.separator + tmpBaseName,
+                Exporter.FileExtension.PNG.toString());
+        FileChooser tmpFileChooser = new FileChooser();
+        tmpFileChooser.setTitle(Message.get("OverviewView.screenshotButton.fileChooser.title"));
+        tmpFileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("PNG", "*" + Exporter.FileExtension.PNG)
+        );
+        tmpFileChooser.setInitialDirectory(tmpRecentDirectory);
+        tmpFileChooser.setInitialFileName(tmpNonExistingFilePath.substring(
+                tmpNonExistingFilePath.lastIndexOf(File.separator) + 1));
+        File tmpFile = tmpFileChooser.showSaveDialog(this.overviewViewStage);
+        if (tmpFile == null) {
+            // user canceled the dialog
+            return;
+        }
+        if (!tmpFile.getName().toLowerCase(Locale.ROOT).endsWith(Exporter.FileExtension.PNG.toString().toLowerCase(Locale.ROOT))) {
+            tmpFile = new File(tmpFile.getAbsolutePath() + Exporter.FileExtension.PNG);
+        }
+        this.settingsContainer.setRecentDirectoryPathSetting(tmpFile.getParent() + File.separator);
+        // Disable the button while the write is in progress to prevent duplicate saves
+        this.overviewView.getScreenshotButton().setDisable(true);
+        // Perform the potentially slow PNG encoding and disk write off the FX thread:
+        // Snapshot must be taken on the FX thread; the resulting WritableImage is then passed to the background task
+        WritableImage tmpSnapshot = this.overviewView.getStructureGridPane().snapshot(null, null);
+        // Capture UI references into local finals before handing off to the background task.
+        // clearGUICachesAtClosing() nulls this.overviewView and this.overviewViewStage when the
+        // window is closed, so the onSucceeded/onFailed callbacks must not dereference those
+        // fields after the task completes – they use the captured locals instead.
+        final Button tmpFinalScreenshotButton = this.overviewView.getScreenshotButton();
+        final Stage tmpFinalCapturedStage = this.overviewViewStage;
+        final File tmpFinalFile = tmpFile;
+        Thread tmpWriteThread = this.createSnapshotWriteThread(
+                tmpFinalFile,
+                tmpSnapshot,
+                tmpFinalScreenshotButton,
+                tmpFinalCapturedStage);
+        tmpWriteThread.start();
+    }
+    //
+    /**
+     * Builds and returns a configured, <em>unstarted</em> daemon {@link Thread} that encodes the given
+     * JavaFX {@link WritableImage} as a PNG file and writes it to disk.
+     *
+     * <p>
+     *     The work is wrapped in a {@link Task}{@code <Void>} whose {@code call()} method invokes
+     *     {@link javax.imageio.ImageIO#write} off the JavaFX application thread, keeping the UI
+     *     responsive during potentially slow encoding and I/O operations on large grid snapshots.
+     * </p>
+     *
+     * <h4>Lifecycle of captured UI references</h4>
+     * <p>
+     *     Because {@link #clearGUICachesAtClosing()} nulls {@code this.overviewView} and
+     *     {@code this.overviewViewStage} when the Overview window is closed, the task callbacks
+     *     <em>must not</em> access those instance fields after the task completes.
+     *     To prevent a {@link NullPointerException}, the caller
+     *     ({@link #takeScreenshotOfStructureGridPane()}) captures the screenshot
+     *     {@link javafx.scene.control.Button} and the current stage into {@code final} local
+     *     variables <em>before</em> starting the thread, then passes them here as
+     *     {@code aScreenshotButton} and {@code aCapturedStage}. These references remain valid
+     *     for the entire lifetime of the task regardless of whether the window is subsequently
+     *     closed.
+     * </p>
+     *
+     * <h4>Callback behaviour</h4>
+     * <ul>
+     *   <li><b>onSucceeded</b> – dispatched on the JavaFX application thread by the framework.
+     *       Re-enables the screenshot button, but only if {@code aCapturedStage} is still showing.
+     *       Always logs the success and shows an informational
+     *       {@link javafx.scene.control.Alert} with the saved file path</li>
+     *   <li><b>onFailed</b> – dispatched on the JavaFX application thread by the framework.
+     *       Always logs the failure at {@link java.util.logging.Level#SEVERE}.
+     *       Re-enables the screenshot button only if {@code aCapturedStage} is still showing, so no UI is touched
+     *       after the window has been closed. Always shows an exception alert.
+     *       </li>
+     * </ul>
+     *
+     * <p>
+     *     The returned thread is configured as a daemon thread (so it does not prevent JVM
+     *     shutdown) with the name {@code "OverviewView-ScreenshotWrite"}.
+     *     The caller is responsible for calling {@link Thread#start()} on the returned thread.
+     * </p>
+     *
+     * @param aDestinationPNGFile     the destination {@link File} to write the PNG image to;
+     *                                must not be {@code null} and its parent directory must be writable
+     * @param aWritableImageSnapshot the {@link WritableImage} snapshot of the structure grid pane
+     *                                to encode; must have been captured on the JavaFX application
+     *                                thread before this method is called
+     * @param aScreenshotButton       the screenshot {@link javafx.scene.control.Button} to re-enable
+     *                                in the callbacks; captured by the caller before
+     *                                {@link #clearGUICachesAtClosing()} could null
+     *                                {@code this.overviewView}
+     * @param aCapturedStage          the {@link Stage} of the overview window at the time the
+     *                                screenshot was triggered; captured by the caller before
+     *                                {@link #clearGUICachesAtClosing()} could null
+     *                                {@code this.overviewViewStage}; the callbacks check
+     *                                {@link Stage#isShowing()} on this reference before touching
+     *                                any UI element
+     * @return a configured, unstarted daemon {@link Thread} whose {@link Thread#start()} will
+     *         trigger the background PNG write
+     */
+    private Thread createSnapshotWriteThread(
+            File aDestinationPNGFile,
+            WritableImage aWritableImageSnapshot,
+            Button aScreenshotButton,
+            Stage aCapturedStage
+    ) {
+        Task<Void> tmpWriteTask = new Task<>() {
+            @Override
+            protected Void call() throws IOException {
+                ImageIO.write(SwingFXUtils.fromFXImage(aWritableImageSnapshot, null), "png", aDestinationPNGFile);
+                return null;
+            }
+        };
+        // setOnSucceeded / setOnFailed are dispatched back on the JavaFX application thread by the framework
+        tmpWriteTask.setOnSucceeded(workerStateEvent -> {
+            // Guard: the overview window may have been closed while the write was running
+            if (aCapturedStage != null && aCapturedStage.isShowing()) {
+                aScreenshotButton.setDisable(false);
+            }
+            // this can run on the main stage if the overview window is closed
+            //note: we cannot report this via the status bar because the MainViewController alone can update it
+            GuiUtil.guiMessageAlert(
+                    Alert.AlertType.INFORMATION,
+                    Message.get("OverviewView.screenshotButton.success.title"),
+                    Message.get("OverviewView.screenshotButton.success.header"),
+                    aDestinationPNGFile.getAbsolutePath()
+            );
+        });
+        tmpWriteTask.setOnFailed(workerStateEvent -> {
+            // Always log the failure, regardless of whether the window is still open
+            Throwable tmpCause = tmpWriteTask.getException();
+            OverviewViewController.LOGGER.log(Level.SEVERE, tmpCause.toString(), tmpCause);
+            // Guard: only touch UI elements if the overview window is still showing
+            if (aCapturedStage != null && aCapturedStage.isShowing()) {
+                aScreenshotButton.setDisable(false);
+            }
+            Exception tmpException = (tmpCause instanceof Exception anException)
+                    ? anException : new RuntimeException(tmpCause);
+            // this can run on the main stage if the overview window is closed
+            GuiUtil.guiExceptionAlert(
+                    Message.get("OverviewView.screenshotButton.error.title"),
+                    Message.get("OverviewView.screenshotButton.error.header"),
+                    Message.get("OverviewView.screenshotButton.error.text"),
+                    tmpException
+            );
+        });
+        Thread tmpWriteThread = new Thread(tmpWriteTask, "OverviewView-ScreenshotWrite");
+        tmpWriteThread.setDaemon(true);
+        return tmpWriteThread;
+    }
+    //
+    /**
      * Creates an overview view page according to the given page index. This method is called again and again for every page!
      * A GridPane containing structure images is returned. The SMILES and image of each structure can be copied and an
      * enlarged version of the image be shown in a separate view via a context menu.
@@ -735,130 +958,176 @@ public class OverviewViewController implements IViewToolController {
                     && (tmpImageWidth >= OverviewViewController.OVERVIEW_VIEW_STRUCTURE_IMAGE_MIN_WIDTH)) {
                 //optional setting for change in usage of shadow effect - deprecated
                 boolean tmpDrawImagesWithShadow = true;
-                //main loop for generation of the page content
-                generationOfStructureImagesLoop:
-                for (int i = 0; i < aRowsPerPage; i++) {
-                    for (int j = 0; j < aColumnsPerPage; j++) {
-                        if (tmpIterator >= tmpToIndex) {
-                            break generationOfStructureImagesLoop;
-                        }
-                        Node tmpContentNode;
-                        try {
-                            MoleculeDataModel tmpMoleculeDataModel;
-                            if ((tmpMoleculeDataModel = this.moleculeDataModelList.get(tmpIterator)) == null) {
-                                //caught below by catch block
-                                throw new NullPointerException("A MoleculeDataModel instance has been null.");
+                //DecimalFormat for fragment frequencies in fragment overview; instantiated once and not per cell
+                DecimalFormat tmpDecimalFormat = new DecimalFormat(OverviewViewController.FRAGMENT_FREQUENCIES_DECIMAL_FORMAT,
+                        new DecimalFormatSymbols(Locale.getDefault()));
+                //Graphics and font metrics instances to be re-used per cell for checking whether a fragment frequency label fits in the image
+                Graphics2D tmpGraphics2D = null;
+                try {
+                    //Graphics and font metrics instances to be re-used per cell for checking whether a fragment frequency label fits in the image
+                    tmpGraphics2D = DepictionUtil.getGraphicsInstanceWithStandardFont(1, 1);
+                    FontMetrics tmpFontMetrics = tmpGraphics2D.getFontMetrics();
+                    //main loop for generation of the page content
+                    generationOfStructureImagesLoop:
+                    for (int i = 0; i < aRowsPerPage; i++) {
+                        for (int j = 0; j < aColumnsPerPage; j++) {
+                            if (tmpIterator >= tmpToIndex) {
+                                break generationOfStructureImagesLoop;
                             }
-                            //depiction of structure image
-                            final Node tmpFinalContentNode;
-                            if (!(tmpIterator == 0 && this.withFirstStructureHighlight)) {
-                                tmpFinalContentNode = new ImageView(
-                                        DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
-                                                tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
-                                                tmpImageHeight, false, true
-                                        )
-                                );
-                            } else {
-                                //highlighting first structure in parent molecules and item overview view
-                                StackPane tmpStackPane = new StackPane(
-                                        new ImageView(
-                                                DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
+                            Node tmpContentNode;
+                            try {
+                                MoleculeDataModel tmpMoleculeDataModel;
+                                if ((tmpMoleculeDataModel = this.moleculeDataModelList.get(tmpIterator)) == null) {
+                                    //caught below by catch block
+                                    throw new NullPointerException("A MoleculeDataModel instance has been null.");
+                                }
+                                //depiction of structure image
+                                final Node tmpFinalContentNode;
+                                if (!(tmpIterator == 0 && this.withFirstStructureHighlight)) {
+                                    if (this.dataSource == DataSources.FRAGMENTS_TAB && tmpMoleculeDataModel instanceof FragmentDataModel tmpFragment) {
+                                        String tmpFrequencyLabel =
+                                                //note: we could make it configurable to use the molecule freq. or fragment freq.
+                                                tmpFragment.getMoleculeFrequency()
+                                                        + " ("
+                                                        // getMoleculePercentage() returns a decimal fraction (e.g. 0.25 for 25%),
+                                                        // so multiply by 100 to convert it to a percentage value for display
+                                                        + tmpDecimalFormat.format(tmpFragment.getMoleculePercentage() * 100)
+                                                        + "%)";
+                                        if (tmpImageWidth <= tmpFontMetrics.stringWidth(tmpFrequencyLabel)) {
+                                            tmpFrequencyLabel = tmpFragment.getMoleculeFrequency() + " (...)";
+                                        }
+                                        if (tmpImageWidth <= tmpFontMetrics.stringWidth(tmpFrequencyLabel)) {
+                                            tmpFrequencyLabel = String.valueOf(tmpFragment.getMoleculeFrequency());
+                                        }
+                                        if (tmpImageWidth <= tmpFontMetrics.stringWidth(tmpFrequencyLabel)) {
+                                            tmpFrequencyLabel = DepictionUtil.fitIntegerDisplayToImageWidth(
+                                                    tmpImageWidth,
+                                                    tmpFragment.getMoleculeFrequency(),
+                                                    tmpFontMetrics);
+                                        }
+                                        tmpFinalContentNode = new ImageView(
+                                                DepictionUtil.depictImageWithText(
                                                         tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
-                                                        tmpImageHeight, false, false
+                                                        tmpImageHeight, tmpFrequencyLabel, false, true
                                                 )
-                                        )
-                                );
-                                tmpStackPane.setMinWidth(tmpImageWidth);
-                                tmpStackPane.setMaxWidth(tmpImageWidth);
-                                tmpStackPane.setMinHeight(tmpImageHeight);
-                                tmpStackPane.setMaxHeight(tmpImageHeight);
-                                tmpStackPane.setBorder(new Border(new BorderStroke(Color.WHITE,
-                                        BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
-                                //the style is set later on to avoid it being replaced
-                                tmpFinalContentNode = tmpStackPane;
+                                        );
+                                        //note: the same could be done for the item overview, but it is more complicated (too
+                                        // complicated?) to get the individual fragment frequencies from the molecule, since
+                                        // we do not know the fragmentation name, atm
+                                    } else {
+                                        tmpFinalContentNode = new ImageView(
+                                                DepictionUtil.depictImage(
+                                                        tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
+                                                        tmpImageHeight, false, true
+                                                )
+                                        );
+                                    }
+                                } else {
+                                    //highlighting first structure in parent molecules and item overview view
+                                    StackPane tmpStackPane = new StackPane(
+                                            new ImageView(
+                                                    DepictionUtil.depictImage(
+                                                            tmpMoleculeDataModel.getAtomContainer(), 1.0, tmpImageWidth,
+                                                            tmpImageHeight, false, false
+                                                    )
+                                            )
+                                    );
+                                    tmpStackPane.setMinWidth(tmpImageWidth);
+                                    tmpStackPane.setMaxWidth(tmpImageWidth);
+                                    tmpStackPane.setMinHeight(tmpImageHeight);
+                                    tmpStackPane.setMaxHeight(tmpImageHeight);
+                                    tmpStackPane.setBorder(new Border(new BorderStroke(Color.WHITE,
+                                            BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));
+                                    //the style is set later on to avoid it being replaced
+                                    tmpFinalContentNode = tmpStackPane;
+                                }
+                                //changing the shadow effects at mouse entering an image
+                                tmpFinalContentNode.setOnMouseEntered(aMouseEvent -> {
+                                    if (tmpDrawImagesWithShadow) {
+                                        tmpFinalContentNode.setStyle("-fx-effect: null" +
+                                                ((tmpFinalContentNode.getClass() == StackPane.class)
+                                                        ? "; -fx-alignment: CENTER; -fx-background-color: LIGHTGREY"
+                                                        : ""));
+                                    } else {
+                                        tmpFinalContentNode.setStyle(
+                                                "-fx-effect: dropshadow(gaussian, rgba(100, 100, 100, 0.6), " +
+                                                        OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH +
+                                                        ", 0, 0, 0)" +
+                                                ((tmpFinalContentNode.getClass() == StackPane.class)
+                                                        ? "; -fx-alignment: CENTER; -fx-background-color: LIGHTGREY"
+                                                        : "")
+                                        );
+                                    }
+                                });
+                                //resetting the shadow effects at mouse leaving the image
+                                tmpFinalContentNode.setOnMouseExited(aMouseEvent -> {
+                                    if (tmpDrawImagesWithShadow) {
+                                        tmpFinalContentNode.setStyle(
+                                                "-fx-effect: dropshadow(three-pass-box, rgba(100, 100, 100, 0.6), " +
+                                                        OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH
+                                                                / 4 + ", 0, " +
+                                                        OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH
+                                                                / 4 + ", " +
+                                                        OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH
+                                                                / 4 + ")" +
+                                                ((tmpFinalContentNode.getClass() == StackPane.class)
+                                                        ? "; -fx-alignment: CENTER; -fx-background-color: LIGHTGREY"
+                                                        : "")
+                                        );
+                                    } else {
+                                        tmpFinalContentNode.setStyle("-fx-effect: null" +
+                                                ((tmpFinalContentNode.getClass() == StackPane.class)
+                                                        ? "; -fx-alignment: CENTER; -fx-background-color: LIGHTGREY"
+                                                        : ""));
+                                    }
+                                });
+                                //
+                                tmpContentNode = tmpFinalContentNode;
+                            } catch (CDKException | NullPointerException anException) {
+                                OverviewViewController.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                                //Error label to be shown when a structure can not be depicted
+                                Label tmpErrorLabel = new Label(Message.get("OverviewView.ErrorLabel.text"));
+                                tmpErrorLabel.setMinWidth(tmpImageWidth);
+                                tmpErrorLabel.setMaxWidth(tmpImageWidth);
+                                tmpErrorLabel.setMinHeight(tmpImageHeight);
+                                tmpErrorLabel.setMaxHeight(tmpImageHeight);
+                                tmpErrorLabel.setStyle("-fx-alignment: CENTER; -fx-background-color: WHITE");
+                                Tooltip tmpErrorLabelTooltip = GuiUtil.createTooltip(Message.get("OverviewView.ErrorLabel.tooltip"));
+                                tmpErrorLabel.setTooltip(tmpErrorLabelTooltip);
+                                tmpContentNode = new StackPane(tmpErrorLabel);
+                                tmpContentNode.disableProperty().set(true);
+                            } catch (IndexOutOfBoundsException anIndexOutOfBoundsException) {
+                                //should not happen
+                                OverviewViewController.LOGGER.log(Level.SEVERE, anIndexOutOfBoundsException.toString(),
+                                        anIndexOutOfBoundsException);
+                                break generationOfStructureImagesLoop;
                             }
-                            //changing the shadow effects at mouse entering an image
-                            tmpFinalContentNode.setOnMouseEntered(aMouseEvent -> {
-                                if (tmpDrawImagesWithShadow) {
-                                    tmpFinalContentNode.setStyle("-fx-effect: null" +
-                                            ((tmpFinalContentNode.getClass() == StackPane.class)
-                                                    ? "; -fx-alignment: CENTER; -fx-background-color: LIGHTGREY"
-                                                    : ""));
-                                } else {
-                                    tmpFinalContentNode.setStyle(
-                                            "-fx-effect: dropshadow(gaussian, rgba(100, 100, 100, 0.6), " +
-                                                    OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH +
-                                                    ", 0, 0, 0)" +
-                                            ((tmpFinalContentNode.getClass() == StackPane.class)
-                                                    ? "; -fx-alignment: CENTER; -fx-background-color: LIGHTGREY"
-                                                    : "")
-                                    );
-                                }
-                            });
-                            //resetting the shadow effects at mouse leaving the image
-                            tmpFinalContentNode.setOnMouseExited(aMouseEvent -> {
-                                if (tmpDrawImagesWithShadow) {
-                                    tmpFinalContentNode.setStyle(
-                                            "-fx-effect: dropshadow(three-pass-box, rgba(100, 100, 100, 0.6), " +
-                                                    OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH
-                                                            / 4 + ", 0, " +
-                                                    OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH
-                                                            / 4 + ", " +
-                                                    OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH
-                                                            / 4 + ")" +
-                                            ((tmpFinalContentNode.getClass() == StackPane.class)
-                                                    ? "; -fx-alignment: CENTER; -fx-background-color: LIGHTGREY"
-                                                    : "")
-                                    );
-                                } else {
-                                    tmpFinalContentNode.setStyle("-fx-effect: null" +
-                                            ((tmpFinalContentNode.getClass() == StackPane.class)
-                                                    ? "; -fx-alignment: CENTER; -fx-background-color: LIGHTGREY"
-                                                    : ""));
-                                }
-                            });
+                            //setting the shadow effect
+                            if (tmpDrawImagesWithShadow) {
+                                tmpContentNode.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(100, 100, 100, 0.6), " +
+                                        OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", 0, " +
+                                        OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", " +
+                                        OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ")");
+                            }
+                            //highlighting the first structure of parent molecules and item overview view
+                            if (!this.withShowInMainViewOption && tmpIterator == 0) {
+                                tmpContentNode.setStyle("-fx-alignment: CENTER; -fx-background-color: LIGHTGREY" +
+                                        (tmpDrawImagesWithShadow
+                                                ? "; -fx-effect: dropshadow(three-pass-box, rgba(100, 100, 100, 0.6), " +
+                                                OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", 0, " +
+                                                OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", " +
+                                                OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ")"
+                                                : "")
+                                );
+                            }
                             //
-                            tmpContentNode = tmpFinalContentNode;
-                        } catch (CDKException | NullPointerException anException) {
-                            OverviewViewController.LOGGER.log(Level.WARNING, anException.toString(), anException);
-                            //Error label to be shown when a structure can not be depicted
-                            Label tmpErrorLabel = new Label(Message.get("OverviewView.ErrorLabel.text"));
-                            tmpErrorLabel.setMinWidth(tmpImageWidth);
-                            tmpErrorLabel.setMaxWidth(tmpImageWidth);
-                            tmpErrorLabel.setMinHeight(tmpImageHeight);
-                            tmpErrorLabel.setMaxHeight(tmpImageHeight);
-                            tmpErrorLabel.setStyle("-fx-alignment: CENTER; -fx-background-color: WHITE");
-                            Tooltip tmpErrorLabelTooltip = GuiUtil.createTooltip(Message.get("OverviewView.ErrorLabel.tooltip"));
-                            tmpErrorLabel.setTooltip(tmpErrorLabelTooltip);
-                            tmpContentNode = new StackPane(tmpErrorLabel);
-                            tmpContentNode.disableProperty().set(true);
-                        } catch (IndexOutOfBoundsException anIndexOutOfBoundsException) {
-                            //should not happen
-                            OverviewViewController.LOGGER.log(Level.SEVERE, anIndexOutOfBoundsException.toString(),
-                                    anIndexOutOfBoundsException);
-                            break generationOfStructureImagesLoop;
-                        }
-                        //setting the shadow effect
-                        if (tmpDrawImagesWithShadow) {
-                            tmpContentNode.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(100, 100, 100, 0.6), " +
-                                    OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", 0, " +
-                                    OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", " +
-                                    OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ")");
-                        }
-                        //highlighting the first structure of parent molecules and item overview view
-                        if (!this.withShowInMainViewOption && tmpIterator == 0) {
-                            tmpContentNode.setStyle("-fx-alignment: CENTER; -fx-background-color: LIGHTGREY" +
-                                    (tmpDrawImagesWithShadow
-                                            ? "; -fx-effect: dropshadow(three-pass-box, rgba(100, 100, 100, 0.6), " +
-                                            OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", 0, " +
-                                            OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ", " +
-                                            OverviewViewController.OVERVIEW_VIEW_STRUCTURE_GRID_PANE_GRIDLINES_WIDTH / 4 + ")"
-                                            : "")
-                            );
-                        }
-                        //
-                        this.overviewView.getStructureGridPane().add(tmpContentNode, j, i);
-                        tmpIterator++;
+                            this.overviewView.getStructureGridPane().add(tmpContentNode, j, i);
+                            tmpIterator++;
+                        } //end of columns iteration
+                    } // end of rows iteration
+                } finally {
+                    if (tmpGraphics2D != null) {
+                        tmpGraphics2D.dispose();
                     }
                 }
             } else {
@@ -1001,14 +1270,16 @@ public class OverviewViewController implements IViewToolController {
         tmpCopyImageMenuItem.setOnAction((ActionEvent anActionEvent) -> {
             if (this.cachedIndexOfStructureInMoleculeDataModelList >= 0) {
                 try {
-                    ClipboardContent tmpContent = new ClipboardContent();
-                    tmpContent.putImage(DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
-                            this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList)
-                                    .getAtomContainer(), 1.0,
+                    //note: making the background transparent leads to problems on Windows, where the background then appears black
+                    Image tmpStructureImage = DepictionUtil.depictImage(
+                            this.moleculeDataModelList.get(this.cachedIndexOfStructureInMoleculeDataModelList).getAtomContainer(),
+                            1.0,
                             GuiDefinitions.GUI_COPY_IMAGE_IMAGE_WIDTH,
                             GuiDefinitions.GUI_COPY_IMAGE_IMAGE_HEIGHT,
-                            true, true
-                    ));
+                            true,
+                            true);
+                    ClipboardContent tmpContent = new ClipboardContent();
+                    tmpContent.putImage(tmpStructureImage);
                     Clipboard.getSystemClipboard().setContent(tmpContent);
                 } catch (CDKException aCDKException) {
                     //should not happen since an initial depiction is needed to make the context menu accessible to the user
@@ -1222,15 +1493,12 @@ public class OverviewViewController implements IViewToolController {
         tmpEnlargedStructureViewStage.getIcons().add(new Image(tmpIconURL));
         tmpEnlargedStructureViewStage.setMinHeight(OverviewViewController.ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE);
         tmpEnlargedStructureViewStage.setMinWidth(OverviewViewController.ENLARGED_STRUCTURE_VIEW_MIN_WIDTH_VALUE);
-        //
-        tmpEnlargedStructureViewStage.show();
-        //
         //generation of context menu for the options of copying the structure's image or SMILES String to the clipboard
         ContextMenu tmpContextMenu = this.generateContextMenuWithListeners(true);
         //
         try {
             //depiction of the structure
-            ImageView tmpStructureImage = new ImageView(DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
+            ImageView tmpStructureImage = new ImageView(DepictionUtil.depictImage(
                     aMoleculeDataModel.getAtomContainer(),1.0,
                     OverviewViewController.ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_WIDTH
                             * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
@@ -1245,7 +1513,7 @@ public class OverviewViewController implements IViewToolController {
                 tmpEnlargedStructureViewStackPane.getChildren().clear();
                 try {
                     ImageView tmpUpdatedStructureImage = new ImageView(
-                            DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(
+                            DepictionUtil.depictImage(
                                     aMoleculeDataModel.getAtomContainer(), 1.0,
                                     tmpEnlargedStructureViewStackPane.getWidth()
                                             * OverviewViewController.ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO,
@@ -1280,7 +1548,9 @@ public class OverviewViewController implements IViewToolController {
                     Message.get("OverviewView.enlargedStructureView.issueWithStructureDepiction.text")
             );
             tmpEnlargedStructureViewStage.close();
+            return;
         }
+        tmpEnlargedStructureViewStage.show();
     }
     //</editor-fold>
 }

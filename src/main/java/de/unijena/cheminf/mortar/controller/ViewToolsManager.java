@@ -30,6 +30,7 @@ import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
+import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 import de.unijena.cheminf.mortar.model.util.BasicDefinitions;
 import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.preference.PreferenceContainer;
@@ -82,10 +83,6 @@ public class ViewToolsManager {
      * OverviewViewController instance.
      */
     private final OverviewViewController overviewViewController;
-    /**
-     * Configuration class to read resource file paths from.
-     */
-    private final IConfiguration configuration;
     //</editor-fold>
     //
     //<editor-fold desc="constructor" defaultstate="collapsed">
@@ -94,13 +91,13 @@ public class ViewToolsManager {
      * Opens a GUI exception alert if they are not.
      *
      * @param aConfiguration configuration instance to read resource file paths from
+     * @param aSettingsContainer settings container to read settings from
      */
-    public ViewToolsManager(IConfiguration aConfiguration) {
-        this.configuration = aConfiguration;
+    public ViewToolsManager(IConfiguration aConfiguration, SettingsContainer aSettingsContainer) {
         this.viewToolsArray = new IViewToolController[2];
-        this.histogramViewController = new HistogramViewController(this.configuration);
+        this.histogramViewController = new HistogramViewController(aConfiguration, aSettingsContainer);
         this.viewToolsArray[0] = this.histogramViewController;
-        this.overviewViewController = new OverviewViewController(this.configuration);
+        this.overviewViewController = new OverviewViewController(aConfiguration, aSettingsContainer);
         this.viewToolsArray[1] = this.overviewViewController;
         try {
             this.checkViewTools();
@@ -124,14 +121,16 @@ public class ViewToolsManager {
         return this.viewToolsArray;
     }
     /**
-     * See {@link HistogramViewController#openHistogramView(Stage, List)}.
+     * See {@link HistogramViewController#openHistogramView(Stage, List, String)}.
      *
      * @param aMainStage Stage of the MainView
      * @param aFragmentDataModelList ObservableList that holds FragmentDataModel objects for visualisation in histogram
+     * @param aFragmentationName name of the fragmentation the fragments stem from, used for the proposed export file name
      * @throws NullPointerException if any param is null
      */
-    public void openHistogramView(Stage aMainStage, List< FragmentDataModel > aFragmentDataModelList) throws NullPointerException {
-        this.histogramViewController.openHistogramView(aMainStage, aFragmentDataModelList);
+    public void openHistogramView(Stage aMainStage, List< FragmentDataModel > aFragmentDataModelList, String aFragmentationName)
+            throws NullPointerException {
+        this.histogramViewController.openHistogramView(aMainStage, aFragmentDataModelList, aFragmentationName);
     }
     /**
      * See {@link OverviewViewController#initializeAndShowOverviewView(Stage, OverviewViewController.DataSources, String, List)}.

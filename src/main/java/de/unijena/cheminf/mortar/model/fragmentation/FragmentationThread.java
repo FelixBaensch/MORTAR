@@ -118,7 +118,7 @@ public class FragmentationThread implements Callable<Hashtable<String, FragmentD
                 tmpToIndex = this.molecules.size();
             }
         }
-        List<Future<Integer>> tmpFuturesList;
+        List<Future<FragmentationTaskResult>> tmpFuturesList;
         long tmpMemoryConsumption = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024*1024);
         FragmentationThread.LOGGER.info("Fragmentation \"" + this.fragmentationName
                 + "\" starting. Current memory consumption: " + tmpMemoryConsumption + " MB");
@@ -130,8 +130,8 @@ public class FragmentationThread implements Callable<Hashtable<String, FragmentD
             throw anException;
         }
         int tmpExceptionsCounter = 0;
-        for (Future<Integer> tmpFuture : tmpFuturesList) {
-            tmpExceptionsCounter += tmpFuture.get();
+        for (Future<FragmentationTaskResult> tmpFuture : tmpFuturesList) {
+            tmpExceptionsCounter += tmpFuture.get().exceptionsCount();
         }
         int tmpFragmentAmount = 0;
         Set<String> tmpKeySet = tmpFragmentHashtable.keySet();

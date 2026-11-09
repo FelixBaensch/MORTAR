@@ -485,6 +485,7 @@ public class GuiUtil {
                 tmpCell = aTableView.getColumns().get(tmpColIndex).getCellData(tmpRowIndex);
             }
             if (tmpCell == null) {
+                GuiUtil.LOGGER.log(Level.WARNING, "Selected cell in table view is empty and could not be copied to clipboard.");
                 return;
             } else {
                 ClipboardContent tmpClipboardContent = new ClipboardContent();
@@ -516,12 +517,21 @@ public class GuiUtil {
                         } else {
                             tmpAtomContainer = ((MoleculeDataModel) aTableView.getItems().get(tmpRowIndex)).getAtomContainer();
                         }
-                        Image tmpImage = DepictionUtil.depictImageWithZoomAndFillToFitAndWhiteBackground(tmpAtomContainer, 1, GuiDefinitions.GUI_COPY_IMAGE_IMAGE_WIDTH, GuiDefinitions.GUI_COPY_IMAGE_IMAGE_HEIGHT,true, true);
+                        //note: making the background transparent leads to problems on Windows, where the background then appears black
+                        Image tmpImage = DepictionUtil.depictImage(
+                                tmpAtomContainer,
+                                1.0,
+                                GuiDefinitions.GUI_COPY_IMAGE_IMAGE_WIDTH,
+                                GuiDefinitions.GUI_COPY_IMAGE_IMAGE_HEIGHT,
+                                true,
+                                true);
                         tmpClipboardContent.putImage(tmpImage);
                     } catch (CDKException | ClassCastException tmpException) {
+                        //copies the exact image instance already on display in the cell to clipboard, instead of generating a bigger depiction
                         tmpClipboardContent.putImage(((ImageView) tmpCell).getImage());
                     }
                 } else {
+                    GuiUtil.LOGGER.log(Level.WARNING, "Unknown data type in table view cell ({0}) could not be copied to clipboard.", tmpCell.getClass());
                     return;
                 }
                 Clipboard.getSystemClipboard().setContent(tmpClipboardContent);

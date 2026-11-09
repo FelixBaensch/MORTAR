@@ -34,9 +34,12 @@ import java.nio.file.Files;
 import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * File utility.
@@ -47,6 +50,21 @@ import java.util.logging.Logger;
  * @version 1.0.0.0
  */
 public final class FileUtil {
+    //<editor-fold defaultstate="collapsed" desc="Private enum OperatingSystem">
+    /**
+     * Represents the three major operating systems used internally for app directory path determination
+     * and file name validation and sanitization.
+     */
+    private enum OperatingSystem {
+        /** Microsoft Windows. */
+        WINDOWS,
+        /** Apple macOS. */
+        MAC_OS,
+        /** Linux and other Unix-like systems (AIX, etc.). */
+        LINUX
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="Private static class variables" defaultstate="collapsed">
     /**
      * Cache String for app dir path.
@@ -73,6 +91,27 @@ public final class FileUtil {
             throw new NullPointerException("Configuration could not be initialized");
         }
     }
+    //
+    /**
+     * Compiled regex pattern that matches characters illegal in a file name on <b>Windows</b>:
+     * {@code \ / : * ? " < > |} and control characters U+0000–U+001F.
+     */
+    private static final Pattern ILLEGAL_FILE_NAME_CHARACTERS_PATTERN_WINDOWS =
+            Pattern.compile("[\\\\/:*?\"<>|\\x00-\\x1F]");
+    //
+    /**
+     * Compiled regex pattern that matches characters illegal in a file name on <b>macOS</b>:
+     * {@code /} and {@code :} (and the NUL character U+0000).
+     */
+    private static final Pattern ILLEGAL_FILE_NAME_CHARACTERS_PATTERN_MAC_OS =
+            Pattern.compile("[/:\\x00]");
+    //
+    /**
+     * Compiled regex pattern that matches characters illegal in a file name on <b>Linux/Unix</b>:
+     * {@code /} and the NUL character (U+0000).
+     */
+    private static final Pattern ILLEGAL_FILE_NAME_CHARACTERS_PATTERN_LINUX =
+            Pattern.compile("[/\\x00]");
     //</editor-fold>
     //
     //<editor-fold desc="Private constructor" defaultstate="collapsed">
@@ -249,19 +288,17 @@ public final class FileUtil {
             return FileUtil.appDirPath;
         }
         String tmpAppDir;
-        String tmpOS = System.getProperty("os.name").toUpperCase();
-        if (tmpOS.contains("WIN"))
+        OperatingSystem tmpOS = FileUtil.detectCurrentOperatingSystem();
+        if (tmpOS.equals(OperatingSystem.WINDOWS))
             tmpAppDir = System.getenv("AppData");
-        else if (tmpOS.contains("MAC"))
-            tmpAppDir = System.getProperty("user.home");
-        else if (tmpOS.contains("NUX") || tmpOS.contains("NIX") || tmpOS.contains("AIX"))
+        else if (tmpOS.equals(OperatingSystem.MAC_OS) || tmpOS.equals(OperatingSystem.LINUX))
             tmpAppDir = System.getProperty("user.home");
         else
             throw new SecurityException("OS name " + tmpOS + " unknown.");
         File tmpAppDirFile = new File(tmpAppDir);
         if(!tmpAppDirFile.exists() || !tmpAppDirFile.isDirectory())
             throw new SecurityException("AppData (Windows) or user home directory path " + tmpAppDir + " is either no directory or does not exist.");
-        if (tmpOS.contains("MAC"))
+        if (tmpOS.equals(OperatingSystem.MAC_OS))
             tmpAppDir += File.separator + "Library" + File.separator + "Application Support";
         tmpAppDir += File.separator + FileUtil.CONFIGURATION.getProperty("mortar.vendor.name") + File.separator + FileUtil.CONFIGURATION.getProperty("mortar.dataDirectory.name");
         tmpAppDirFile = new File(tmpAppDir);
@@ -344,6 +381,60 @@ public final class FileUtil {
     }
     //
     /**
+     * Checks whether the given file name contains characters that are illegal on the current operating system.
+     * The operating system is detected automatically. The characters considered illegal are:
+     * <ul>
+     *     <li>Windows: {@code \ / : * ? " < > |} and control characters U+0000–U+001F</li>
+     *     <li>macOS: {@code /} and {@code :} (and the NUL character U+0000)</li>
+     *     <li>Linux/Unix: {@code /} and the NUL character (U+0000)</li>
+     * </ul>
+     *
+     * @param aFileName the file name (not a full path) to check; must not be {@code null} or empty
+     * @return {@code true} if the file name contains at least one illegal character, {@code false} otherwise
+     * @throws NullPointerException     if the given file name is {@code null}
+     * @throws IllegalArgumentException if the given file name is empty
+     */
+    public static boolean containsIllegalFileNameCharacters(String aFileName)
+            throws NullPointerException, IllegalArgumentException {
+        //<editor-fold defaultstate="collapsed" desc="Checks">
+        Objects.requireNonNull(aFileName, "Given file name is 'null'.");
+        if (aFileName.isEmpty()) {
+            throw new IllegalArgumentException("Given file name is empty.");
+        }
+        //</editor-fold>
+        return FileUtil.getPatternForOperatingSystem(FileUtil.detectCurrentOperatingSystem()).matcher(aFileName).find();
+    }
+
+    /**
+     * Replaces every character in the given file name that is illegal on the current operating system with the
+     * supplied replacement string. The operating system is detected automatically. The characters considered
+     * illegal are:
+     * <ul>
+     *     <li>Windows: {@code \ / : * ? " < > |} and control characters U+0000–U+001F</li>
+     *     <li>macOS: {@code /} and {@code :} (and the NUL character U+0000)</li>
+     *     <li>Linux/Unix: {@code /} and the NUL character (U+0000)</li>
+     * </ul>
+     *
+     * @param aFileName    the file name (not a full path) to sanitize; must not be {@code null} or empty
+     * @param aReplacement the string used as a substitute for each illegal character; may be an empty string
+     *                     (effectively removing illegal characters) but must not be {@code null}
+     * @return the sanitized file name with all illegal characters replaced by {@code aReplacement}
+     * @throws NullPointerException     if {@code aFileName} or {@code aReplacement} is {@code null}
+     * @throws IllegalArgumentException if {@code aFileName} is empty
+     */
+    public static String replaceIllegalFileNameCharacters(String aFileName, String aReplacement)
+            throws NullPointerException, IllegalArgumentException {
+        //<editor-fold defaultstate="collapsed" desc="Checks">
+        Objects.requireNonNull(aFileName, "Given file name is 'null'.");
+        Objects.requireNonNull(aReplacement, "Given replacement string is 'null'.");
+        if (aFileName.isEmpty()) {
+            throw new IllegalArgumentException("Given file name is empty.");
+        }
+        //</editor-fold>
+        return FileUtil.getPatternForOperatingSystem(FileUtil.detectCurrentOperatingSystem()).matcher(aFileName)
+                .replaceAll(Matcher.quoteReplacement(aReplacement));
+    }
+    /**
      * Opens given path in OS depending explorer equivalent.
      *
      * @param aPath path to open
@@ -351,16 +442,16 @@ public final class FileUtil {
      * @throws SecurityException if the directory could not be opened
      */
     public static void openFilePathInExplorer(String aPath) throws SecurityException {
-        if (Objects.isNull(aPath) || aPath.isEmpty() || aPath.isBlank()) {
-            throw new IllegalArgumentException("Given file path is null or empty.");
+        if (Objects.isNull(aPath) || aPath.isBlank()) {
+            throw new IllegalArgumentException("Given file path is null, empty, or blank.");
         }
-        String tmpOS = System.getProperty("os.name").toUpperCase();
+        OperatingSystem tmpOS = FileUtil.detectCurrentOperatingSystem();
         try {
-            if (tmpOS.contains("WIN")) {
+            if (tmpOS.equals(OperatingSystem.WINDOWS)) {
                 Runtime.getRuntime().exec(new String[]{"explorer", "/open,", aPath});
-            } else if (tmpOS.contains("MAC")) {
+            } else if (tmpOS.equals(OperatingSystem.MAC_OS)) {
                 Runtime.getRuntime().exec(new String[]{"open", "-R", aPath});
-            } else if (tmpOS.contains("NUX") || tmpOS.contains("NIX") || tmpOS.contains("AIX")) {
+            } else if (tmpOS.equals(OperatingSystem.LINUX)) {
                 Runtime.getRuntime().exec(new String[]{"gio", "open", aPath});
             } else {
                 throw new SecurityException("OS name " + tmpOS + " unknown.");
@@ -371,4 +462,43 @@ public final class FileUtil {
         }
     }
     // </editor-fold>
+    //
+    //<editor-fold defaultstate="collapsed" desc="Private static methods">
+    /**
+     * Detects the current operating system and returns the matching {@link OperatingSystem} enum constant.
+     *
+     * @return the {@link OperatingSystem} constant for the current platform
+     * @throws SecurityException if the OS name is unknown
+     */
+    private static OperatingSystem detectCurrentOperatingSystem() throws SecurityException {
+        // In locales like Turkish, the case conversion for "i" can change and break the subsequent checks,
+        // leading to false "unknown OS" errors; therefore, the English locale is used here
+        String tmpOS = System.getProperty("os.name").toUpperCase(Locale.ENGLISH);
+        if (tmpOS.contains("WIN")) {
+            return OperatingSystem.WINDOWS;
+        }
+        if (tmpOS.contains("MAC")) {
+            return OperatingSystem.MAC_OS;
+        }
+        if (tmpOS.contains("NUX") || tmpOS.contains("NIX") || tmpOS.contains("AIX")) {
+            return OperatingSystem.LINUX;
+        }
+        throw new SecurityException("OS name " + tmpOS + " unknown.");
+    }
+
+    /**
+     * Returns the pre-compiled {@link Pattern} that matches illegal file name characters for the given
+     * {@link OperatingSystem}.
+     *
+     * @param anOperatingSystem the target operating system; must not be {@code null}
+     * @return the corresponding illegal-character pattern
+     */
+    private static Pattern getPatternForOperatingSystem(OperatingSystem anOperatingSystem) {
+        return switch (anOperatingSystem) {
+            case WINDOWS -> FileUtil.ILLEGAL_FILE_NAME_CHARACTERS_PATTERN_WINDOWS;
+            case MAC_OS  -> FileUtil.ILLEGAL_FILE_NAME_CHARACTERS_PATTERN_MAC_OS;
+            case LINUX   -> FileUtil.ILLEGAL_FILE_NAME_CHARACTERS_PATTERN_LINUX;
+        };
+    }
+    //</editor-fold>
 }

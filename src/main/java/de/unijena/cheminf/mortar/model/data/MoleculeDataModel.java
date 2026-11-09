@@ -280,10 +280,10 @@ public class MoleculeDataModel {
     public ImageView getStructure() {
         try {
             IAtomContainer tmpAtomContainer = this.getAtomContainer();
-            return new ImageView(DepictionUtil.depictImageWithZoomAndFillToFit(tmpAtomContainer, 1, this.getStructureImageWidth(), this.getStructureImageHeight(), false));
+            return new ImageView(DepictionUtil.depictImageWithTransparentBackground(tmpAtomContainer, 1, this.getStructureImageWidth(), this.getStructureImageHeight(), false));
         } catch (CDKException aCDKException) {
             Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString(), aCDKException);
-            return new ImageView(DepictionUtil.depictErrorImage(aCDKException.getMessage(), 250, 250));
+            return new ImageView(DepictionUtil.depictErrorImage(aCDKException.getMessage(), (int) this.getStructureImageWidth(), (int) this.getStructureImageHeight()));
         }
     }
     //
@@ -297,10 +297,10 @@ public class MoleculeDataModel {
     public ImageView getStructureWithText(String aText){
         try {
             IAtomContainer tmpAtomContainer = this.getAtomContainer();
-            return new ImageView(DepictionUtil.depictImageWithText(tmpAtomContainer, 1, this.getStructureImageWidth(), this.getStructureImageHeight(), aText));
+            return new ImageView(DepictionUtil.depictImageWithTextNoFillToFitAndTransparentBackground(tmpAtomContainer, 1, this.getStructureImageWidth(), this.getStructureImageHeight(), aText));
         } catch (CDKException aCDKException) {
             Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, aCDKException.toString(), aCDKException);
-            return new ImageView(DepictionUtil.depictErrorImage(aCDKException.getMessage(), 250, 250));
+            return new ImageView(DepictionUtil.depictErrorImage(aCDKException.getMessage(), (int) this.getStructureImageWidth(), (int) this.getStructureImageHeight()));
         }
     }
     //

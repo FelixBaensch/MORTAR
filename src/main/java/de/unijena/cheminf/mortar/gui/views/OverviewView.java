@@ -58,7 +58,7 @@ import java.util.Objects;
  * @version 1.0.0.0
  */
 public class OverviewView extends AnchorPane {
-    //<editor-fold desc="public static final class constants", defaultstate="collapsed">
+    //<editor-fold desc="public static final class constants" defaultstate="collapsed">
     /**
      * Width of columns and rows per page label of the overview view.
      */
@@ -99,6 +99,10 @@ public class OverviewView extends AnchorPane {
      * Button to apply the default configuration to the structure grid pane.
      */
     private final Button defaultButton;
+    /**
+     * Button to save a screenshot of the structure grid pane.
+     */
+    private final Button screenshotButton;
     /**
      * Button to close the view.
      */
@@ -275,7 +279,10 @@ public class OverviewView extends AnchorPane {
         this.closeButton = GuiUtil.getButtonOfStandardSize(Message.get("OverviewView.closeButton.text"));
         this.closeButton.setTooltip(GuiUtil.createTooltip(Message.get("OverviewView.closeButton.tooltip")));
         //
-        this.bottomRightHBox.getChildren().add(this.closeButton);
+        this.screenshotButton = GuiUtil.getButtonOfStandardSize(Message.get("OverviewView.screenshotButton.text"));
+        this.screenshotButton.setTooltip(GuiUtil.createTooltip(Message.get("OverviewView.screenshotButton.tooltip")));
+        //
+        this.bottomRightHBox.getChildren().addAll(this.screenshotButton, this.closeButton);
         //
         /*
         initialization of the imageDimensionsBelowLimitVBox that is meant to be shown when the dimensions of the
@@ -411,6 +418,15 @@ public class OverviewView extends AnchorPane {
      */
     public Button getCloseButton() {
         return this.closeButton;
+    }
+    //
+    /**
+     * Returns the overview view's screenshot button for saving a PNG image of the current structure grid page.
+     *
+     * @return Button
+     */
+    public Button getScreenshotButton() {
+        return this.screenshotButton;
     }
     //
     /**

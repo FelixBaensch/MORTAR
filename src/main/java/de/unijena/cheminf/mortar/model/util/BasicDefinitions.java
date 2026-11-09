@@ -112,7 +112,7 @@ public final class BasicDefinitions {
     /**
      * Version of application.
      */
-    public static final String MORTAR_VERSION = "1.6.0.0";
+    public static final String MORTAR_VERSION = "1.7.0.0";
     //</editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Model constants and magic numbers">
@@ -129,9 +129,11 @@ public final class BasicDefinitions {
      */
     public static final double DEFAULT_IMAGE_HEIGHT_DEFAULT = 250.0;
     /**
-     * Default distance between image and text.
+     * Default height of the space that should be reserved for a text label in images,
+     * using the default font defined in private constants in
+     * {@link de.unijena.cheminf.mortar.model.depict.DepictionUtil}.
      */
-    public static final int DEFAULT_IMAGE_TEXT_DISTANCE = 15;
+    public static final int DEFAULT_IMAGE_TEXT_LABEL_HEIGHT = 25;
     /**
      * Default load factor for HashMap and HashSet instances, defined based on default value given in the Java documentation.
      */

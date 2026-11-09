@@ -34,6 +34,7 @@ import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
+import org.openscience.cdk.tools.manipulator.HydrogenState;
 
 import java.io.File;
 import java.io.FileReader;
@@ -41,6 +42,7 @@ import java.net.URL;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
@@ -54,7 +56,7 @@ class ChemUtilTest {
      * CDK canonical SMILES and re-generate SMILES with stereo chemistry from the resulting atom containers.
      */
     @Test
-    public void testParseAndCreateUniqueSmilesRoundTrip() throws Exception {
+    void testParseAndCreateUniqueSmilesRoundTrip() throws Exception {
         String[] tmpSmilesCodes = new String[] {
                 "C/C=C(\\C)/C(=O)O[C@H]1C[C@@H]2C[C@@H](C[C@H]1N2C)OC(=O)/C=C(\\C)/C(=O)OCC", //CNP0315572.1
                 "C/C(=C\\C[C@@H]([C@@H](C)[C@H]1CC[C@@]2(C)C3=CC[C@H]4C(C)(C)[C@@H](CC[C@]4(C)C3=CC[C@]12C)O)OC(=O)C)/C(=O)O", //CNP0219624.2
@@ -88,9 +90,9 @@ class ChemUtilTest {
      * Test importing a MOL file containing a molecule with radicals and verifying that these are fixed correctly.
      */
     @Test
-    public void testFixRadicals() throws Exception {
+    void testFixRadicals() throws Exception {
         URL tmpURL = this.getClass().getResource("Mirabilin_B.mol");
-        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        File tmpResourceFile = Paths.get(Objects.requireNonNull(tmpURL, "Failed to fetch resource file Mirabilin_B.mol").toURI()).toFile();
         MDLV2000Reader tmpReader = new MDLV2000Reader(new FileReader(tmpResourceFile));
         IAtomContainer tmpMolecule = tmpReader.read(SilentChemObjectBuilder.getInstance().newAtomContainer());
         tmpReader.close();
@@ -104,7 +106,7 @@ class ChemUtilTest {
      * Makes sure that the Regex pattern in ChemUtil.fixAromaticNitrogenAndCreateSMILES() does not match 'n' in '[Sn]'.
      */
     @Test
-    public void testFixAromaticNitrogenAndCreateSMILESPattern() throws Exception {
+    void testFixAromaticNitrogenAndCreateSMILESPattern() throws Exception {
         //PubChem CID	16682804
         String tmpSmiles = "CC(=O)O[Sn](C1=CC=CC=C1)(C2=CC=CC=C2)C3=CC=CC=C3";
         Pattern tmpNPattern = Pattern.compile(ChemUtil.AROMATIC_N_REGEX);
@@ -115,7 +117,7 @@ class ChemUtilTest {
      * Tests fixing a molecule imported from an aromatic SMILES string that is missing an explicit H on an aromatic N.
      */
     @Test
-    public void testFixAromaticNitrogenAndCreateSMILES() throws Exception {
+    void testFixAromaticNitrogenAndCreateSMILES() throws Exception {
         //CHEBI:929 - one n needs to be fixed
         String tmpSmilesCode = "Nc1nc(N[C@@H]2O[C@H](COP(=O)(O)OP(=O)(O)OP(=O)(O)O)[C@@H](O)[C@H]2O)c(N)c(=O)n1";
         SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
@@ -131,7 +133,7 @@ class ChemUtilTest {
      * Tests fixing a molecule imported from an aromatic SMILES string that is missing explicit Hs on multiple aromatic N.
      */
     @Test
-    public void testFixAromaticNitrogensAndCreateSMILES() throws Exception {
+    void testFixAromaticNitrogensAndCreateSMILES() throws Exception {
         //CHEBI:10048 - two n need to be fixed (without creating an uncharged(!) tetravalent N)
         String tmpSmilesCode = "O=c1nc(=O)c2ncn([C@@H]3O[C@H](COP(=O)(O)OP(=O)(O)O)[C@@H](O)[C@H]3O)c2n1";
         SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
@@ -147,7 +149,7 @@ class ChemUtilTest {
      * Tests fixing a molecule imported from an aromatic SMILES string that is missing an explicit H on a charged aromatic N.
      */
     @Test
-    public void testFixAromaticChargedNitrogenAndCreateSMILES() throws Exception {
+    void testFixAromaticChargedNitrogenAndCreateSMILES() throws Exception {
         //CHEBI:20794 - one aromatic n is charged and therefore needs to be tetravalent in the solution
         String tmpSmilesCode = "C[n+]1cn([C@@H]2O[C@H](CO)[C@@H](O)[C@H]2O)c2nc(N)nc(=O)c21";
         SmilesParser tmpSmiPar = new SmilesParser(SilentChemObjectBuilder.getInstance());
@@ -165,7 +167,7 @@ class ChemUtilTest {
      * based on a bulk of ChEBI molecules with this issue.
      */
     @Test
-    public void testFixAromaticNitrogenAndCreateSMILESBulk() throws Exception {
+    void testFixAromaticNitrogenAndCreateSMILESBulk() throws Exception {
         String tmpChEBISmiles = """
                 CHEBI:10048	O=c1nc(=O)c2ncn([C@@H]3O[C@H](COP(=O)(O)OP(=O)(O)O)[C@@H](O)[C@H]3O)c2n1
                 CHEBI:10049	O=c1nc(=O)c2ncn([C@@H]3O[C@H](COP(=O)(O)OP(=O)(O)OP(=O)(O)O)[C@@H](O)[C@H]3O)c2n1
@@ -202,6 +204,36 @@ class ChemUtilTest {
                 failMsg.append(tmpLine).append('\n');
             }
             Assertions.fail(failMsg.toString());
+        }
+    }
+    //
+    /**
+     * Tests the generation of molecular formulae on a few examples.
+     */
+    @Test
+    void testMolecularFormulaGeneration() throws Exception {
+        String[] tmpSmilesCodes = new String[]{
+                "C", // methane
+                "CCO", // ethanol
+                "c1ccccc1", // benzene
+                "CC(=O)O", // acetic acid
+                "N[C@@H](Cc1ccccc1)C(=O)O" // phenylalanine
+        };
+        String[] tmpExpectedFormulas = new String[]{
+                "CH4",
+                "C2H6O",
+                "C6H6",
+                "C2H4O2",
+                "C9H11NO2"
+        };
+        for (int i = 0; i < tmpSmilesCodes.length; i++) {
+            IAtomContainer tmpMolecule = ChemUtil.parseSmilesToAtomContainer(tmpSmilesCodes[i], true, true);
+            String tmpFormula = ChemUtil.generateMolecularFormula(tmpMolecule);
+            Assertions.assertEquals(tmpExpectedFormulas[i], tmpFormula);
+            // make sure molecular formula generation is independent of hydrogen state
+            AtomContainerManipulator.normalizeHydrogens(tmpMolecule, HydrogenState.Explicit);
+            tmpFormula = ChemUtil.generateMolecularFormula(tmpMolecule);
+            Assertions.assertEquals(tmpExpectedFormulas[i], tmpFormula);
         }
     }
 }

@@ -33,13 +33,19 @@
 * [Acknowledgements](#Acknowledgements)
 
 ## Description
+
+![MORTAR_Screenshots](./Images/Screenshot_for_README.png)
+
 MORTAR ('MOlecule fRagmenTation fRamework') is a free and open-source graphical desktop application that supports 
 molecular <i>in silico</i> fragmentation and substructure analysis. The Java/JavaFX rich client offers extensive graphical 
 functions for visualizing the fragmentation results of individual compounds or entire compound sets. 
-In addition to four currently integrated methods for fragmentation and substructure analysis - 
+In addition to six currently integrated methods for fragmentation and substructure analysis -
 <a href="https://github.com/JonasSchaub/ErtlFunctionalGroupsFinder">ErtlFunctionalGroupsFinder</a>, 
 <a href="https://github.com/JonasSchaub/SugarRemoval">Sugar Removal Utility</a> (with the <a href="https://github.com/cdk/cdk/pull/1225">Sugar Detection Utility</a> extension), 
-<a href="https://github.com/cdk/cdk-scaffold">CDK-Scaffold</a>, and <a href="https://gitlab.com/glycoinfo/molwurcs">MolWURCS</a> - MORTAR allows straightforward integration of 
+<a href="https://github.com/cdk/cdk-scaffold">CDK-Scaffold</a>, <a href="https://gitlab.com/glycoinfo/molwurcs">MolWURCS</a>,
+ Circular Fragmentation analogous to HOSE codes or Morgan Fingerprints, and 
+<a href="https://github.com/cdk/cdk/blob/main/tool/fragment/src/main/java/org/openscience/cdk/fragment/ExhaustiveFragmenter.java">Exhaustive Fragmentation</a> - 
+MORTAR allows straightforward integration of
 additional fragmentation algorithms to support the development of new methods at an early stage. 
 All cheminformatics functionalities are implemented based on the <a href="https://github.com/cdk/cdk">Chemistry Development Kit (CDK)</a>.<br>
 The scientific article describing MORTAR can be found here: 
@@ -77,7 +83,7 @@ to run MORTAR from the command line.
 
 <p>
 <b>Windows:</b> A convenient Windows OS installer executable for MORTAR is available
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.6.0/MORTAR_v1.6.0.0_WINx64_setup.exe">here</a> to 
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.7.0/MORTAR_v1.7.0.0_WINx64_setup.exe">here</a> to 
 automatically download the setup.exe of the latest version). Download the installer 
 executable, start it, and follow the instructions to install MORTAR. During installation, you are asked whether desktop 
 or start menu icons/shortcuts should be created. The executable (batch file) denoted "MORTAR" uses up to 4 GB of RAM, 
@@ -85,7 +91,7 @@ while the "MORTAR 20GB" configuration allocates up to 20 GB of your RAM for runn
 will be created, so creating at least one of the shortcuts is recommended. To start MORTAR after installation, double-click 
 one of the created shortcuts. 
 <br>
-The MORTAR program folder is located at "C:\Program Files\MORTAR\MORTARv1.6.0.0" by default, but can be adjusted during 
+The MORTAR program folder is located at "C:\Program Files\MORTAR\MORTARv1.7.0.0" by default, but can be adjusted during 
 installation. MORTAR can be uninstalled by the provided "unins000.exe" executable in the MORTAR program folder or by 
 standard Windows functions (Settings -> Apps -> Installed Apps). Note that the installation includes a full Java Runtime 
 Environment (JRE).
@@ -128,7 +134,7 @@ command line:
 </p>
 
 ```shell
-sudo dpkg -i <path to>MORTAR-1.6.0.deb
+sudo dpkg -i <path to>MORTAR-1.7.0.deb
 ```
 
 Execute the command in the directory where the package is situated or use its explicit 
@@ -148,7 +154,7 @@ command line:
 </p>
 
 ```shell
-sudo rpm -i <path to>MORTAR-1.6.0.rpm
+sudo rpm -i <path to>MORTAR-1.7.0.rpm
 ```
 
 Execute the command in the directory where the package is situated or use its explicit
@@ -159,15 +165,15 @@ installation not work for you, you can run MORTAR directly from the command line
 (see below).
 
 <p><b>JAR execution via command line (all platforms)</b>: 
-Every release has the executable JAR "MORTAR-fat-1.6.0.0.jar"
+Every release has the executable JAR "MORTAR-fat-1.7.0.0.jar"
 attached, which contains the packaged MORTAR code together with all dependencies 
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.6.0/MORTAR-fat-1.6.0.0.jar">here</a>
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.7.0/MORTAR-fat-1.7.0.0.jar">here</a>
 to automatically download the JAR of the latest version). 
 To run MORTAR (with up to 4 GB of RAM available, e.g.), 
 execute the JAR from the command-line using</p>
 
 ```shell
-java -jar -Xms512m -Xmx4g <path to>MORTAR-fat-1.6.0.0.jar
+java -jar -Xms512m -Xmx4g <path to>MORTAR-fat-1.7.0.0.jar
 ```
 
 A JDK or JRE of version 21.0.1 or higher (see [CONTRIBUTING.md](./CONTRIBUTING.md) for details on compatibility with 
@@ -177,10 +183,10 @@ Execute the command in the directory where the JAR is situated or use its explic
 Adjust the initially allocated memory (-Xms) and maximum memory to be used (-Xmx) according to your preferences.
 
 <p><b>Further notes</b>: Please note that MORTAR only supports x64 (not x32, on all four platforms) and AArch64/ARM 
-(on macOS and Linux) architectures in general. 
-For the latter, a special "fat JAR" named "MORTAR-fat-aarch64-1.6.0.0.jar" is available from the distributions attached 
+(on macOS and Linux) architectures in general.
+For the latter, a special "fat JAR" named "MORTAR-fat-aarch64-1.7.0.0.jar" is available from the distributions attached 
 to the releases and must be used 
-(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.6.0/MORTAR-fat-aarch64-1.6.0.0.jar">here</a> to 
+(click <a href="https://github.com/FelixBaensch/MORTAR/releases/download/v1.7.0/MORTAR-fat-aarch64-1.7.0.0.jar">here</a> to 
 automatically download the AArch64 JAR of the latest version).</p>
 Also note that using the Windows Subsystem for Linux (WSL) is not recommended, since a lot of additional configurations 
 have to be made there to run Java GUI applications.
@@ -211,7 +217,7 @@ If you are not sure about the contribution process, please contact us via email,
 * JavaFX version 21.0.1
   * [Open JavaFX](https://openjfx.io)
   * GNU General Public License (GPL) Version 2
-* Chemistry Development Kit (CDK) version 2.12-SNAPSHOT
+* Chemistry Development Kit (CDK) version 2.13
     * [Chemistry Development Kit on GitHub](https://cdk.github.io/)
     * License: GNU Lesser General Public License 2.1
 * MolWURCS version 0.12.1
@@ -263,6 +269,11 @@ fragmentation (Baensch et al. 2023)</a>).
 * [Masaaki Matsubara, Kiyoko F. Aoki-Kinoshita, Nobuyuki P. Aoki, Issaku Yamada, and Hisashi Narimatsu. WURCS 2.0 Update To Encapsulate Ambiguous Carbohydrate Structures. Journal of Chemical Information and Modeling 2017 57 (4), 632-637. https://doi.org/10.1021/acs.jcim.6b00650](https://doi.org/10.1021/acs.jcim.6b00650)
 * [Kenichi Tanaka, Kiyoko F. Aoki-Kinoshita, Masaaki Kotera, Hiromichi Sawaki, Shinichiro Tsuchiya, Noriaki Fujita, Toshihide Shikanai, Masaki Kato, Shin Kawano, Issaku Yamada, and Hisashi Narimatsu. WURCS: The Web3 Unique Representation of Carbohydrate Structures. Journal of Chemical Information and Modeling 2014 54 (6), 1558-1566. https://doi.org/10.1021/ci400571e](https://doi.org/10.1021/ci400571e)
 
+**Circular Fragmentation**
+* [W. Bremser, Hose — a novel substructure code, Analytica Chimica Acta, Volume 103, Issue 4, 1978, Pages 355-365, ISSN 0003-2670, https://doi.org/10.1016/S0003-2670(01)83100-7.](https://doi.org/10.1016/S0003-2670(01)83100-7)
+* [Rogers, D.; Hahn, M. Extended-Connectivity Fingerprints. J. Chem. Inf. Model. 2010, 50, 742–754, doi:10.1021/ci100050t.](https://doi.org/10.1021/ci100050t)
+* [Faulon, J.-L.; Visco, D.P.; Pophale, R.S. The Signature Molecular Descriptor. 1. Using Extended Valence Sequences in QSAR and QSPR Studies. J. Chem. Inf. Comput. Sci. 2003, 43, 707–720, doi:10.1021/ci020345w.](https://doi.org/10.1021/ci020345w)
+
 **Chemistry Development Kit (CDK)**
 * [Chemistry Development Kit on GitHub](https://cdk.github.io/)
 * [Steinbeck C, Han Y, Kuhn S, Horlacher O, Luttmann E, Willighagen EL. The Chemistry Development Kit (CDK): An Open-Source Java Library for Chemo- and Bioinformatics. J Chem Inform Comput Sci. 2003;43(2):493-500.](https://dx.doi.org/10.1021%2Fci025584y)
@@ -281,6 +292,8 @@ fragmentation (Baensch et al. 2023)</a>).
 * Zeynep Dagtekin
 * Tom Weiss
 * Martin Urban
+* Sareen Mohammad
+* Manuel Schauer
 
 **Logo:**
 * Kohulan Rajan
@@ -300,8 +313,8 @@ fragmentation (Baensch et al. 2023)</a>).
 <br>Steinbeck Research Group
 <br>Institute for Inorganic and Analytical Chemistry
 <br>Friedrich-Schiller-University Jena
-<br>Lessingstraße 8
-<br>D-07743 Jena
+<br>Rosalind-Franklin-Strasse 5
+<br>D-07745 Jena
 
 **The MORTAR project team would like to thank the communities behind the open software libraries the application employs 
 for their amazing work.**

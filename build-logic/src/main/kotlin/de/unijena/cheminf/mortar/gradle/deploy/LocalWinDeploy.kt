@@ -115,10 +115,20 @@ open class LocalWinDeploy @Inject constructor(
      * - winDeploy/in/icon
      * - winDeploy/out
      *
-     * Note: The JRE directory is created when the JRE is downloaded.
+     * The staging directories `in/bin`, `in/lib`, and `in/tutorial` are emptied first, so that no stale files from an
+     * earlier deployment run without `clean` (e.g. the filtered-out non-Windows JavaFX jars or jars of outdated
+     * dependency versions) end up in the installer.
+     *
+     * Note: The JRE directory is created when the JRE is downloaded. It is kept here and checked in [downloadJRE].
      */
     private fun createDirectories() {
         val tmpBuildDir = project.layout.buildDirectory.asFile.get()
+        listOf("winDeploy/in/bin", "winDeploy/in/lib", "winDeploy/in/tutorial").forEach { tmpStagingDirName ->
+            val tmpStagingDir = File(tmpBuildDir, tmpStagingDirName)
+            if (!tmpStagingDir.deleteRecursively()) {
+                throw RuntimeException("Could not empty the staging directory ${tmpStagingDir.absolutePath}")
+            }
+        }
         // The directory for the JRE is created when the JRE is downloaded
         listOf(
             "winDeploy",
@@ -134,9 +144,11 @@ open class LocalWinDeploy @Inject constructor(
     /**
      * Copies the necessary files for Windows deployment.
      *
+     * The target subdirectories `in/bin`, `in/lib`, and `in/tutorial` have already been emptied by [createDirectories].
+     *
      * Copies the following from `build/install/MORTAR` to the corresponding `winDeploy/in` subdirectories:
      * - `bin` directory to `in/bin`
-     * - `lib` directory to `in/lib`
+     * - `lib` directory to `in/lib`, minus the JavaFX artifacts of the non-Windows platforms
      * - `tutorial` directory to `in/tutorial`
      *
      * Also copies the icon file `Images/Mortar_Logo_Icon1.ico` to `in/icon/Mortar_Logo_Icon1.ico` if it exists.
@@ -157,7 +169,11 @@ open class LocalWinDeploy @Inject constructor(
         }
 
         DeployUtil.copyDir(File(tmpInstallDir, "bin"), File(tmpWinDeployDir, "in/bin"))
-        DeployUtil.copyDir(File(tmpInstallDir, "lib"), File(tmpWinDeployDir, "in/lib"))
+        //the distribution carries the JavaFX natives of every supported platform so it stays portable; a Windows
+        //installer only ever loads the Windows ones, so the other four classifiers are dead weight in the .exe
+        DeployUtil.copyDir(File(tmpInstallDir, "lib"), File(tmpWinDeployDir, "in/lib")) { tmpFile ->
+            !tmpFile.name.startsWith("javafx-") || tmpFile.name.endsWith("-win.jar")
+        }
         DeployUtil.copyDir(File(tmpInstallDir, "tutorial"), File(tmpWinDeployDir, "in/tutorial"))
 
         File(MortarBundle.message(PropertyNames.ICON_PATH_WINDOWS)).takeIf { it.exists() }
@@ -314,12 +330,14 @@ open class LocalWinDeploy @Inject constructor(
     /**
      * Downloads and extracts the JRE required for Windows deployment.
     *
-    * - Checks if the JRE directory already exists and is not empty.
-    *   If so, skips the download.
+    * - Checks if the JRE directory already exists, is not empty, and was downloaded from the currently configured
+    *   JRE URL (recorded in the marker file `winDeploy/jre-source-url.txt`). If so, skips the download.
+    * - Otherwise, deletes an existing (outdated or incomplete) JRE directory
     * - Downloads the JRE ZIP from Adoptium Temurin
     * - Extracts the ZIP to `winDeploy/in`
     * - Renames the extracted directory
     * - Deletes the ZIP file after extraction
+    * - Records the JRE URL in the marker file
     *
     * @throws RuntimeException if the download or extraction fails.
     */
@@ -327,11 +345,23 @@ open class LocalWinDeploy @Inject constructor(
         val tmpBuildDir = project.layout.buildDirectory.asFile.get()
         val tmpInnoSetupInputDir = File(tmpBuildDir, "winDeploy/in/")
         val tmpJreDeploymentDir = File(tmpInnoSetupInputDir, MortarBundle.message(PropertyNames.LOCAL_DEPLOY_WIN_JRE_DIR_NAME))
+        val tmpJreUrl = MortarBundle.message(PropertyNames.LOCAL_DEPLOY_WIN_JRE_URL)
+        //the marker lives outside of winDeploy/in, so that it does not end up in the installer
+        val tmpJreSourceMarkerFile = File(tmpBuildDir, "winDeploy/jre-source-url.txt")
 
         if (tmpJreDeploymentDir.exists() && tmpJreDeploymentDir.listFiles()?.isNotEmpty() == true) {
-            logger.lifecycle("JRE already exists, skipping download")
-            return
+            if (tmpJreSourceMarkerFile.isFile && tmpJreSourceMarkerFile.readText().trim() == tmpJreUrl) {
+                logger.lifecycle("JRE already exists, skipping download")
+                return
+            }
+            //JRE downloaded from a different (outdated) URL, by a version of this task without the marker file, or
+            //incompletely, so it must not be packaged into the installer
+            logger.lifecycle("Existing JRE does not match the configured JRE URL, replacing it")
+            if (!tmpJreDeploymentDir.deleteRecursively()) {
+                throw RuntimeException("Could not delete the outdated JRE directory ${tmpJreDeploymentDir.absolutePath}")
+            }
         }
+        tmpJreSourceMarkerFile.delete()
 
         logger.lifecycle("Downloading JRE...")
         val tmpTempDir = File(tmpBuildDir, "tmp")
@@ -340,10 +370,15 @@ open class LocalWinDeploy @Inject constructor(
         val tmpInnoInputsJreDir = File(tmpInnoSetupInputDir, MortarBundle.message(PropertyNames.LOCAL_DEPLOY_WIN_JRE_DIR_NAME))
 
         try {
-            DeployUtil.downloadFile(MortarBundle.message(PropertyNames.LOCAL_DEPLOY_WIN_JRE_URL), tmpJreZip)
+            //remove leftovers of an earlier, interrupted extraction
+            tmpInnoInputsJreExtractDir.deleteRecursively()
+            DeployUtil.downloadFile(tmpJreUrl, tmpJreZip)
             DeployUtil.extractZip(tmpJreZip, tmpInnoSetupInputDir)
-            tmpInnoInputsJreExtractDir.renameTo(tmpInnoInputsJreDir)
+            if (!tmpInnoInputsJreExtractDir.renameTo(tmpInnoInputsJreDir)) {
+                throw RuntimeException("Could not rename ${tmpInnoInputsJreExtractDir.absolutePath} to ${tmpInnoInputsJreDir.absolutePath}")
+            }
             tmpJreZip.delete()
+            tmpJreSourceMarkerFile.writeText(tmpJreUrl)
             logger.lifecycle("JRE download completed")
         } catch (e: Exception) {
             throw RuntimeException("Failed to download or extract JRE: ${e.message}", e)

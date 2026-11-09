@@ -31,6 +31,7 @@ import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.DataModelPropertiesForTableView;
 import de.unijena.cheminf.mortar.model.data.FragmentDataModel;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
+import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 
 import javafx.beans.binding.Bindings;
@@ -47,6 +48,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
 import java.util.List;
 
 /**
@@ -95,6 +98,13 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
      * Configuration class to read resource file paths from.
      */
     private final IConfiguration configuration;
+    /**
+     * Cached {@link FontMetrics} instance (created once in the constructor using
+     * {@link DepictionUtil#getGraphicsInstanceWithStandardFont(int, int)}) that is reused by the
+     * fragment-column cell-value factories to avoid allocating a new {@link java.awt.image.BufferedImage}
+     * and {@link Graphics2D} on every cell render.
+     */
+    private final FontMetrics cachedFontMetrics;
     //</editor-fold>
     //
     /**
@@ -106,6 +116,11 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
     public ItemizationDataTableView(String aFragmentationName, IConfiguration aConfiguration) {
         super();
         this.configuration = aConfiguration;
+        // Build FontMetrics once; the backing Graphics2D is disposed immediately after extraction.
+        // The FontMetrics object itself is self-contained and can be reused across all cell renders.
+        Graphics2D tmpGraphics2D = DepictionUtil.getGraphicsInstanceWithStandardFont(1, 1);
+        this.cachedFontMetrics = tmpGraphics2D.getFontMetrics();
+        tmpGraphics2D.dispose();
         this.setEditable(false);
         this.fragmentationName = aFragmentationName;
         this.getSelectionModel().setCellSelectionEnabled(true);
@@ -222,11 +237,14 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
                     return null;
                 }
                 FragmentDataModel tmpFragment = cellData.getValue().getFragmentsOfSpecificFragmentation(this.fragmentationName).get(tmpIndex);
-                if (!cellData.getValue().hasMoleculeUndergoneSpecificFragmentation(this.fragmentationName)) {
-                    return null;
+                int tmpFrequency = cellData.getValue().getFragmentFrequencyOfSpecificFragmentation(this.fragmentationName).get(tmpFragment.getUniqueSmiles());
+                String tmpFrequencyString = String.valueOf(tmpFrequency);
+                // just a precaution; it is highly unlikely that we get that many fragments of the same type for one(!) molecule
+                // cachedFontMetrics is reused here to avoid allocating a BufferedImage/Graphics2D per cell render
+                if (!DepictionUtil.isTextNarrowerThanImage(tmpFragment.getStructureImageWidth(), tmpFrequencyString, this.cachedFontMetrics)) {
+                    tmpFrequencyString = DepictionUtil.fitIntegerDisplayToImageWidth(tmpFragment.getStructureImageWidth(), tmpFrequency, this.cachedFontMetrics);
                 }
-                String tmpFrequency = cellData.getValue().getFragmentFrequencyOfSpecificFragmentation(this.fragmentationName).get(tmpFragment.getUniqueSmiles()).toString();
-                return tmpFragment.getStructureWithText(tmpFrequency);
+                return tmpFragment.getStructureWithText(tmpFrequencyString);
             }));
             tmpColumn.setMinWidth(300);
             this.fragmentStructureColumn.getColumns().add(tmpColumn);

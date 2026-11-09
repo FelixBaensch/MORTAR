@@ -195,26 +195,17 @@ public final class ChemUtil {
     }
 
     /**
-     * Generates the molecular formula of a given atom container. If the molecular formula could not be generated, null
-     * is returned.
+     * Generates the molecular formula of a given atom container.
      *
      * @param anAtomContainer AtomContainer to generate the molecular formula of
      * @return String containing the molecular formula of the given atom container
-     * @author Samuel Behr
+     * @author Samuel Behr, Jonas Schaub
      */
     public static String generateMolecularFormula(IAtomContainer anAtomContainer) {
-        IAtomContainer tmpAtomContainerClone;
-        String tmpMolecularFormulaString = null;
-        try {
-            tmpAtomContainerClone = anAtomContainer.clone();
-            AtomContainerManipulator.suppressHydrogens(tmpAtomContainerClone);
-            IMolecularFormula tmpMolecularFormula = MolecularFormulaManipulator.getMolecularFormula(tmpAtomContainerClone);
-            tmpMolecularFormulaString = MolecularFormulaManipulator.getString(tmpMolecularFormula);
-        } catch (CloneNotSupportedException anException) {
-            ChemUtil.LOGGER.log(Level.WARNING, String.format("%s molecule name: %s", anException.toString(),
-                    anAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY)), anException);
-        }
-        return tmpMolecularFormulaString;
+        /* the doc of MolecularFormulaManipulator.getMolecularFormula() says "The hydrogens must be implicit." but the
+           CDK tests indicate that both implicit and explicit hydrogens are working fine */
+        IMolecularFormula tmpMolecularFormula = MolecularFormulaManipulator.getMolecularFormula(anAtomContainer);
+        return MolecularFormulaManipulator.getString(tmpMolecularFormula);
     }
 
     /**

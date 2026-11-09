@@ -66,9 +66,15 @@ import java.util.logging.Logger;
 public class SettingsContainer {
     //<editor-fold desc="public static final constants" defaultstate="collapsed">
     /**
+     * Number of different settings wrapped by the container.
+     */
+    public static final int NUMBER_OF_SETTINGS = 8;
+
+    /**
      * Name of the settings container file that persists the global settings.
      */
     public static final String SETTINGS_CONTAINER_FILE_NAME = "MORTAR_Settings";
+
     /**
      * Maximum available threads on the given machine.
      */
@@ -88,6 +94,11 @@ public class SettingsContainer {
      * Default value of whether to add implicit hydrogen atoms to open valences in the imported molecules.
      */
     public static final boolean ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT = true;
+
+    /**
+     * Default value of whether to import aromatic structures as Kekule structures.
+     */
+    public static final boolean IMPORT_AROMATICS_AS_KEKULE_STRUCTURES_DEFAULT = false;
 
     /**
      * Default value of whether to keep the atom container in the molecule/fragment data model.
@@ -140,6 +151,9 @@ public class SettingsContainer {
 
     private SimpleBooleanProperty addImplicitHydrogensAtImportSetting;
 
+    private SimpleBooleanProperty importAromaticsAsKekuleStructuresSetting;
+
+    @Deprecated
     private SimpleBooleanProperty keepAtomContainerInDataModelSetting;
 
     private SimpleBooleanProperty alwaysMDLV3000FormatAtExportSetting;
@@ -148,6 +162,7 @@ public class SettingsContainer {
 
     private SimpleBooleanProperty regardStereochemistrySetting;
 
+    @Deprecated
     private SimpleBooleanProperty keepLastFragmentSetting;
 
     /**
@@ -304,6 +319,24 @@ public class SettingsContainer {
      */
     public SimpleBooleanProperty addImplicitHydrogensAtImportSettingProperty() {
         return this.addImplicitHydrogensAtImportSetting;
+    }
+
+    /**
+     * Returns the current value of the import aromatics as Kekule structures setting.
+     *
+     * @return import aromatics as Kekule structures setting value
+     */
+    public boolean getImportAromaticsAsKekuleStructuresSetting() {
+        return this.importAromaticsAsKekuleStructuresSetting.get();
+    }
+
+    /**
+     * Returns the property wrapping the import aromatics as Kekule structures setting.
+     *
+     * @return import aromatics as Kekule structures setting property
+     */
+    public SimpleBooleanProperty importAromaticsAsKekuleStructuresSettingProperty() {
+        return this.importAromaticsAsKekuleStructuresSetting;
     }
 
     /**
@@ -475,6 +508,16 @@ public class SettingsContainer {
     }
 
     /**
+     * Sets the setting for whether aromatics should be imported as Kekule structures.
+     *
+     * @param aBoolean whether to import aromatics as Kekule structures
+     */
+    public void setImportAromaticsAsKekuleStructuresSetting(boolean aBoolean) {
+        //synchronises the preference also
+        this.importAromaticsAsKekuleStructuresSetting.set(aBoolean);
+    }
+
+    /**
      * Sets the setting for whether to keep the atom container in the molecule/fragment data model.
      *
      * @param aBoolean whether to keep the atom container in the molecule/fragment data model
@@ -541,6 +584,7 @@ public class SettingsContainer {
         this.numberOfTasksForFragmentationSetting.set(this.nrOfTasksForFragmentationSettingDefault);
         this.recentDirectoryPathSetting.set(SettingsContainer.RECENT_DIRECTORY_PATH_SETTING_DEFAULT);
         this.addImplicitHydrogensAtImportSetting.set(SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT);
+        this.importAromaticsAsKekuleStructuresSetting.set(SettingsContainer.IMPORT_AROMATICS_AS_KEKULE_STRUCTURES_DEFAULT);
         //DEPRECATED
         //this.keepAtomContainerInDataModelSetting.set(SettingsContainer.KEEP_ATOM_CONTAINER_IN_DATA_MODEL_SETTING_DEFAULT);
         this.alwaysMDLV3000FormatAtExportSetting.set(SettingsContainer.ALWAYS_MDLV3000_FORMAT_AT_EXPORT_SETTING_DEFAULT);
@@ -572,7 +616,7 @@ public class SettingsContainer {
         String tmpPreferenceContainerFilePathName = tmpSettingsDirectoryPathName
                 + SettingsContainer.SETTINGS_CONTAINER_FILE_NAME
                 + BasicDefinitions.PREFERENCE_CONTAINER_FILE_EXTENSION;
-        List<Property<?>> tmpSettings = new ArrayList<>(6);
+        List<Property<?>> tmpSettings = new ArrayList<>(SettingsContainer.NUMBER_OF_SETTINGS);
         tmpSettings.addAll(this.settings);
         tmpSettings.add(this.recentDirectoryPathSetting);
         try {
@@ -618,7 +662,7 @@ public class SettingsContainer {
                     SettingsContainer.LOGGER.log(Level.SEVERE, String.format("Unable to reload global settings: %s", anException.toString()), anException);
                     return;
                 }
-                List<Property<?>> tmpSettings = new ArrayList<>(8);
+                List<Property<?>> tmpSettings = new ArrayList<>(SettingsContainer.NUMBER_OF_SETTINGS);
                 tmpSettings.addAll(this.settings);
                 tmpSettings.add(this.recentDirectoryPathSetting);
                 PreferenceUtil.updatePropertiesFromPreferences(tmpSettings, tmpDePersistedContainer);
@@ -633,7 +677,7 @@ public class SettingsContainer {
      * to the list of settings for display to the user.
      */
     private void initialiseSettings() {
-        int tmpNumberOfSettings = 6;
+        int tmpNumberOfSettings = 7;
         int tmpInitialCapacityForSettingNameMaps = CollectionUtil.calculateInitialHashCollectionCapacity(
                 tmpNumberOfSettings,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
@@ -707,6 +751,11 @@ public class SettingsContainer {
                 SettingsContainer.ADD_IMPLICIT_HYDROGENS_AT_IMPORT_SETTING_DEFAULT);
         this.settingNameTooltipTextMap.put(this.addImplicitHydrogensAtImportSetting.getName(), Message.get("SettingsContainer.addImplicitHydrogensAtImportSetting.tooltip"));
         this.settingNameDisplayNameMap.put(this.addImplicitHydrogensAtImportSetting.getName(), Message.get("SettingsContainer.addImplicitHydrogensAtImportSetting.displayName"));
+        this.importAromaticsAsKekuleStructuresSetting = new SimpleBooleanProperty(this,
+                "Import aromatics as Kekule structures setting",
+                SettingsContainer.IMPORT_AROMATICS_AS_KEKULE_STRUCTURES_DEFAULT);
+        this.settingNameTooltipTextMap.put(this.importAromaticsAsKekuleStructuresSetting.getName(), Message.get("SettingsContainer.importAromaticsAsKekuleStructuresSetting.tooltip"));
+        this.settingNameDisplayNameMap.put(this.importAromaticsAsKekuleStructuresSetting.getName(), Message.get("SettingsContainer.importAromaticsAsKekuleStructuresSetting.displayName"));
         //DEPRECATED
         /*this.keepAtomContainerInDataModelSetting = new SimpleBooleanProperty(this,
                 "Keep AtomContainers in the DataModels setting",
@@ -774,6 +823,7 @@ public class SettingsContainer {
         this.settings.add(this.rowsPerPageSetting);
         this.settings.add(this.numberOfTasksForFragmentationSetting);
         this.settings.add(this.addImplicitHydrogensAtImportSetting);
+        this.settings.add(this.importAromaticsAsKekuleStructuresSetting);
         //DEPRECATED
         //this.settings.add(this.keepAtomContainerInDataModelSetting);
         this.settings.add(this.alwaysMDLV3000FormatAtExportSetting);
@@ -794,7 +844,7 @@ public class SettingsContainer {
      * @throws UnsupportedOperationException if a setting does not fulfil the requirements
      */
     private void checkSettings() throws UnsupportedOperationException {
-        List<Property<?>> tmpSettings = new ArrayList<>(8);
+        List<Property<?>> tmpSettings = new ArrayList<>(SettingsContainer.NUMBER_OF_SETTINGS);
         tmpSettings.addAll(this.settings);
         tmpSettings.add(this.recentDirectoryPathSetting);
         PreferenceUtil.checkPropertiesForPreferenceRestrictions(tmpSettings);
