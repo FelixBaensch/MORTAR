@@ -290,6 +290,7 @@ fragmentation (Baensch et al. 2023)</a>).
 * Tom Weiss
 * Martin Urban
 * Sareen Mohammad
+* Manuel Schauer
 
 **Logo:**
 * Kohulan Rajan
@@ -309,8 +310,8 @@ fragmentation (Baensch et al. 2023)</a>).
 <br>Steinbeck Research Group
 <br>Institute for Inorganic and Analytical Chemistry
 <br>Friedrich-Schiller-University Jena
-<br>Lessingstraße 8
-<br>D-07743 Jena
+<br>Rosalind-Franklin-Strasse 5
+<br>D-07745 Jena
 
 **The MORTAR project team would like to thank the communities behind the open software libraries the application employs 
 for their amazing work.**
