@@ -37,6 +37,8 @@ import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuButton;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
@@ -63,6 +65,12 @@ public class OverviewView extends AnchorPane {
      * Width of columns and rows per page label of the overview view.
      */
     public static final double OVERVIEW_VIEW_GRID_CONFIGURATION_LABEL_PREF_WIDTH = 10.0;
+    /**
+     * Width of the third (right) column of the main grid pane holding the export, screenshot, and close buttons.
+     */
+    public static final double OVERVIEW_VIEW_BOTTOM_RIGHT_COLUMN_WIDTH =
+            GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH
+                    + GuiDefinitions.GUI_BUTTON_WIDTH_VALUE + GuiDefinitions.GUI_SPACING_VALUE;
     //</editor-fold>
     //
     //<editor-fold desc="private class variables" defaultstate="collapsed">
@@ -103,6 +111,18 @@ public class OverviewView extends AnchorPane {
      * Button to save a screenshot of the structure grid pane.
      */
     private final Button screenshotButton;
+    /**
+     * Menu button offering the export of the displayed structures as SD or CSV file.
+     */
+    private final MenuButton exportMenuButton;
+    /**
+     * Menu item to export the displayed structures as SD file.
+     */
+    private final MenuItem exportToSDFMenuItem;
+    /**
+     * Menu item to export the displayed structures as CSV file.
+     */
+    private final MenuItem exportToCSVMenuItem;
     /**
      * Button to close the view.
      */
@@ -175,9 +195,9 @@ public class OverviewView extends AnchorPane {
         this.mainGridPane.getColumnConstraints().add(tmpColCon2);
         ColumnConstraints tmpColCon3 = new ColumnConstraints();
         tmpColCon3.setHgrow(Priority.ALWAYS);
-        tmpColCon3.setMaxWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
-        tmpColCon3.setMinWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
-        tmpColCon3.setPrefWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
+        tmpColCon3.setMaxWidth(OverviewView.OVERVIEW_VIEW_BOTTOM_RIGHT_COLUMN_WIDTH);
+        tmpColCon3.setMinWidth(OverviewView.OVERVIEW_VIEW_BOTTOM_RIGHT_COLUMN_WIDTH);
+        tmpColCon3.setPrefWidth(OverviewView.OVERVIEW_VIEW_BOTTOM_RIGHT_COLUMN_WIDTH);
         tmpColCon3.setHalignment(HPos.RIGHT);
         this.mainGridPane.getColumnConstraints().add(tmpColCon3);
         //
@@ -273,7 +293,7 @@ public class OverviewView extends AnchorPane {
         this.bottomRightHBox.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE,
                 GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
         this.bottomRightHBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
-        this.bottomRightHBox.setMaxWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
+        this.bottomRightHBox.setMaxWidth(OverviewView.OVERVIEW_VIEW_BOTTOM_RIGHT_COLUMN_WIDTH);
         this.bottomRightHBox.setAlignment(Pos.CENTER_RIGHT);
         //
         this.closeButton = GuiUtil.getButtonOfStandardSize(Message.get("OverviewView.closeButton.text"));
@@ -282,7 +302,17 @@ public class OverviewView extends AnchorPane {
         this.screenshotButton = GuiUtil.getButtonOfStandardSize(Message.get("OverviewView.screenshotButton.text"));
         this.screenshotButton.setTooltip(GuiUtil.createTooltip(Message.get("OverviewView.screenshotButton.tooltip")));
         //
-        this.bottomRightHBox.getChildren().addAll(this.screenshotButton, this.closeButton);
+        this.exportToSDFMenuItem = new MenuItem(Message.get("OverviewView.exportButton.SDF.text"));
+        this.exportToCSVMenuItem = new MenuItem(Message.get("OverviewView.exportButton.CSV.text"));
+        this.exportMenuButton = new MenuButton(Message.get("OverviewView.exportButton.text"), null,
+                this.exportToSDFMenuItem, this.exportToCSVMenuItem);
+        this.exportMenuButton.setPrefWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.exportMenuButton.setMinWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.exportMenuButton.setMaxWidth(GuiDefinitions.GUI_BUTTON_WIDTH_VALUE);
+        this.exportMenuButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        this.exportMenuButton.setTooltip(GuiUtil.createTooltip(Message.get("OverviewView.exportButton.tooltip")));
+        //
+        this.bottomRightHBox.getChildren().addAll(this.exportMenuButton, this.screenshotButton, this.closeButton);
         //
         /*
         initialization of the imageDimensionsBelowLimitVBox that is meant to be shown when the dimensions of the
@@ -427,6 +457,33 @@ public class OverviewView extends AnchorPane {
      */
     public Button getScreenshotButton() {
         return this.screenshotButton;
+    }
+    //
+    /**
+     * Returns the overview view's export menu button offering the export of the displayed structures.
+     *
+     * @return MenuButton
+     */
+    public MenuButton getExportMenuButton() {
+        return this.exportMenuButton;
+    }
+    //
+    /**
+     * Returns the menu item for exporting the displayed structures as SD file.
+     *
+     * @return MenuItem
+     */
+    public MenuItem getExportToSDFMenuItem() {
+        return this.exportToSDFMenuItem;
+    }
+    //
+    /**
+     * Returns the menu item for exporting the displayed structures as CSV file.
+     *
+     * @return MenuItem
+     */
+    public MenuItem getExportToCSVMenuItem() {
+        return this.exportToCSVMenuItem;
     }
     //
     /**

@@ -1121,10 +1121,7 @@ public class HistogramViewController implements IViewToolController {
                     this.displayedHistogramFrequencies,
                     this.settingsContainer.getCsvExportSeparatorSettingCharacter(),
                     this.displayFrequencySetting.get().equals(HistogramViewController.FrequencyOption.ABSOLUTE_FREQUENCY));
-            //TODO: after #243 is merged, this can be a "guiExportFinishedAlert" which contains the file path as a cliackable link
-            GuiUtil.guiMessageAlert(Alert.AlertType.INFORMATION, Message.get("Exporter.Histogram.ExportSuccessful.title"),
-                    Message.get("Exporter.Histogram.ExportSuccessful.header"),
-                    Message.get("Exporter.Histogram.ExportSuccessful.content") + System.lineSeparator() + tmpExportFile.getAbsolutePath());
+            GuiUtil.guiExportFinishedAlert(tmpExportFile);
         } catch (FileNotFoundException | RuntimeException anException) {
             Logger.getLogger(HistogramViewController.class.getName()).log(Level.SEVERE, anException.toString(), anException);
             GuiUtil.guiMessageAlert(Alert.AlertType.ERROR, Message.get("Exporter.Histogram.ExportFailed.title"),

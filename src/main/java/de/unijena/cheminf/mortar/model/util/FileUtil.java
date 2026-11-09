@@ -28,12 +28,15 @@ package de.unijena.cheminf.mortar.model.util;
 import de.unijena.cheminf.mortar.configuration.Configuration;
 import de.unijena.cheminf.mortar.configuration.IConfiguration;
 
+import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -112,6 +115,13 @@ public final class FileUtil {
      */
     private static final Pattern ILLEGAL_FILE_NAME_CHARACTERS_PATTERN_LINUX =
             Pattern.compile("[/\\x00]");
+    //
+    /**
+     * Absolute paths of the xdg-open command on <b>Linux</b>, which opens a directory in the file explorer of the
+     * desktop environment (e.g. GNOME, KDE, Xfce). It is only used if the {@link Desktop} API is not available, and
+     * only from these fixed system directories instead of resolving it via the PATH variable.
+     */
+    private static final List<String> XDG_OPEN_PATHS = List.of("/usr/bin/xdg-open", "/bin/xdg-open");
     //</editor-fold>
     //
     //<editor-fold desc="Private constructor" defaultstate="collapsed">
@@ -435,35 +445,87 @@ public final class FileUtil {
                 .replaceAll(Matcher.quoteReplacement(aReplacement));
     }
     /**
-     * Opens given path in OS depending explorer equivalent.
+     * Opens the given path in the file explorer of the operating system, see {@link #openFilePathInExplorer(File)}.
      *
-     * @param aPath path to open
+     * @param aPath path of the file or directory to open
      * @throws IllegalArgumentException if the given path is empty, blank, or null
-     * @throws SecurityException if the directory could not be opened
+     * @throws SecurityException if the location could not be opened
      */
-    public static void openFilePathInExplorer(String aPath) throws SecurityException {
+    public static void openFilePathInExplorer(String aPath) throws IllegalArgumentException, SecurityException {
         if (Objects.isNull(aPath) || aPath.isBlank()) {
             throw new IllegalArgumentException("Given file path is null, empty, or blank.");
         }
-        OperatingSystem tmpOS = FileUtil.detectCurrentOperatingSystem();
-        try {
-            if (tmpOS.equals(OperatingSystem.WINDOWS)) {
-                Runtime.getRuntime().exec(new String[]{"explorer", "/open,", aPath});
-            } else if (tmpOS.equals(OperatingSystem.MAC_OS)) {
-                Runtime.getRuntime().exec(new String[]{"open", "-R", aPath});
-            } else if (tmpOS.equals(OperatingSystem.LINUX)) {
-                Runtime.getRuntime().exec(new String[]{"gio", "open", aPath});
-            } else {
-                throw new SecurityException("OS name " + tmpOS + " unknown.");
-            }
-        } catch (IOException anException) {
-            FileUtil.LOGGER.log(Level.SEVERE, anException.toString(), anException);
-            throw new SecurityException("Could not open directory path");
+        FileUtil.openFilePathInExplorer(new File(aPath));
+    }
+    //
+    /**
+     * Opens the location of the given file or directory in the file explorer of the operating system via
+     * {@link Desktop}, i.e. without starting an external command whose path would have to be resolved via the PATH
+     * variable. For a file, its directory is opened and the file is selected if the platform supports this (e.g.
+     * macOS); otherwise, only its directory is opened. A directory is opened itself. On Linux, the {@link Desktop} API
+     * needs the GTK libraries; if it is not available or fails, the directory is opened with xdg-open from a fixed
+     * system directory (see {@link #XDG_OPEN_PATHS}).
+     * <br>Note: The {@link Desktop} API may block the calling thread, so this method should not be called on the JavaFX
+     * application thread.
+     *
+     * @param aFileOrDirectory file or directory whose location should be opened
+     * @throws IllegalArgumentException if the given file is null
+     * @throws SecurityException if the location could not be opened, e.g. because the platform does not support it
+     */
+    public static void openFilePathInExplorer(File aFileOrDirectory) throws IllegalArgumentException, SecurityException {
+        if (Objects.isNull(aFileOrDirectory)) {
+            throw new IllegalArgumentException("Given file is null.");
         }
+        File tmpDirectory = aFileOrDirectory.isDirectory() ? aFileOrDirectory : aFileOrDirectory.getAbsoluteFile().getParentFile();
+        try {
+            if (Desktop.isDesktopSupported()) {
+                Desktop tmpDesktop = Desktop.getDesktop();
+                if (aFileOrDirectory.isFile() && tmpDesktop.isSupported(Desktop.Action.BROWSE_FILE_DIR)) {
+                    tmpDesktop.browseFileDirectory(aFileOrDirectory);
+                    return;
+                }
+                if (tmpDesktop.isSupported(Desktop.Action.OPEN)) {
+                    tmpDesktop.open(tmpDirectory);
+                    return;
+                }
+            }
+        } catch (IOException | UnsupportedOperationException | IllegalArgumentException anException) {
+            FileUtil.LOGGER.log(Level.WARNING, anException.toString(), anException);
+        }
+        if (FileUtil.detectCurrentOperatingSystem() == OperatingSystem.LINUX) {
+            String tmpXdgOpenPath = FileUtil.getXdgOpenPath();
+            if (tmpXdgOpenPath != null) {
+                try {
+                    new ProcessBuilder(tmpXdgOpenPath, tmpDirectory.getAbsolutePath())
+                            .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+                            .redirectError(ProcessBuilder.Redirect.DISCARD)
+                            .start();
+                    return;
+                } catch (IOException anException) {
+                    FileUtil.LOGGER.log(Level.WARNING, anException.toString(), anException);
+                }
+            }
+        }
+        throw new SecurityException("Could not open file location");
     }
     // </editor-fold>
     //
     //<editor-fold defaultstate="collapsed" desc="Private static methods">
+    /**
+     * Returns the absolute path of the first executable xdg-open command in the fixed system directories of
+     * {@link #XDG_OPEN_PATHS}.
+     *
+     * @return absolute path of xdg-open or null if it is not available
+     */
+    private static String getXdgOpenPath() {
+        for (String tmpPath : FileUtil.XDG_OPEN_PATHS) {
+            if (Files.isExecutable(Path.of(tmpPath))) {
+                return tmpPath;
+            }
+        }
+        return null;
+    }
+    //
     /**
      * Detects the current operating system and returns the matching {@link OperatingSystem} enum constant.
      *

@@ -43,6 +43,13 @@ import javafx.scene.control.SeparatorMenuItem;
  * @version 1.0.0.0
  */
 public class MainMenuBar extends MenuBar {
+    //<editor-fold desc="private static final class constants" defaultstate="collapsed">
+    /**
+     * Message key of the text of the CSV export menu items.
+     */
+    private static final String CSV_EXPORT_MENU_ITEM_TEXT_KEY = "MainView.menuBar.fileMenu.exportMenu.CSV.text";
+    //</editor-fold>
+    //
     //<editor-fold desc="private final class constants" defaultstate="collapsed">
     /**
      * FileMenu.
@@ -56,6 +63,18 @@ public class MainMenuBar extends MenuBar {
      * MenuItem for export.
      */
     private final Menu exportMenu;
+    /**
+     * Menu for molecules export.
+     */
+    private final Menu moleculesExportMenu;
+    /**
+     * MenuItem to export molecules as csv file.
+     */
+    private final MenuItem moleculesExportToCSVMenuItem;
+    /**
+     * MenuItem to export molecules as single sd file.
+     */
+    private final MenuItem moleculesExportToSDFMenuItem;
     /**
      * Menu for fragments export.
      */
@@ -169,10 +188,15 @@ public class MainMenuBar extends MenuBar {
         this.exportMenu = new Menu(Message.get("MainView.menuBar.fileMenu.exportMenu.text"));
         this.cancelExportMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.cancel"));
         //<editor-fold desc="exportMenu components" defaultstate="collapsed">
+        //moleculesExportMenu
+        this.moleculesExportMenu = new Menu(Message.get("MainView.menuBar.fileMenu.exportMenu.moleculesExportMenu.text"));
+        //components
+        this.moleculesExportToCSVMenuItem = new MenuItem(Message.get(MainMenuBar.CSV_EXPORT_MENU_ITEM_TEXT_KEY));
+        this.moleculesExportToSDFMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.SDF.text"));
         //fragmentsExportMenu
         this.fragmentsExportMenu = new Menu(Message.get("MainView.menuBar.fileMenu.exportMenu.fragmentsExportMenu.text"));
         //components
-        this.fragmentsExportToCSVMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.CSV.text"));
+        this.fragmentsExportToCSVMenuItem = new MenuItem(Message.get(MainMenuBar.CSV_EXPORT_MENU_ITEM_TEXT_KEY));
         this.fragmentsExportToPDBMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.PDB.text"));
         this.fragmentsExportToPDFMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.PDF.text"));
         this.fragmentsExportToSDFMenu = new Menu(Message.get("MainView.menuBar.fileMenu.exportMenu.SDF.text"));
@@ -181,7 +205,7 @@ public class MainMenuBar extends MenuBar {
         //itemsExportMenu
         this.itemsExportMenu = new Menu(Message.get("MainView.menuBar.fileMenu.exportMenu.itemsExportMenu.text"));
         //components
-        this.itemsExportToCSVMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.CSV.text"));
+        this.itemsExportToCSVMenuItem = new MenuItem(Message.get(MainMenuBar.CSV_EXPORT_MENU_ITEM_TEXT_KEY));
         this.itemsExportToPDFMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exportMenu.PDF.text"));
         //</editor-fold>
         this.exitMenuItem = new MenuItem(Message.get("MainView.menuBar.fileMenu.exitMenuItem.text"));
@@ -267,6 +291,11 @@ public class MainMenuBar extends MenuBar {
      * Adds the menu items to the export menu.
      */
     private void addComponentsToExportMenu() {
+        //<editor-fold desc="moleculesExportMenu" defaultstate="collapsed">
+        this.exportMenu.getItems().add(this.moleculesExportMenu);
+        this.moleculesExportMenu.getItems().add(this.moleculesExportToCSVMenuItem);
+        this.moleculesExportMenu.getItems().add(this.moleculesExportToSDFMenuItem);
+        //</editor-fold>
         //<editor-fold desc="fragmentsExportMenu" defaultstate="collapsed">
         this.exportMenu.getItems().add(this.fragmentsExportMenu);
         this.fragmentsExportMenu.getItems().add(this.fragmentsExportToCSVMenuItem);
@@ -304,6 +333,36 @@ public class MainMenuBar extends MenuBar {
      */
     public Menu getExportMenu() {
         return this.exportMenu;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getMoleculesExportMenu" defaultstate="collapsed">
+    /**
+     * Returns the menu that is supposed to open a list of molecules export options.
+     *
+     * @return the menu that should open a list of molecules export options
+     */
+    public Menu getMoleculesExportMenu() {
+        return this.moleculesExportMenu;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getMoleculesExportToCSVMenuItem" defaultstate="collapsed">
+    /**
+     * Returns the menu item that is supposed to export the imported molecules to a CSV file.
+     *
+     * @return the menu item that should export the imported molecules to a CSV file
+     */
+    public MenuItem getMoleculesExportToCSVMenuItem() {
+        return this.moleculesExportToCSVMenuItem;
+    }
+    //</editor-fold>
+    //<editor-fold desc="getMoleculesExportToSDFMenuItem" defaultstate="collapsed">
+    /**
+     * Returns the menu item that is supposed to export the imported molecules to a single SD file.
+     *
+     * @return the menu item that should export the imported molecules to a single SD file
+     */
+    public MenuItem getMoleculesExportToSDFMenuItem() {
+        return this.moleculesExportToSDFMenuItem;
     }
     //</editor-fold>
     //<editor-fold desc="getFragmentsExportMenu" defaultstate="collapsed">

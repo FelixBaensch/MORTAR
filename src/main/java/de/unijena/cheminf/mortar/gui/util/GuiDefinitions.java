@@ -133,6 +133,11 @@ public final class GuiDefinitions {
      */
     public static final double GUI_TOOLTIP_MAX_WIDTH = 500.0;
     /**
+     * Width of the custom content of alerts, e.g. of a wrapped hyperlink or text, so that long texts do not widen the
+     * alert.
+     */
+    public static final double GUI_ALERT_CONTENT_WIDTH_VALUE = 400.0;
+    /**
      * Show duration for tooltips.
      */
     public static final double GUI_TOOLTIP_SHOW_DURATION = 10.0;
