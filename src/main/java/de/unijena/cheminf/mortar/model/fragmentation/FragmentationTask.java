@@ -126,6 +126,11 @@ public class FragmentationTask implements Callable<FragmentationTaskResult> {
         int tmpFragmentFailedSmilesGenerationCounter = 0;
         int tmpUnexpectedExceptionsCounter = 0;
         for (MoleculeDataModel tmpMolecule : this.moleculesList) {
+            // checked at the start of every iteration, so that the various "continue" statements below cannot skip it
+            if (Thread.currentThread().isInterrupted()) {
+                FragmentationTask.LOGGER.log(Level.INFO, "Thread interrupted");
+                return null;
+            }
             try {
                 IAtomContainer tmpAtomContainer;
                 try {
@@ -163,8 +168,6 @@ public class FragmentationTask implements Callable<FragmentationTaskResult> {
                     tmpMolecule.getFragmentFrequencies().put(this.fragmentationName, new HashMap<>(0));
                     tmpMoleculeProducedNoFragmentsCounter++;
                     continue;
-                } else {
-                    tmpMoleculeProducedFragmentsCounter++;
                 }
                 // list of all fragments for this molecule
                 List<FragmentDataModel> tmpFragmentsOfMolList = new ArrayList<>(tmpFragmentsList.size());
@@ -200,6 +203,9 @@ public class FragmentationTask implements Callable<FragmentationTaskResult> {
                 }
                 tmpMolecule.getFragmentFrequencies().put(this.fragmentationName, tmpFragmentFrequenciesOfMoleculeMap);
                 tmpMolecule.getAllFragments().put(this.fragmentationName, tmpFragmentsOfMolList);
+                // counted only after the results have been stored, so that a molecule whose result processing throws
+                // is counted as an unexpected exception only and not additionally as having produced fragments
+                tmpMoleculeProducedFragmentsCounter++;
             } catch (Exception anException) {
                 tmpUnexpectedExceptionsCounter++;
                 FragmentationTask.LOGGER.log(Level.SEVERE, String.format("Exception while fragmenting molecule with name: %s", tmpMolecule.getName()), anException);
@@ -209,10 +215,6 @@ public class FragmentationTask implements Callable<FragmentationTaskResult> {
                 if (tmpMolecule.getFragmentFrequencies() != null && !tmpMolecule.getFragmentFrequencies().containsKey(this.fragmentationName)) {
                     tmpMolecule.getFragmentFrequencies().put(this.fragmentationName, new HashMap<>(0));
                 }
-            }
-            if (Thread.currentThread().isInterrupted()) {
-                FragmentationTask.LOGGER.log(Level.INFO, "Thread interrupted");
-                return null;
             }
         }
         return new FragmentationTaskResult(
