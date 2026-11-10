@@ -225,4 +225,24 @@ object DeployUtil {
         val parts = aCompleteVersion.split('.')
         return if (parts.size >= 3) parts.take(3).joinToString(".") else aCompleteVersion
     }
+
+    /**
+     * Prepares a jpackage input directory that contains nothing but the given fat jar.
+     *
+     * jpackage copies its whole input directory into the app image, so passing the project root would ship the
+     * sources, the .git directory, build outputs and previously built installers. The directory is emptied first so
+     * that jars of earlier runs do not end up in the package.
+     *
+     * @param aFatJar the fat jar to package
+     * @param aStagingDir the directory to (re)create as jpackage input
+     * @return the staging directory
+     */
+    fun stageJpackageInput(aFatJar: File, aStagingDir: File): File {
+        if (!aStagingDir.deleteRecursively()) {
+            throw RuntimeException("Could not empty the jpackage input directory ${aStagingDir.absolutePath}")
+        }
+        aStagingDir.mkdirs()
+        aFatJar.copyTo(File(aStagingDir, aFatJar.name))
+        return aStagingDir
+    }
 }

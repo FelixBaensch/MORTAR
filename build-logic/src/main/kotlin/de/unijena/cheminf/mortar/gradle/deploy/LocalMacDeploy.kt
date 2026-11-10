@@ -83,15 +83,17 @@ open class LocalMacDeploy @Inject constructor(
         val fatJar = File(project.layout.buildDirectory.asFile.get(), "libs${File.separator}$jarName")
         require(fatJar.exists()) { "Fat jar not found. Build it first: ${fatJar.absolutePath}" }
 
-        val mainJarRelative = "build${File.separator}libs${File.separator}$jarName"
+        val inputDir = DeployUtil.stageJpackageInput(
+            fatJar, File(project.layout.buildDirectory.asFile.get(), "jpackage${File.separator}input")
+        )
 
         // Build jpackage command mirroring deployment.yml
         val cmd = mutableListOf(
             "jpackage",
-            "-i", project.rootDir.absolutePath,
+            "-i", inputDir.absolutePath,
             "-n", appName,
             "--icon", iconFile.absolutePath,
-            "--main-jar", mainJarRelative,
+            "--main-jar", jarName,
             "-t", "dmg",
             "--app-version", appVersionShort,
             "--copyright", MortarBundle.message(PropertyNames.LOCAL_DEPLOY_COPYRIGHT),

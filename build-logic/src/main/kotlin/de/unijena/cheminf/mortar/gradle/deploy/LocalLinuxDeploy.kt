@@ -84,12 +84,16 @@ open class LocalLinuxDeploy @Inject constructor(
             else -> throw IllegalArgumentException("Unsupported package type: '$type'. Use 'deb' or 'rpm'.")
         }
 
+        val inputDir = DeployUtil.stageJpackageInput(
+            fatJar, File(project.layout.buildDirectory.asFile.get(), "jpackage${File.separator}input")
+        )
+
         val cmd = mutableListOf(
             "jpackage",
-            "-i", project.rootDir.absolutePath,
+            "-i", inputDir.absolutePath,
             "-n", appName,
             "--icon", iconFile.absolutePath,
-            "--main-jar", fatJar.absolutePath,
+            "--main-jar", jarName,
             "-t", pkgType,
             "--app-version", appVersionShort,
             "--copyright", MortarBundle.message(PropertyNames.LOCAL_DEPLOY_COPYRIGHT),
