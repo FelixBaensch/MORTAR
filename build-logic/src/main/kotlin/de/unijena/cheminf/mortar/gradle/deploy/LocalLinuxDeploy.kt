@@ -42,13 +42,14 @@ import javax.inject.Inject
  * Gradle task for local Linux deployment using jpackage.
  *
  * This task prepares and builds a DEB or RPM using the jpackage tool. It mirrors the
- * GitHub Actions configuration used in .github/workflows/deployment.yml.
+ * GitHub Actions configuration used in .github/workflows/deployment.yml. It packages the jars of
+ * the installed distribution (installDist), keeping only the Linux (x64) JavaFX jars.
  *
  * Pre-checks before invocation:
  * - current OS must be Linux
  * - jpackage must be available on PATH (provided by JDK 14+)
  * - icon Images/MORTAR-icon.icns must exist (matching the workflow)
- * - expected fat jar must exist
+ * - the installed distribution (build/install/MORTAR/lib) must exist
  *
  * @author Martin Urban
  */
@@ -75,9 +76,9 @@ open class LocalLinuxDeploy @Inject constructor(
         val iconFile = File(project.rootDir, MortarBundle.message(PropertyNames.ICON_PATH_LINUX))
         require(iconFile.exists()) { "Icon file not found: ${iconFile.absolutePath}" }
 
-        val jarName = "$appName-fat-$appVersion.jar"
-        val fatJar = File(project.layout.buildDirectory.asFile.get(), "libs${File.separator}$jarName")
-        require(fatJar.exists()) { "Fat jar not found. Build it first: ${fatJar.absolutePath}" }
+        // Application jar plus all dependency jars from installDist; only the Linux (x64) JavaFX jars are kept
+        val jarName = "$appName-$appVersion.jar"
+        val buildDir = project.layout.buildDirectory.asFile.get()
 
         val pkgType = when (type.lowercase()) {
             "deb", "rpm" -> type.lowercase()
@@ -85,8 +86,11 @@ open class LocalLinuxDeploy @Inject constructor(
         }
 
         val inputDir = DeployUtil.stageJpackageInput(
-            fatJar, File(project.layout.buildDirectory.asFile.get(), "jpackage${File.separator}input")
+            File(buildDir, "install${File.separator}$appName${File.separator}lib"),
+            File(buildDir, "jpackage${File.separator}input"),
+            "linux"
         )
+        require(File(inputDir, jarName).exists()) { "Application jar not found in ${inputDir.absolutePath}: $jarName" }
         // Write the package to the build directory instead of the project root
         val outputDir = File(project.layout.buildDirectory.asFile.get(), "jpackage${File.separator}out")
 

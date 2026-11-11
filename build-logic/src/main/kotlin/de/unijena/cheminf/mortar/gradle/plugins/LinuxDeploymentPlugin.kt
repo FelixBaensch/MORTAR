@@ -17,8 +17,8 @@ import org.gradle.api.Project
  * for better performance and compatibility with the configuration cache.
  *
  * Registered Tasks:
- * - `localLinuxDeb`: Creates a Debian package. Depends on the `fatJar` task.
- * - `localLinuxRpm`: Creates a Red Hat package. Depends on the `fatJar` task.
+ * - `localLinuxDeb`: Creates a Debian package. Depends on the `installDist` task.
+ * - `localLinuxRpm`: Creates a Red Hat package. Depends on the `installDist` task.
  *
  * Task Configuration:
  * - The `LocalLinuxDeploy` task type is used for the packaging process.
@@ -27,7 +27,7 @@ import org.gradle.api.Project
  * Preconditions for Task Execution:
  * - The operating system must be Linux.
  * - A valid installation of `jpackage` must be accessible on the system PATH (provided by JDK 14+).
- * - The required fat jar must be pre-built.
+ * - The installed distribution (installDist) must be pre-built.
  * - An application icon file in the expected format must be available.
  *
  * This plugin is part of a series of deployment plugins in the MORTAR framework, designed for various platforms including macOS and Windows.
@@ -41,8 +41,8 @@ class LinuxDeploymentPlugin : Plugin<Project> {
      * This method registers tasks for creating Linux deployment packages, specifically "localLinuxDeb"
      * and "localLinuxRpm". Each task uses the LocalLinuxDeploy task type to configure and execute
      * the packaging process with the desired options. These tasks disable caching due to their
-     * external and side-effectful nature, and they depend on the "fatJar" task to ensure the required
-     * artifact is built before packaging.
+     * external and side-effectful nature, and they depend on the "installDist" task to ensure the required
+     * jars are built before packaging.
      *
      * @param project the Gradle project to which the plugin is applied, used for setting up tasks and configurations
      */
@@ -54,15 +54,15 @@ class LinuxDeploymentPlugin : Plugin<Project> {
                 // Use receiver syntax; avoid implicit 'it' which is not available in Kotlin DSL configuration lambdas
                 type = "deb"
                 outputs.cacheIf { false }
-                // Require fatJar to be built before packaging
-                dependsOn(tasks.named("fatJar"))
+                // Require the installed distribution (application and dependency jars) before packaging
+                dependsOn(tasks.named("installDist"))
             }
             tasks.register("localLinuxRpm", LocalLinuxDeploy::class.java) {
                 // Use receiver syntax; avoid implicit 'it' which is not available in Kotlin DSL configuration lambdas
                 type = "rpm"
                 outputs.cacheIf { false }
-                // Require fatJar to be built before packaging
-                dependsOn(tasks.named("fatJar"))
+                // Require the installed distribution (application and dependency jars) before packaging
+                dependsOn(tasks.named("installDist"))
             }
         }
     }
