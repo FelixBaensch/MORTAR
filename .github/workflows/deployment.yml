@@ -86,7 +86,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.os == 'macos-15' && format('MORTAR-aarch64-{0}.dmg', env.APP_VERSION_SHORT) || format('MORTAR-{0}.dmg', env.APP_VERSION_SHORT) }}
-          path: ./*.dmg
+          path: build/jpackage/out/*.dmg
           retention-days: 30
           compression-level: 0 # no compression since it makes no difference
 
@@ -118,7 +118,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: MORTAR-${{ env.APP_VERSION_SHORT }}.deb
-          path: ./*.deb
+          path: build/jpackage/out/*.deb
           retention-days: 30
           compression-level: 0 # no compression since it makes no difference
       - name: Build RPM with Gradle
@@ -127,7 +127,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: MORTAR-${{ env.APP_VERSION_SHORT }}.rpm
-          path: ./*.rpm
+          path: build/jpackage/out/*.rpm
           retention-days: 30
           compression-level: 0 # no compression since it makes no difference
 

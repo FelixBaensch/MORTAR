@@ -86,11 +86,14 @@ open class LocalMacDeploy @Inject constructor(
         val inputDir = DeployUtil.stageJpackageInput(
             fatJar, File(project.layout.buildDirectory.asFile.get(), "jpackage${File.separator}input")
         )
+        // Write the DMG to the build directory instead of the project root
+        val outputDir = File(project.layout.buildDirectory.asFile.get(), "jpackage${File.separator}out")
 
         // Build jpackage command mirroring deployment.yml
         val cmd = mutableListOf(
             "jpackage",
             "-i", inputDir.absolutePath,
+            "--dest", outputDir.absolutePath,
             "-n", appName,
             "--icon", iconFile.absolutePath,
             "--main-jar", jarName,
@@ -115,7 +118,6 @@ open class LocalMacDeploy @Inject constructor(
             val defaultDmgName = "$appName-$appVersionShort.dmg"
             val desiredDmgName = "$appName-aarch64-$appVersionShort.dmg"
 
-            val outputDir = project.rootDir
             val defaultFile = File(outputDir, defaultDmgName)
             val desiredFile = File(outputDir, desiredDmgName)
 
