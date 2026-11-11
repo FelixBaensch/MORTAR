@@ -142,6 +142,71 @@ public class Importer {
     }
     //</editor-fold>
     //
+    //<editor-fold desc="Enum ImportPhase">
+    /**
+     * Enum of the consecutive phases of a molecule file import for which the progress is reported to an
+     * {@link ImportProgressListener}.
+     */
+    public enum ImportPhase {
+        /**
+         * Counting the entries of an SD file to know the total number of entries to read. The total is unknown in
+         * this phase and therefore reported as -1.
+         */
+        COUNTING("Status.importing.counting"),
+        /**
+         * Reading the entries of an SD file into atom containers.
+         */
+        READING("Status.importing.reading"),
+        /**
+         * Preprocessing the imported atom containers, see {@link Importer#preprocessMoleculeSet(IAtomContainerSet, boolean)}.
+         */
+        PREPROCESSING("Status.importing.preprocessing"),
+        /**
+         * Generating the unique SMILES codes of the MORTAR-internal data models.
+         */
+        SMILES_GENERATION("Status.importing.smilesGeneration"),
+        ;
+        /**
+         * Key of the status bar message describing this phase.
+         */
+        private final String messageKey;
+        /**
+         * Constructor.
+         *
+         * @param aMessageKey key of the status bar message describing this phase
+         */
+        private ImportPhase(String aMessageKey) {
+            this.messageKey = aMessageKey;
+        }
+        /**
+         * Returns the key of the status bar message describing this phase.
+         *
+         * @return message key
+         */
+        public String getMessageKey() {
+            return this.messageKey;
+        }
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="Interface ImportProgressListener">
+    /**
+     * Listener that is notified about the progress of a molecule file import.
+     */
+    @FunctionalInterface
+    public interface ImportProgressListener {
+        /**
+         * Called repeatedly during each import phase, but not necessarily for every single entry, and always at the
+         * end of each phase. Called in the importing thread.
+         *
+         * @param aPhase current import phase
+         * @param aProcessedCount number of entries processed in the current phase so far
+         * @param aTotalCount total number of entries to process in the current phase or -1 if unknown
+         */
+        void progressChanged(ImportPhase aPhase, int aProcessedCount, int aTotalCount);
+    }
+    //</editor-fold>
+    //
     //<editor-fold desc="public static final class constants">
     /**
      * Property key that is used to store the detected molecule names on the imported atom containers.
@@ -176,6 +241,10 @@ public class Importer {
      * Container of general MORTAR settings, providing the recent directory path and other import-related settings.
      */
     private final SettingsContainer settingsContainer;
+    /**
+     * Listener that is notified about the import progress, may be null.
+     */
+    private ImportProgressListener progressListener;
     //</editor-fold>
     //
     //<editor-fold desc="Constructor" defaultstate="collapsed">
@@ -282,7 +351,11 @@ public class Importer {
         }
         List<MoleculeDataModel> tmpReturnList = new ArrayList<>(anAtomContainerSet.getAtomContainerCount());
         int tmpExceptionCount = 0;
+        int tmpTotalCount = anAtomContainerSet.getAtomContainerCount();
+        int tmpProcessedCount = 0;
         for (IAtomContainer tmpAtomContainer : anAtomContainerSet.atomContainers()) {
+            this.reportProgress(Importer.ImportPhase.SMILES_GENERATION, tmpProcessedCount, tmpTotalCount, false);
+            tmpProcessedCount++;
             //returns null if no SMILES code could be created
             String tmpSmiles = ChemUtil.createUniqueSmiles(tmpAtomContainer, isRegardStereo, !isKekulizationEnforced);
             if (tmpSmiles == null || tmpSmiles.isBlank()) {
@@ -298,6 +371,7 @@ public class Importer {
             tmpMoleculeDataModel.setName(tmpAtomContainer.getProperty(Importer.MOLECULE_NAME_PROPERTY_KEY));
             tmpReturnList.add(tmpMoleculeDataModel);
         }
+        this.reportProgress(Importer.ImportPhase.SMILES_GENERATION, tmpProcessedCount, tmpTotalCount, true);
         int finalTmpExceptionCount = tmpExceptionCount;
         Importer.LOGGER.log(Level.INFO, () -> String.format("Successfully imported %d molecules from file: %s; " +
                 "%d molecules could not be parsed into the internal data model (SMILES code generation failed). " +
@@ -313,6 +387,15 @@ public class Importer {
      */
     public String getFileName(){
         return this.fileName;
+    }
+    //
+    /**
+     * Sets the listener that is notified about the progress of subsequent imports. Null removes the current listener.
+     *
+     * @param aProgressListener listener to notify or null
+     */
+    public void setProgressListener(ImportProgressListener aProgressListener) {
+        this.progressListener = aProgressListener;
     }
     //
     /**
@@ -419,10 +502,14 @@ public class Importer {
      */
     private IAtomContainerSet importSDFile(File aFile) throws IOException {
         IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
+        //the extra pass over the file is only worth it if someone is interested in the progress
+        int tmpTotalCount = Objects.isNull(this.progressListener) ? -1 : this.countSDFileEntries(aFile);
         /*the IteratingSDFReader is not set to skip erroneous input molecules in its constructor to be able to log them*/
         try (IteratingSDFReader tmpSDFReader = new IteratingSDFReader(new FileInputStream(aFile), SilentChemObjectBuilder.getInstance())) {
             int tmpCounter = 0;
             while (!Thread.currentThread().isInterrupted()) {
+                //a last entry without delimiter is not counted, so the total must not fall behind the counter
+                this.reportProgress(Importer.ImportPhase.READING, tmpCounter, Math.max(tmpTotalCount, tmpCounter), false);
                 //end of file or encountered erroneous entry
                 if (!tmpSDFReader.hasNext()) {
                     //skip if it is an erroneous entry
@@ -449,11 +536,57 @@ public class Importer {
                 tmpAtomContainerSet.addAtomContainer(tmpAtomContainer);
                 tmpCounter++;
             }
+            this.reportProgress(Importer.ImportPhase.READING, tmpCounter, Math.max(tmpTotalCount, tmpCounter), true);
             int tmpFailedImportsCount = tmpCounter - tmpAtomContainerSet.getAtomContainerCount();
             if (tmpFailedImportsCount > 0) {
                 Importer.LOGGER.log(Level.WARNING, "The import from SD file failed for a total of {0} structure(s).", tmpFailedImportsCount);
             }
             return tmpAtomContainerSet;
+        }
+    }
+    //
+    /**
+     * Counts the entries of the given SD file by counting the lines starting with the record delimiter "$$$$". This is
+     * much faster than parsing the entries. A last entry that is not closed by a delimiter is not counted. Stops early
+     * if the current thread is interrupted.
+     *
+     * @param aFile sdf
+     * @return number of record delimiters in the file
+     * @throws IOException if the file cannot be read
+     */
+    private int countSDFileEntries(File aFile) throws IOException {
+        int tmpCount = 0;
+        this.reportProgress(Importer.ImportPhase.COUNTING, tmpCount, -1, false);
+        try (BufferedReader tmpReader = new BufferedReader(new FileReader(aFile))) {
+            String tmpLine;
+            while ((tmpLine = tmpReader.readLine()) != null && !Thread.currentThread().isInterrupted()) {
+                if (tmpLine.startsWith("$$$$")) {
+                    tmpCount++;
+                    this.reportProgress(Importer.ImportPhase.COUNTING, tmpCount, -1, false);
+                }
+            }
+        }
+        this.reportProgress(Importer.ImportPhase.COUNTING, tmpCount, -1, true);
+        return tmpCount;
+    }
+    //
+    /**
+     * Notifies the progress listener, if one is set. To keep the overhead low for large files, the listener is only
+     * notified every time another thousandth of the total count has been processed (or another 1,000 entries if the
+     * total is unknown) or if the report is forced, e.g. at the end of a phase.
+     *
+     * @param aPhase current import phase
+     * @param aProcessedCount number of entries processed in the current phase so far
+     * @param aTotalCount total number of entries to process in the current phase or -1 if unknown
+     * @param isReportForced whether the listener should be notified regardless of the processed count
+     */
+    private void reportProgress(Importer.ImportPhase aPhase, int aProcessedCount, int aTotalCount, boolean isReportForced) {
+        if (Objects.isNull(this.progressListener)) {
+            return;
+        }
+        int tmpStep = aTotalCount > 0 ? Math.max(1, aTotalCount / 1000) : 1000;
+        if (isReportForced || aProcessedCount % tmpStep == 0) {
+            this.progressListener.progressChanged(aPhase, aProcessedCount, aTotalCount);
         }
     }
     //
@@ -582,7 +715,11 @@ public class Importer {
         }
         int tmpExceptionsCounter = 0;
         int tmpMoleculesWithRadicalsCounter = 0;
+        int tmpTotalCount = aMoleculeSet.getAtomContainerCount();
+        int tmpProcessedCount = 0;
         for (IAtomContainer tmpMolecule : aMoleculeSet.atomContainers()) {
+            this.reportProgress(Importer.ImportPhase.PREPROCESSING, tmpProcessedCount, tmpTotalCount, false);
+            tmpProcessedCount++;
             try {
                 // perceive atom types and configure atoms is always done as preprocessing
                 AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(tmpMolecule);
@@ -615,6 +752,7 @@ public class Importer {
                 // note: an exception here does not lead to the causing molecule being removed from the input set!
             }
         }
+        this.reportProgress(Importer.ImportPhase.PREPROCESSING, tmpProcessedCount, tmpTotalCount, true);
         if (!isFillOpenValencesWithImplH) {
             Importer.LOGGER.log(Level.INFO, "Imported and preprocessed molecule set. {0} exceptions occurred while processing.",
                     tmpExceptionsCounter);
