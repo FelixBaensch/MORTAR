@@ -48,6 +48,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Tests some functionalities of the {@link Importer} class.
@@ -113,13 +114,13 @@ public class ImporterTest extends Importer {
         Assertions.assertEquals("CCCCC(C)CCC", smiGen.create(tmpMolecule));
     }
     /**
-     * Test importing an SD file with three entries and testing whether the import progress is reported for every
-     * import phase and finally reaches the total number of entries in each phase. The total is unknown while counting.
+     * Test importing an SD file with three entries and testing whether the import progress is reported for counting
+     * the entries (total unknown) and for importing them, finally reaching the total number of entries.
      *
      * @throws Exception if anything goes wrong
      */
     @Test
-    public void testImportProgressReachesTotalInEachPhaseForSDFile() throws Exception {
+    public void testImportProgressReachesTotalForSDFile() throws Exception {
         URL tmpURL = this.getClass().getResource("ChEBI_three_entries.sdf");
         File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
         Importer tmpImporter = new Importer(new SettingsContainer());
@@ -127,35 +128,41 @@ public class ImporterTest extends Importer {
         tmpImporter.setProgressListener((aPhase, aProcessedCount, aTotalCount) ->
                 tmpLastProgressMap.put(aPhase, new int[]{aProcessedCount, aTotalCount}));
         tmpImporter.importMoleculeFile(tmpResourceFile, false, true, false);
+        Assertions.assertEquals(Set.of(Importer.ImportPhase.COUNTING, Importer.ImportPhase.IMPORTING), tmpLastProgressMap.keySet());
         Assertions.assertArrayEquals(new int[]{3, -1}, tmpLastProgressMap.get(Importer.ImportPhase.COUNTING));
-        Assertions.assertArrayEquals(new int[]{3, 3}, tmpLastProgressMap.get(Importer.ImportPhase.READING));
-        Assertions.assertArrayEquals(new int[]{3, 3}, tmpLastProgressMap.get(Importer.ImportPhase.PREPROCESSING));
-        Assertions.assertArrayEquals(new int[]{3, 3}, tmpLastProgressMap.get(Importer.ImportPhase.SMILES_GENERATION));
+        Assertions.assertArrayEquals(new int[]{3, 3}, tmpLastProgressMap.get(Importer.ImportPhase.IMPORTING));
     }
     /**
      * Test importing an SD file whose last entry is not closed by the record delimiter "$$$$" and testing whether the
-     * reported reading progress never exceeds the reported total, although counting the delimiters yields one entry less.
+     * reported import progress never exceeds the reported total, although counting the delimiters yields one entry less.
      *
      * @throws Exception if anything goes wrong
      */
     @Test
-    public void testReadingProgressStaysWithinTotalForSDFileWithoutFinalDelimiter() throws Exception {
-        URL tmpURL = this.getClass().getResource("ChEBI_three_entries_no_final_delimiter.sdf");
-        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
-        Importer tmpImporter = new Importer(new SettingsContainer());
-        List<int[]> tmpReadingProgressList = new ArrayList<>();
-        tmpImporter.setProgressListener((aPhase, aProcessedCount, aTotalCount) -> {
-            if (aPhase == Importer.ImportPhase.READING) {
-                tmpReadingProgressList.add(new int[]{aProcessedCount, aTotalCount});
-            }
-        });
-        tmpImporter.importMoleculeFile(tmpResourceFile, false, true, false);
-        Assertions.assertFalse(tmpReadingProgressList.isEmpty());
-        for (int[] tmpProgress : tmpReadingProgressList) {
+    public void testImportProgressStaysWithinTotalForSDFileWithoutFinalDelimiter() throws Exception {
+        List<int[]> tmpImportProgressList = this.collectImportProgress("ChEBI_three_entries_no_final_delimiter.sdf");
+        Assertions.assertFalse(tmpImportProgressList.isEmpty());
+        for (int[] tmpProgress : tmpImportProgressList) {
             Assertions.assertTrue(tmpProgress[0] <= tmpProgress[1],
                     String.format("Reported progress %d exceeds total %d", tmpProgress[0], tmpProgress[1]));
         }
-        Assertions.assertArrayEquals(new int[]{3, 3}, tmpReadingProgressList.getLast());
+        Assertions.assertArrayEquals(new int[]{3, 3}, tmpImportProgressList.getLast());
+    }
+    /**
+     * Test importing a SMILES file with a headline and five lines, two of them with invalid SMILES codes, and testing
+     * whether the import progress counts all five lines, never exceeds the total, and finally reaches it.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testImportProgressReachesTotalForSMILESFileWithInvalidLines() throws Exception {
+        List<int[]> tmpImportProgressList = this.collectImportProgress("SMILESTestFileThree.txt");
+        Assertions.assertFalse(tmpImportProgressList.isEmpty());
+        for (int[] tmpProgress : tmpImportProgressList) {
+            Assertions.assertTrue(tmpProgress[0] <= tmpProgress[1],
+                    String.format("Reported progress %d exceeds total %d", tmpProgress[0], tmpProgress[1]));
+        }
+        Assertions.assertArrayEquals(new int[]{5, 5}, tmpImportProgressList.getLast());
     }
     /**
      * Test importing an SD file with default settings and testing the names and unique SMILES codes of the resulting
@@ -236,6 +243,27 @@ public class ImporterTest extends Importer {
         URL tmpURL = this.getClass().getResource(aResourceName);
         File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
         return new Importer(new SettingsContainer()).importMoleculeFile(tmpResourceFile, true, true, false);
+    }
+    /**
+     * Imports the given test resource file and collects the processed and total counts of all progress reports of the
+     * import phase in the order of reporting.
+     *
+     * @param aResourceName name of the test resource file in the package of this class
+     * @return list of reported {processed count, total count} pairs of the import phase
+     * @throws Exception if anything goes wrong
+     */
+    private List<int[]> collectImportProgress(String aResourceName) throws Exception {
+        URL tmpURL = this.getClass().getResource(aResourceName);
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        Importer tmpImporter = new Importer(new SettingsContainer());
+        List<int[]> tmpImportProgressList = new ArrayList<>();
+        tmpImporter.setProgressListener((aPhase, aProcessedCount, aTotalCount) -> {
+            if (aPhase == Importer.ImportPhase.IMPORTING) {
+                tmpImportProgressList.add(new int[]{aProcessedCount, aTotalCount});
+            }
+        });
+        tmpImporter.importMoleculeFile(tmpResourceFile, false, true, false);
+        return tmpImportProgressList;
     }
     //</editor-fold>
 }
