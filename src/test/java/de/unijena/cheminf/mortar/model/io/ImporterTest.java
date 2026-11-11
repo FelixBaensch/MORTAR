@@ -42,7 +42,11 @@ import java.io.File;
 import java.io.FileReader;
 import java.net.URL;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Tests some functionalities of the {@link Importer} class.
@@ -106,6 +110,51 @@ public class ImporterTest extends Importer {
         this.preprocessMoleculeSet(tmpSet, true);
         SmilesGenerator smiGen = new SmilesGenerator(SmiFlavor.Canonical);
         Assertions.assertEquals("CCCCC(C)CCC", smiGen.create(tmpMolecule));
+    }
+    /**
+     * Test importing an SD file with three entries and testing whether the import progress is reported for every
+     * import phase and finally reaches the total number of entries in each phase. The total is unknown while counting.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testImportProgressReachesTotalInEachPhaseForSDFile() throws Exception {
+        URL tmpURL = this.getClass().getResource("ChEBI_three_entries.sdf");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        Importer tmpImporter = new Importer(new SettingsContainer());
+        Map<Importer.ImportPhase, int[]> tmpLastProgressMap = new EnumMap<>(Importer.ImportPhase.class);
+        tmpImporter.setProgressListener((aPhase, aProcessedCount, aTotalCount) ->
+                tmpLastProgressMap.put(aPhase, new int[]{aProcessedCount, aTotalCount}));
+        tmpImporter.importMoleculeFile(tmpResourceFile, false, true, false);
+        Assertions.assertArrayEquals(new int[]{3, -1}, tmpLastProgressMap.get(Importer.ImportPhase.COUNTING));
+        Assertions.assertArrayEquals(new int[]{3, 3}, tmpLastProgressMap.get(Importer.ImportPhase.READING));
+        Assertions.assertArrayEquals(new int[]{3, 3}, tmpLastProgressMap.get(Importer.ImportPhase.PREPROCESSING));
+        Assertions.assertArrayEquals(new int[]{3, 3}, tmpLastProgressMap.get(Importer.ImportPhase.SMILES_GENERATION));
+    }
+    /**
+     * Test importing an SD file whose last entry is not closed by the record delimiter "$$$$" and testing whether the
+     * reported reading progress never exceeds the reported total, although counting the delimiters yields one entry less.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testReadingProgressStaysWithinTotalForSDFileWithoutFinalDelimiter() throws Exception {
+        URL tmpURL = this.getClass().getResource("ChEBI_three_entries_no_final_delimiter.sdf");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        Importer tmpImporter = new Importer(new SettingsContainer());
+        List<int[]> tmpReadingProgressList = new ArrayList<>();
+        tmpImporter.setProgressListener((aPhase, aProcessedCount, aTotalCount) -> {
+            if (aPhase == Importer.ImportPhase.READING) {
+                tmpReadingProgressList.add(new int[]{aProcessedCount, aTotalCount});
+            }
+        });
+        tmpImporter.importMoleculeFile(tmpResourceFile, false, true, false);
+        Assertions.assertFalse(tmpReadingProgressList.isEmpty());
+        for (int[] tmpProgress : tmpReadingProgressList) {
+            Assertions.assertTrue(tmpProgress[0] <= tmpProgress[1],
+                    String.format("Reported progress %d exceeds total %d", tmpProgress[0], tmpProgress[1]));
+        }
+        Assertions.assertArrayEquals(new int[]{3, 3}, tmpReadingProgressList.getLast());
     }
     //</editor-fold>
 }
