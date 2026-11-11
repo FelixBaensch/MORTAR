@@ -25,6 +25,7 @@
 
 package de.unijena.cheminf.mortar.model.io;
 
+import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.settings.SettingsContainer;
 
 import org.junit.jupiter.api.Assertions;
@@ -155,6 +156,86 @@ public class ImporterTest extends Importer {
                     String.format("Reported progress %d exceeds total %d", tmpProgress[0], tmpProgress[1]));
         }
         Assertions.assertArrayEquals(new int[]{3, 3}, tmpReadingProgressList.getLast());
+    }
+    /**
+     * Test importing an SD file with default settings and testing the names and unique SMILES codes of the resulting
+     * data models, including a generic structure with pseudo atoms.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testImportedNamesAndSmilesOfSDFile() throws Exception {
+        List<MoleculeDataModel> tmpMolecules = this.importTestResource("ChEBI_three_entries.sdf");
+        Assertions.assertEquals(List.of("(-)-epicatechin", "(1S,4R)-fenchone", "1-alkyl-2-acylglycerol"),
+                tmpMolecules.stream().map(MoleculeDataModel::getName).toList());
+        Assertions.assertEquals(List.of(
+                "C1=CC(=C(C=C1[C@@H]2[C@@H](CC3=C(C=C(C=C3O2)O)O)O)O)O",
+                "CC1(C)[C@@H]2CC[C@@](C)(C2)C1=O",
+                "*OCC(OC(*)=O)CO"),
+                tmpMolecules.stream().map(MoleculeDataModel::getUniqueSmiles).toList());
+    }
+    /**
+     * Test importing a SMILES file with a headline, empty lines, and no name column with default settings and testing
+     * the names (file name plus line index) and unique SMILES codes of the resulting data models.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testImportedNamesAndSmilesOfSMILESFileWithEmptyLines() throws Exception {
+        List<MoleculeDataModel> tmpMolecules = this.importTestResource("SMILESTestFileOne.txt");
+        Assertions.assertEquals(List.of("SMILESTestFileOne1", "SMILESTestFileOne3", "SMILESTestFileOne5"),
+                tmpMolecules.stream().map(MoleculeDataModel::getName).toList());
+        Assertions.assertEquals(List.of(
+                "O=C1OC2=CC(=CC(OC3OC(CO)C(O)C(O)C3O)=C2C4=C1CCC4)C",
+                "O=C1C=C(OC=2C1=C(O)C=C(O)C2C(C=3C=CC=CC3)CC(=O)OC)C=4C=CC=CC4",
+                "O=C(NC1OCOC2C1OC(CC(OC)CO)C(C)(C)C2OC)C(O)C3(OC)OC(C)C(C(=C)C3)C"),
+                tmpMolecules.stream().map(MoleculeDataModel::getUniqueSmiles).toList());
+    }
+    /**
+     * Test importing a SMILES file with a headline, a name column, and invalid SMILES codes with default settings and
+     * testing that only the valid lines result in data models with the given names.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testImportedNamesAndSmilesOfSMILESFileWithInvalidLines() throws Exception {
+        List<MoleculeDataModel> tmpMolecules = this.importTestResource("SMILESTestFileThree.txt");
+        Assertions.assertEquals(List.of("tert-Butanol", "Istanbulin A", "Valdiazen"),
+                tmpMolecules.stream().map(MoleculeDataModel::getName).toList());
+        Assertions.assertEquals(List.of(
+                "OC(C)(C)C",
+                "O=C1OC2(O)C(=C1C)CC3(C)C(C(=O)CCC3C)C2",
+                "[O-][N+](=NO)C(CO)C(C)C"),
+                tmpMolecules.stream().map(MoleculeDataModel::getUniqueSmiles).toList());
+    }
+    /**
+     * Test importing a MOL file with default settings and testing the name and unique SMILES code of the resulting
+     * data model.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testImportedNameAndSmilesOfMOLFile() throws Exception {
+        List<MoleculeDataModel> tmpMolecules = this.importTestResource("Mirabilin_B.mol");
+        Assertions.assertEquals(1, tmpMolecules.size());
+        Assertions.assertEquals("Mirabilin B", tmpMolecules.getFirst().getName());
+        Assertions.assertEquals("N=C1N=C2C3=C(N1)CCC3CC(C)C2CCCC", tmpMolecules.getFirst().getUniqueSmiles());
+    }
+    //</editor-fold>
+    //
+    // <editor-fold desc="private methods">
+    /**
+     * Imports the given test resource file with the default import settings, i.e. regarding stereochemistry, filling
+     * open valences with implicit hydrogen atoms, and not enforcing kekulization.
+     *
+     * @param aResourceName name of the test resource file in the package of this class
+     * @return the imported molecule data models
+     * @throws Exception if anything goes wrong
+     */
+    private List<MoleculeDataModel> importTestResource(String aResourceName) throws Exception {
+        URL tmpURL = this.getClass().getResource(aResourceName);
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        return new Importer(new SettingsContainer()).importMoleculeFile(tmpResourceFile, true, true, false);
     }
     //</editor-fold>
 }
