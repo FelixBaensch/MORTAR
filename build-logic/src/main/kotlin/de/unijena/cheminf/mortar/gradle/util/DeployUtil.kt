@@ -241,7 +241,9 @@ object DeployUtil {
         if (!aStagingDir.deleteRecursively()) {
             throw RuntimeException("Could not empty the jpackage input directory ${aStagingDir.absolutePath}")
         }
-        aStagingDir.mkdirs()
+        if (!aStagingDir.mkdirs()) {
+            throw RuntimeException("Could not create the jpackage input directory ${aStagingDir.absolutePath}")
+        }
         aFatJar.copyTo(File(aStagingDir, aFatJar.name))
         return aStagingDir
     }
