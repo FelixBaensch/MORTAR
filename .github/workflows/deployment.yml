@@ -114,18 +114,31 @@ jobs:
         run: chmod +x gradlew
       - name: Build DEB with Gradle
         run: ./gradlew --info --stacktrace localLinuxDeb
-      # Starts the packaged app on a virtual display: it must still run after 30 s, and must not print an uncaught
-      # exception. This catches packages that build fine but cannot start (e.g., a broken class path).
+      # Starts the packaged app on a virtual display: it must still run after 30 s, and must neither print an uncaught
+      # exception nor log a SEVERE error. This catches packages that build fine but cannot start (e.g., a broken class
+      # path) as well as errors during startup that MORTAR catches itself: MainApp.start() logs those as SEVERE and
+      # shows them in a modal dialog that blocks until the timeout, so the app looks like it is still running.
       - name: Smoke-test the DEB
         run: |
           sudo apt-get update -q && sudo apt-get install -y -q xvfb
           dpkg-deb -x build/jpackage/out/*.deb "$RUNNER_TEMP/deb"
+          # MORTAR logs to the console only until its logging is set up, then only to files in this folder
+          # (user home + mortar.vendor.name/mortar.dataDirectory.name/mortar.logDirectory.name). It is emptied first
+          # so that only the log of this run is checked.
+          tmpLogDir="$HOME/MORTAR/MORTAR_Data/Logs"
+          rm -rf "$tmpLogDir"
           set +e
           timeout --kill-after=10 30 xvfb-run -a "$RUNNER_TEMP/deb/opt/mortar/bin/MORTAR" 2>&1 | tee "$RUNNER_TEMP/smoke.log"
           tmpExit=${PIPESTATUS[0]}
           set -e
           if [ "$tmpExit" -ne 124 ]; then echo "::error::MORTAR exited with code $tmpExit within 30 s"; exit 1; fi
-          if grep -q "Exception in thread" "$RUNNER_TEMP/smoke.log"; then echo "::error::MORTAR printed an uncaught exception"; exit 1; fi
+          if grep -qE "Exception in thread|^SEVERE:" "$RUNNER_TEMP/smoke.log"; then echo "::error::MORTAR printed an uncaught exception or a SEVERE error"; exit 1; fi
+          if ! ls "$tmpLogDir"/MORTAR_Log_*.txt > /dev/null 2>&1; then echo "::error::MORTAR wrote no log file to $tmpLogDir"; exit 1; fi
+          if grep -q "^SEVERE:" "$tmpLogDir"/MORTAR_Log_*.txt; then
+            cat "$tmpLogDir"/MORTAR_Log_*.txt
+            echo "::error::MORTAR logged a SEVERE error during startup (see the log above)"
+            exit 1
+          fi
       - name: Upload DEB as an artifact
         uses: actions/upload-artifact@v7
         with:
