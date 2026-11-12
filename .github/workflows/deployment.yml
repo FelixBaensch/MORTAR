@@ -82,6 +82,14 @@ jobs:
       - name: Package DMG (Intel)
         if: matrix.os == 'macos-15-intel'
         run: ./gradlew --info --stacktrace localMacDmgIntel
+      # Uploaded before the smoke test, so that a DMG that fails it is still available for debugging
+      - name: Upload DMG as an artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.os == 'macos-15' && format('MORTAR-aarch64-{0}.dmg', env.APP_VERSION_SHORT) || format('MORTAR-{0}.dmg', env.APP_VERSION_SHORT) }}
+          path: build/jpackage/out/*.dmg
+          retention-days: 30
+          compression-level: 0 # no compression since it makes no difference
       # Starts the app from the DMG: it must still run after 30 s, and must neither print an uncaught exception nor log
       # a SEVERE error (same checks as for the DEB, see the build-linux job). Each runner tests the DMG of its own
       # architecture, so this also covers the JavaFX jars of that architecture. macOS runners have a GUI session, so
@@ -120,13 +128,6 @@ jobs:
             echo "::error::MORTAR logged a SEVERE error during startup (see the log above)"
             exit 1
           fi
-      - name: Upload DMG as an artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: ${{ matrix.os == 'macos-15' && format('MORTAR-aarch64-{0}.dmg', env.APP_VERSION_SHORT) || format('MORTAR-{0}.dmg', env.APP_VERSION_SHORT) }}
-          path: build/jpackage/out/*.dmg
-          retention-days: 30
-          compression-level: 0 # no compression since it makes no difference
 
   build-linux:
     runs-on: ubuntu-latest
@@ -152,10 +153,28 @@ jobs:
         run: chmod +x gradlew
       - name: Build DEB with Gradle
         run: ./gradlew --info --stacktrace localLinuxDeb
+      - name: Upload DEB as an artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: MORTAR-${{ env.APP_VERSION_SHORT }}.deb
+          path: build/jpackage/out/*.deb
+          retention-days: 30
+          compression-level: 0 # no compression since it makes no difference
+      - name: Build RPM with Gradle
+        run: ./gradlew --info --stacktrace localLinuxRpm
+      - name: Upload RPM as an artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: MORTAR-${{ env.APP_VERSION_SHORT }}.rpm
+          path: build/jpackage/out/*.rpm
+          retention-days: 30
+          compression-level: 0 # no compression since it makes no difference
       # Starts the packaged app on a virtual display: it must still run after 30 s, and must neither print an uncaught
       # exception nor log a SEVERE error. This catches packages that build fine but cannot start (e.g., a broken class
       # path) as well as errors during startup that MORTAR catches itself: MainApp.start() logs those as SEVERE and
       # shows them in a modal dialog that blocks until the timeout, so the app looks like it is still running.
+      # It runs after building and uploading both packages, so that a failing smoke test neither prevents the RPM
+      # build nor withholds the DEB needed to debug it.
       - name: Smoke-test the DEB
         run: |
           sudo apt-get update -q && sudo apt-get install -y -q xvfb
@@ -177,22 +196,6 @@ jobs:
             echo "::error::MORTAR logged a SEVERE error during startup (see the log above)"
             exit 1
           fi
-      - name: Upload DEB as an artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: MORTAR-${{ env.APP_VERSION_SHORT }}.deb
-          path: build/jpackage/out/*.deb
-          retention-days: 30
-          compression-level: 0 # no compression since it makes no difference
-      - name: Build RPM with Gradle
-        run: ./gradlew --info --stacktrace localLinuxRpm
-      - name: Upload RPM as an artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: MORTAR-${{ env.APP_VERSION_SHORT }}.rpm
-          path: build/jpackage/out/*.rpm
-          retention-days: 30
-          compression-level: 0 # no compression since it makes no difference
 
   build-fat-jars:
     runs-on: ubuntu-latest
