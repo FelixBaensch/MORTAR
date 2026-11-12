@@ -87,13 +87,14 @@ public class AboutViewControllerTest {
     }
     //
     /**
-     * Returns null if the tutorial is in neither location.
+     * Returns null if the tutorial is in neither location. The jar directory is nested in the temporary directory so
+     * that the lookup in its parent stays inside the temporary directory too.
      *
-     * @param aTempDir temporary directory standing in for the jar directory
+     * @param aTempDir temporary directory standing in for the install folder
      */
     @Test
     public void findTutorialFileMissingTest(@TempDir Path aTempDir) {
-        Assertions.assertNull(AboutViewController.findTutorialFile(aTempDir, AboutViewControllerTest.tutorialRelativePath));
+        Assertions.assertNull(AboutViewController.findTutorialFile(aTempDir.resolve("app"), AboutViewControllerTest.tutorialRelativePath));
     }
     //
     /**

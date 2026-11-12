@@ -103,6 +103,10 @@ public class AboutViewController {
      * Logger of this class.
      */
     private static final Logger LOGGER = Logger.getLogger(AboutViewController.class.getName());
+    /**
+     * Absolute paths at which gio is looked for on Linux, in this order. Absolute paths avoid a PATH lookup.
+     */
+    private static final String[] GIO_EXECUTABLE_PATHS = {"/usr/bin/gio", "/bin/gio"};
     //</editor-fold>
     //
     /**
@@ -176,7 +180,8 @@ public class AboutViewController {
     /**
      * Opens the local MORTAR tutorial PDF in the system default PDF viewer. If the file cannot be found or opened, an
      * alert with a link to the online version is shown. On Linux, the file is opened via "gio open" (as in
-     * {@link FileUtil#openFilePathInExplorer(String)}) because the AWT Desktop API is unreliable there.
+     * {@link FileUtil#openFilePathInExplorer(String)}) because the AWT Desktop API is unreliable there; gio is called
+     * by its absolute path so that no PATH lookup is needed. If gio is not found, the Desktop API is used.
      */
     private void openTutorialInDefaultPdfViewer() {
         //Note: Does not work when started from IDE, only in built version started from JAR
@@ -186,8 +191,9 @@ public class AboutViewController {
             if (tmpTutorialFile == null) {
                 throw new FileNotFoundException("Local tutorial PDF not found next to the application jar.");
             }
-            if (System.getProperty("os.name").toUpperCase(Locale.ENGLISH).contains("LINUX")) {
-                new ProcessBuilder("gio", "open", tmpTutorialFile.getAbsolutePath()).start();
+            File tmpGio = AboutViewController.findGioExecutable();
+            if (tmpGio != null) {
+                new ProcessBuilder(tmpGio.getAbsolutePath(), "open", tmpTutorialFile.getAbsolutePath()).start();
             } else {
                 Desktop.getDesktop().open(tmpTutorialFile);
             }
@@ -206,6 +212,24 @@ public class AboutViewController {
             GuiUtil.guiMessageAlertWithHyperlink(Alert.AlertType.ERROR, Message.get("AboutView.tutorialButton.alert.title"),
                     Message.get("AboutView.tutorialButton.alert.header"), tmpLinkToTutorial );
         }
+    }
+    //
+    /**
+     * Returns the gio executable at one of {@link #GIO_EXECUTABLE_PATHS} if running on Linux, otherwise null.
+     *
+     * @return gio executable or null
+     */
+    private static File findGioExecutable() {
+        if (!System.getProperty("os.name").toUpperCase(Locale.ENGLISH).contains("LINUX")) {
+            return null;
+        }
+        for (String tmpPath : AboutViewController.GIO_EXECUTABLE_PATHS) {
+            File tmpGio = new File(tmpPath);
+            if (tmpGio.canExecute()) {
+                return tmpGio;
+            }
+        }
+        return null;
     }
     //
     /**
