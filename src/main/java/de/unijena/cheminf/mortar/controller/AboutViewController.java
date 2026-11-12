@@ -61,6 +61,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -170,15 +171,21 @@ public class AboutViewController {
     }
     //
     /**
-     * Opens the MORTAR tutorial in system default browser.
+     * Opens the local MORTAR tutorial PDF in the system default PDF viewer. If the file cannot be found or opened, an
+     * alert with a link to the online version is shown.
      *
      * @throws SecurityException if URL could not be opened
      */
     private void openTutorialInDefaultPdfViewer() {
         //Note: Does not work when started from IDE, only in built version started from JAR
         try {
-            Desktop.getDesktop().open(new File(this.configuration.getProperty("mortar.tutorial.relativeFilePath")));
-        } catch (IOException | IllegalArgumentException anException) {
+            File tmpTutorialFile = AboutViewController.findTutorialFile(AboutViewController.getCodeSourceDirectory(),
+                    this.configuration.getProperty("mortar.tutorial.relativeFilePath"));
+            if (tmpTutorialFile == null) {
+                throw new FileNotFoundException("Local tutorial PDF not found next to the application jar.");
+            }
+            Desktop.getDesktop().open(tmpTutorialFile);
+        } catch (IOException | IllegalArgumentException | UnsupportedOperationException anException) {
             AboutViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             Hyperlink tmpLinkToTutorial = new Hyperlink(Message.get("AboutView.tutorialButton.alert.hyperlink.text"));
             tmpLinkToTutorial.setTooltip(GuiUtil.createTooltip(this.configuration.getProperty("mortar.tutorial.url")));
@@ -194,6 +201,23 @@ public class AboutViewController {
                     Message.get("AboutView.tutorialButton.alert.header"), tmpLinkToTutorial );
         }
     }
+    //
+    /**
+     * Returns the directory holding the jar (or class folder) this class was loaded from, or null if it cannot be
+     * determined.
+     *
+     * @return directory of the running code or null
+     */
+    private static Path getCodeSourceDirectory() {
+        try {
+            Path tmpCodeSource = Path.of(AboutViewController.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+            return tmpCodeSource.getParent();
+        } catch (URISyntaxException | SecurityException | NullPointerException | IllegalArgumentException anException) {
+            AboutViewController.LOGGER.log(Level.WARNING, anException.toString(), anException);
+            return null;
+        }
+    }
+    //
     //
     /**
      * Reads xml file (tools_description.xml in resources) which contains information about the used external tools.
@@ -242,5 +266,29 @@ public class AboutViewController {
             this.toolObservableList.add(tmpTool);
         }
     }
+    //</editor-fold>
+    //
+    //<editor-fold desc="package-private static methods" defaultstate="collapsed">
+    /**
+     * Looks for the tutorial PDF relative to the directory holding the application jar. The jpackage installers
+     * (macOS, Linux) place the tutorial folder next to the jar, the Windows installer and the Gradle distribution
+     * place it next to the lib folder holding the jars, so both the jar directory and its parent are checked.
+     *
+     * @param aJarDirectory directory holding the application jar, may be null
+     * @param aRelativeFilePath path of the tutorial PDF relative to the install folder
+     * @return the existing tutorial file or null if it is in neither location
+     */
+    static File findTutorialFile(Path aJarDirectory, String aRelativeFilePath) {
+        Path tmpDirectory = aJarDirectory;
+        for (int i = 0; i < 2 && tmpDirectory != null; i++) {
+            File tmpCandidate = tmpDirectory.resolve(aRelativeFilePath).toFile();
+            if (tmpCandidate.isFile()) {
+                return tmpCandidate;
+            }
+            tmpDirectory = tmpDirectory.getParent();
+        }
+        return null;
+    }
+    //
     //</editor-fold>
 }

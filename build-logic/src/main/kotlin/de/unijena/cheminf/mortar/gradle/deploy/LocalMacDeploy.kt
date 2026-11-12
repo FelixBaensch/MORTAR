@@ -84,7 +84,9 @@ open class LocalMacDeploy @Inject constructor(
         require(fatJar.exists()) { "Fat jar not found. Build it first: ${fatJar.absolutePath}" }
 
         val inputDir = DeployUtil.stageJpackageInput(
-            fatJar, File(project.layout.buildDirectory.asFile.get(), "jpackage${File.separator}input")
+            fatJar,
+            File(project.layout.buildDirectory.asFile.get(), "jpackage${File.separator}input"),
+            File(project.rootDir, "Tutorial")
         )
 
         // Build jpackage command mirroring deployment.yml

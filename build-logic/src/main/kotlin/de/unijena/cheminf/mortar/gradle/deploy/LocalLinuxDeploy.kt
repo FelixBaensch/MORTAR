@@ -85,7 +85,9 @@ open class LocalLinuxDeploy @Inject constructor(
         }
 
         val inputDir = DeployUtil.stageJpackageInput(
-            fatJar, File(project.layout.buildDirectory.asFile.get(), "jpackage${File.separator}input")
+            fatJar,
+            File(project.layout.buildDirectory.asFile.get(), "jpackage${File.separator}input"),
+            File(project.rootDir, "Tutorial")
         )
 
         val cmd = mutableListOf(
