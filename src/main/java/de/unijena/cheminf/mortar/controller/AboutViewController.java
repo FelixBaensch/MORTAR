@@ -61,7 +61,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Path;
+import java.security.CodeSource;
+import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -172,9 +175,8 @@ public class AboutViewController {
     //
     /**
      * Opens the local MORTAR tutorial PDF in the system default PDF viewer. If the file cannot be found or opened, an
-     * alert with a link to the online version is shown.
-     *
-     * @throws SecurityException if URL could not be opened
+     * alert with a link to the online version is shown. On Linux, the file is opened via "gio open" (as in
+     * {@link FileUtil#openFilePathInExplorer(String)}) because the AWT Desktop API is unreliable there.
      */
     private void openTutorialInDefaultPdfViewer() {
         //Note: Does not work when started from IDE, only in built version started from JAR
@@ -184,7 +186,11 @@ public class AboutViewController {
             if (tmpTutorialFile == null) {
                 throw new FileNotFoundException("Local tutorial PDF not found next to the application jar.");
             }
-            Desktop.getDesktop().open(tmpTutorialFile);
+            if (System.getProperty("os.name").toUpperCase(Locale.ENGLISH).contains("LINUX")) {
+                new ProcessBuilder("gio", "open", tmpTutorialFile.getAbsolutePath()).start();
+            } else {
+                Desktop.getDesktop().open(tmpTutorialFile);
+            }
         } catch (IOException | IllegalArgumentException | UnsupportedOperationException anException) {
             AboutViewController.LOGGER.log(Level.SEVERE, anException.toString(), anException);
             Hyperlink tmpLinkToTutorial = new Hyperlink(Message.get("AboutView.tutorialButton.alert.hyperlink.text"));
@@ -210,14 +216,16 @@ public class AboutViewController {
      */
     private static Path getCodeSourceDirectory() {
         try {
-            Path tmpCodeSource = Path.of(AboutViewController.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-            return tmpCodeSource.getParent();
-        } catch (URISyntaxException | SecurityException | NullPointerException | IllegalArgumentException anException) {
+            CodeSource tmpCodeSource = AboutViewController.class.getProtectionDomain().getCodeSource();
+            if (tmpCodeSource == null) {
+                return null;
+            }
+            return Path.of(tmpCodeSource.getLocation().toURI()).getParent();
+        } catch (URISyntaxException | SecurityException | IllegalArgumentException | FileSystemNotFoundException anException) {
             AboutViewController.LOGGER.log(Level.WARNING, anException.toString(), anException);
             return null;
         }
     }
-    //
     //
     /**
      * Reads xml file (tools_description.xml in resources) which contains information about the used external tools.

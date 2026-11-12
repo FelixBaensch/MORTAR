@@ -25,7 +25,10 @@
 
 package de.unijena.cheminf.mortar.controller;
 
+import de.unijena.cheminf.mortar.configuration.Configuration;
+
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -41,7 +44,18 @@ public class AboutViewControllerTest {
     /**
      * Relative path of the tutorial as given in the configuration.
      */
-    private static final String TUTORIAL_RELATIVE_PATH = "tutorial/MORTAR_Tutorial.pdf";
+    private static String tutorialRelativePath;
+    //
+    /**
+     * Reads the tutorial path from the app configuration, so the tests fail if the configured value does not match
+     * the packaged layout.
+     *
+     * @throws IOException if the configuration cannot be read
+     */
+    @BeforeAll
+    public static void readTutorialPathFromConfiguration() throws IOException {
+        AboutViewControllerTest.tutorialRelativePath = Configuration.getInstance().getProperty("mortar.tutorial.relativeFilePath");
+    }
     //
     /**
      * jpackage layout (macOS and Linux installers): the tutorial folder sits next to the jar.
@@ -53,7 +67,7 @@ public class AboutViewControllerTest {
     public void findTutorialFileNextToJarTest(@TempDir Path aTempDir) throws IOException {
         Path tmpJarDir = aTempDir.resolve("app");
         Path tmpTutorial = AboutViewControllerTest.createTutorial(tmpJarDir);
-        File tmpResult = AboutViewController.findTutorialFile(tmpJarDir, AboutViewControllerTest.TUTORIAL_RELATIVE_PATH);
+        File tmpResult = AboutViewController.findTutorialFile(tmpJarDir, AboutViewControllerTest.tutorialRelativePath);
         Assertions.assertEquals(tmpTutorial.toFile(), tmpResult);
     }
     //
@@ -68,7 +82,7 @@ public class AboutViewControllerTest {
         Path tmpJarDir = aTempDir.resolve("lib");
         Files.createDirectories(tmpJarDir);
         Path tmpTutorial = AboutViewControllerTest.createTutorial(aTempDir);
-        File tmpResult = AboutViewController.findTutorialFile(tmpJarDir, AboutViewControllerTest.TUTORIAL_RELATIVE_PATH);
+        File tmpResult = AboutViewController.findTutorialFile(tmpJarDir, AboutViewControllerTest.tutorialRelativePath);
         Assertions.assertEquals(tmpTutorial.toFile(), tmpResult);
     }
     //
@@ -79,7 +93,7 @@ public class AboutViewControllerTest {
      */
     @Test
     public void findTutorialFileMissingTest(@TempDir Path aTempDir) {
-        Assertions.assertNull(AboutViewController.findTutorialFile(aTempDir, AboutViewControllerTest.TUTORIAL_RELATIVE_PATH));
+        Assertions.assertNull(AboutViewController.findTutorialFile(aTempDir, AboutViewControllerTest.tutorialRelativePath));
     }
     //
     /**
@@ -87,7 +101,7 @@ public class AboutViewControllerTest {
      */
     @Test
     public void findTutorialFileNullDirectoryTest() {
-        Assertions.assertNull(AboutViewController.findTutorialFile(null, AboutViewControllerTest.TUTORIAL_RELATIVE_PATH));
+        Assertions.assertNull(AboutViewController.findTutorialFile(null, AboutViewControllerTest.tutorialRelativePath));
     }
     //
     /**
@@ -98,7 +112,7 @@ public class AboutViewControllerTest {
      * @throws IOException if the file cannot be created
      */
     private static Path createTutorial(Path aBaseDir) throws IOException {
-        Path tmpTutorial = aBaseDir.resolve(AboutViewControllerTest.TUTORIAL_RELATIVE_PATH);
+        Path tmpTutorial = aBaseDir.resolve(AboutViewControllerTest.tutorialRelativePath);
         Files.createDirectories(tmpTutorial.getParent());
         return Files.createFile(tmpTutorial);
     }
