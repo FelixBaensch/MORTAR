@@ -153,9 +153,16 @@ val fatJarAarch64 by createFatJarTask(
 //</editor-fold>
 
 tasks.jar {
+    val tmpRuntimeClasspath = configurations.runtimeClasspath
     manifest {
         attributes(
-            "Main-Class" to providers.gradleProperty("mainClassName").get()
+            "Main-Class" to providers.gradleProperty("mainClassName").get(),
+            // The jpackage launcher of the macOS and Linux installers starts this jar with "java -jar", which ignores
+            // every other class path setting, so the dependency jars next to it must be listed here. Jars missing at
+            // runtime (the JavaFX jars of other platforms) are skipped by the JVM.
+            "Class-Path" to tmpRuntimeClasspath.map { aConfiguration ->
+                aConfiguration.files.joinToString(" ") { aFile -> aFile.name }
+            }
         )
     }
 }
