@@ -225,4 +225,30 @@ object DeployUtil {
         val parts = aCompleteVersion.split('.')
         return if (parts.size >= 3) parts.take(3).joinToString(".") else aCompleteVersion
     }
+
+    /**
+     * Prepares a jpackage input directory that contains nothing but the given fat jar and, if given, the tutorial
+     * folder (copied as `tutorial/` next to the jar, where the "open tutorial" button of the about view looks for it).
+     *
+     * jpackage copies its whole input directory into the app image, so passing the project root would ship the
+     * sources, the .git directory, build outputs and previously built installers. The directory is emptied first so
+     * that jars of earlier runs do not end up in the package.
+     *
+     * @param aFatJar the fat jar to package
+     * @param aStagingDir the directory to (re)create as jpackage input
+     * @param aTutorialDir the tutorial folder to package, skipped if null
+     * @return the staging directory
+     */
+    fun stageJpackageInput(aFatJar: File, aStagingDir: File, aTutorialDir: File? = null): File {
+        if (!aStagingDir.deleteRecursively()) {
+            throw RuntimeException("Could not empty the jpackage input directory ${aStagingDir.absolutePath}")
+        }
+        aStagingDir.mkdirs()
+        aFatJar.copyTo(File(aStagingDir, aFatJar.name))
+        if (aTutorialDir != null) {
+            require(aTutorialDir.isDirectory) { "Tutorial folder not found: ${aTutorialDir.absolutePath}" }
+            DeployUtil.copyDir(aTutorialDir, File(aStagingDir, "tutorial"))
+        }
+        return aStagingDir
+    }
 }
