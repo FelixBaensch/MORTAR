@@ -99,10 +99,11 @@ jobs:
         run: |
           tmpMountDir="$RUNNER_TEMP/dmg"
           hdiutil attach -nobrowse -readonly -mountpoint "$tmpMountDir" build/jpackage/out/*.dmg
-          # MORTAR logs to the console only until its logging is set up, then only to files in this folder
-          # (user home + mortar.vendor.name/mortar.dataDirectory.name/mortar.logDirectory.name). It is emptied first
-          # so that only the log of this run is checked.
-          tmpLogDir="$HOME/MORTAR/MORTAR_Data/Logs"
+          # MORTAR logs to the console only until its logging is set up, then only to files in this folder. On macOS,
+          # FileUtil.getAppDirPath() puts the app data under Library/Application Support in the user home (+
+          # mortar.vendor.name/mortar.dataDirectory.name/mortar.logDirectory.name). It is emptied first so that only
+          # the log of this run is checked.
+          tmpLogDir="$HOME/Library/Application Support/MORTAR/MORTAR_Data/Logs"
           rm -rf "$tmpLogDir"
           "$tmpMountDir/MORTAR.app/Contents/MacOS/MORTAR" > "$RUNNER_TEMP/smoke.log" 2>&1 &
           tmpPid=$!
@@ -179,9 +180,10 @@ jobs:
         run: |
           sudo apt-get update -q && sudo apt-get install -y -q xvfb
           dpkg-deb -x build/jpackage/out/*.deb "$RUNNER_TEMP/deb"
-          # MORTAR logs to the console only until its logging is set up, then only to files in this folder
-          # (user home + mortar.vendor.name/mortar.dataDirectory.name/mortar.logDirectory.name). It is emptied first
-          # so that only the log of this run is checked.
+          # MORTAR logs to the console only until its logging is set up, then only to files in this folder. On Linux,
+          # FileUtil.getAppDirPath() puts the app data directly in the user home (+
+          # mortar.vendor.name/mortar.dataDirectory.name/mortar.logDirectory.name). It is emptied first so that only
+          # the log of this run is checked.
           tmpLogDir="$HOME/MORTAR/MORTAR_Data/Logs"
           rm -rf "$tmpLogDir"
           set +e
