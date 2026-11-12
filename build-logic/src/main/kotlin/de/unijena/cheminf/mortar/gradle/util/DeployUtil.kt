@@ -225,4 +225,32 @@ object DeployUtil {
         val parts = aCompleteVersion.split('.')
         return if (parts.size >= 3) parts.take(3).joinToString(".") else aCompleteVersion
     }
+
+    /**
+     * Prepares a jpackage input directory that contains the application jars of the `installDist` lib directory,
+     * minus the JavaFX artifacts of all platforms but the given one.
+     *
+     * jpackage copies its whole input directory into the app image and puts every jar in it on the class path, so
+     * only the jars needed on the target platform may be in there. The distribution carries the JavaFX natives of
+     * every supported platform; like the Windows installer (see LocalWinDeploy), only the target's ones are kept.
+     * The directory is emptied first so that jars of earlier runs do not end up in the package.
+     *
+     * @param aLibDir the lib directory of the installed distribution (build/install/MORTAR/lib)
+     * @param aStagingDir the directory to (re)create as jpackage input
+     * @param aJavaFxClassifier the JavaFX classifier of the target platform, e.g. "mac", "mac-aarch64" or "linux"
+     * @return the staging directory
+     */
+    fun stageJpackageInput(aLibDir: File, aStagingDir: File, aJavaFxClassifier: String): File {
+        require(aLibDir.isDirectory) { "Distribution lib directory not found. Run installDist first: ${aLibDir.absolutePath}" }
+        if (!aStagingDir.deleteRecursively()) {
+            throw RuntimeException("Could not empty the jpackage input directory ${aStagingDir.absolutePath}")
+        }
+        if (!aStagingDir.mkdirs()) {
+            throw RuntimeException("Could not create the jpackage input directory ${aStagingDir.absolutePath}")
+        }
+        copyDir(aLibDir, aStagingDir) { tmpFile ->
+            !tmpFile.name.startsWith("javafx-") || tmpFile.name.endsWith("-$aJavaFxClassifier.jar")
+        }
+        return aStagingDir
+    }
 }

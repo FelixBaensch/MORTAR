@@ -41,15 +41,15 @@ import javax.inject.Inject
 /**
  * Gradle task for local macOS deployment using jpackage.
  *
- * This task prepares and builds a DMG using the jpackage tool. It mirrors the
- * GitHub Actions configuration: for Intel it packages the standard fatJar, for
- * Apple Silicon (ARM) it packages the aarch64 fat jar.
+ * This task prepares and builds a DMG using the jpackage tool. It packages the jars of the
+ * installed distribution (installDist), keeping only the JavaFX jars of the target
+ * architecture: "mac" for Intel, "mac-aarch64" for Apple Silicon (ARM).
  *
  * Pre-checks before invocation:
  * - current OS must be macOS
  * - jpackage must be available on PATH (provided by JDK 14+)
  * - icon Images/MORTAR-icon.icns must exist
- * - expected fat jar must exist
+ * - the installed distribution (build/install/MORTAR/lib) must exist
  *
  * @author Martin Urban
  */
@@ -76,22 +76,27 @@ open class LocalMacDeploy @Inject constructor(
         val iconFile = File(project.rootDir, MortarBundle.message(PropertyNames.ICON_PATH_MAC))
         require(iconFile.exists()) { "Icon file not found: ${iconFile.absolutePath}" }
 
-        val jarName = if (arch == "arm")
-            "$appName-fat-aarch64-$appVersion.jar"
-        else
-            "$appName-fat-$appVersion.jar"
-        val fatJar = File(project.layout.buildDirectory.asFile.get(), "libs${File.separator}$jarName")
-        require(fatJar.exists()) { "Fat jar not found. Build it first: ${fatJar.absolutePath}" }
-
-        val mainJarRelative = "build${File.separator}libs${File.separator}$jarName"
+        // Application jar plus all dependency jars from installDist; only the JavaFX jars of the target are kept
+        val jarName = "$appName-$appVersion.jar"
+        val javaFxClassifier = if (arch == "arm") "mac-aarch64" else "mac"
+        val buildDir = project.layout.buildDirectory.asFile.get()
+        val inputDir = DeployUtil.stageJpackageInput(
+            File(buildDir, "install${File.separator}$appName${File.separator}lib"),
+            File(buildDir, "jpackage${File.separator}input"),
+            javaFxClassifier
+        )
+        require(File(inputDir, jarName).exists()) { "Application jar not found in ${inputDir.absolutePath}: $jarName" }
+        // Write the DMG to the build directory instead of the project root
+        val outputDir = File(project.layout.buildDirectory.asFile.get(), "jpackage${File.separator}out")
 
         // Build jpackage command mirroring deployment.yml
         val cmd = mutableListOf(
             "jpackage",
-            "-i", project.rootDir.absolutePath,
+            "-i", inputDir.absolutePath,
+            "--dest", outputDir.absolutePath,
             "-n", appName,
             "--icon", iconFile.absolutePath,
-            "--main-jar", mainJarRelative,
+            "--main-jar", jarName,
             "-t", "dmg",
             "--app-version", appVersionShort,
             "--copyright", MortarBundle.message(PropertyNames.LOCAL_DEPLOY_COPYRIGHT),
@@ -113,7 +118,6 @@ open class LocalMacDeploy @Inject constructor(
             val defaultDmgName = "$appName-$appVersionShort.dmg"
             val desiredDmgName = "$appName-aarch64-$appVersionShort.dmg"
 
-            val outputDir = project.rootDir
             val defaultFile = File(outputDir, defaultDmgName)
             val desiredFile = File(outputDir, desiredDmgName)
 
