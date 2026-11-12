@@ -114,6 +114,18 @@ jobs:
         run: chmod +x gradlew
       - name: Build DEB with Gradle
         run: ./gradlew --info --stacktrace localLinuxDeb
+      # Starts the packaged app on a virtual display: it must still run after 30 s, and must not print an uncaught
+      # exception. This catches packages that build fine but cannot start (e.g., a broken class path).
+      - name: Smoke-test the DEB
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q xvfb
+          dpkg-deb -x build/jpackage/out/*.deb "$RUNNER_TEMP/deb"
+          set +e
+          timeout --kill-after=10 30 xvfb-run -a "$RUNNER_TEMP/deb/opt/mortar/bin/MORTAR" 2>&1 | tee "$RUNNER_TEMP/smoke.log"
+          tmpExit=${PIPESTATUS[0]}
+          set -e
+          if [ "$tmpExit" -ne 124 ]; then echo "::error::MORTAR exited with code $tmpExit within 30 s"; exit 1; fi
+          if grep -q "Exception in thread" "$RUNNER_TEMP/smoke.log"; then echo "::error::MORTAR printed an uncaught exception"; exit 1; fi
       - name: Upload DEB as an artifact
         uses: actions/upload-artifact@v7
         with:
