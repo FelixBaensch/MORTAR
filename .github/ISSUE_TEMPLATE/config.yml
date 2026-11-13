@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: MORTAR Tutorial
+    url: https://felixbaensch.github.io/MORTAR/Tutorial/MORTAR_Tutorial.pdf
+    about: Check the tutorial first - it covers installation, import/export and all fragmentation algorithms.
+  - name: Questions and Discussion
+    url: https://github.com/FelixBaensch/MORTAR/discussions
+    about: For usage questions and general discussion, please use Discussions instead of an issue.
