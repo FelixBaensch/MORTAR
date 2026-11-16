@@ -613,6 +613,58 @@ public class GuiUtil {
     }
     //
     /**
+     * Creates a "Copy" menu item with the copy icon. The action of the menu item has to be set by the caller.
+     *
+     * @return the copy menu item
+     */
+    public static MenuItem createCopyMenuItem() {
+        MenuItem tmpCopyMenuItem = new MenuItem(Message.get("TableView.contextMenu.copyMenuItem"));
+        tmpCopyMenuItem.setGraphic(new ImageView(new Image(GuiUtil.getCopyIconURL())));
+        return tmpCopyMenuItem;
+    }
+    //
+    /**
+     * Creates the harmonised structure context menu items for the given molecule: copy image, copy SMILES,
+     * copy name/ID and enlarge structure.
+     *
+     * @param aMoleculeDataModel molecule the menu items refer to
+     * @param anOwnerStage owner stage of the enlarged structure view
+     * @return list of the structure menu items
+     */
+    public static List<MenuItem> createStructureMenuItems(MoleculeDataModel aMoleculeDataModel, Stage anOwnerStage) {
+        Objects.requireNonNull(aMoleculeDataModel);
+        Objects.requireNonNull(anOwnerStage);
+        //copyImageMenuItem
+        MenuItem tmpCopyImageMenuItem = new MenuItem(Message.get("TableView.contextMenu.copyImageMenuItem"));
+        tmpCopyImageMenuItem.setGraphic(new ImageView(new Image(GuiUtil.getCopyIconURL())));
+        tmpCopyImageMenuItem.setOnAction(anActionEvent -> GuiUtil.copyMoleculeStructureImageToClipboard(aMoleculeDataModel));
+        //copySmilesMenuItem
+        MenuItem tmpCopySmilesMenuItem = new MenuItem(Message.get("TableView.contextMenu.copySmilesMenuItem"));
+        tmpCopySmilesMenuItem.setGraphic(new ImageView(new Image(GuiUtil.getCopyIconURL())));
+        tmpCopySmilesMenuItem.setOnAction(anActionEvent -> GuiUtil.copyMoleculeSmilesToClipboard(aMoleculeDataModel));
+        //copyNameMenuItem
+        MenuItem tmpCopyNameMenuItem = new MenuItem(Message.get("TableView.contextMenu.copyNameMenuItem"));
+        tmpCopyNameMenuItem.setGraphic(new ImageView(new Image(GuiUtil.getCopyIconURL())));
+        tmpCopyNameMenuItem.setOnAction(anActionEvent -> GuiUtil.copyMoleculeNameToClipboard(aMoleculeDataModel));
+        //enlargedStructureViewMenuItem
+        MenuItem tmpEnlargedStructureViewMenuItem = new MenuItem(Message.get("TableView.contextMenu.enlargedStructureViewMenuItem"));
+        tmpEnlargedStructureViewMenuItem.setOnAction(anActionEvent -> GuiUtil.showEnlargedStructureView(aMoleculeDataModel, anOwnerStage));
+        return List.of(tmpCopyImageMenuItem, tmpCopySmilesMenuItem, tmpCopyNameMenuItem,
+                new SeparatorMenuItem(), tmpEnlargedStructureViewMenuItem);
+    }
+    //
+    /**
+     * Returns the URL of the copy icon as external form.
+     *
+     * @return URL string of the copy icon
+     */
+    private static String getCopyIconURL() {
+        return GuiUtil.class.getClassLoader().getResource(
+                GuiUtil.CONFIGURATION.getProperty("mortar.imagesFolder")
+                        + GuiUtil.CONFIGURATION.getProperty("mortar.icon.copy.name")).toExternalForm();
+    }
+    //
+    /**
      * Copies the unique SMILES of the given atom container to the system clipboard. Does nothing if the atom container
      * is null or no SMILES could be created.
      *

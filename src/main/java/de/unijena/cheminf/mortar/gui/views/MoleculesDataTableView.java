@@ -41,13 +41,15 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TablePosition;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
+import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.Stage;
 
 import java.util.List;
 
@@ -150,15 +152,40 @@ public class MoleculesDataTableView extends TableView implements IDataTableView 
         this.getColumns().addAll(this.selectionColumn, this.nameColumn, this.structureColumn);
         //context menu
         this.contextMenu = new ContextMenu();
-        this.setContextMenu(this.contextMenu);
+        this.setOnContextMenuRequested(this::showContextMenuForFocusedCell);
         //-copyMenuItem
-        this.copyMenuItem = new MenuItem(Message.get("TableView.contextMenu.copyMenuItem"));
-        String tmpCopyIconURL = this.getClass().getClassLoader().getResource(
-                this.configuration.getProperty("mortar.imagesFolder")
-                        + this.configuration.getProperty("mortar.icon.copy.name")).toExternalForm();
-        this.copyMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
-        this.contextMenu.getItems().add(this.copyMenuItem);
+        this.copyMenuItem = GuiUtil.createCopyMenuItem();
     }
+    //
+    //<editor-fold desc="private methods" defaultstate="collapsed">
+    /**
+     * Shows the context menu matching the right-clicked column: no menu for the selection column, a simple copy menu
+     * item for the name column and the harmonised structure context menu for the structure column.
+     *
+     * @param aContextMenuEvent the context menu request event
+     */
+    private void showContextMenuForFocusedCell(ContextMenuEvent aContextMenuEvent) {
+        aContextMenuEvent.consume();
+        this.contextMenu.hide();
+        TablePosition<?, ?> tmpFocusedCell = this.getFocusModel().getFocusedCell();
+        if (tmpFocusedCell == null || tmpFocusedCell.getTableColumn() == null
+                || tmpFocusedCell.getRow() < 0 || tmpFocusedCell.getRow() >= this.getItems().size()) {
+            return;
+        }
+        TableColumn<?, ?> tmpColumn = tmpFocusedCell.getTableColumn();
+        if (tmpColumn == this.nameColumn) {
+            this.contextMenu.getItems().setAll(this.copyMenuItem);
+        } else if (tmpColumn == this.structureColumn
+                && this.getScene() != null && this.getScene().getWindow() instanceof Stage tmpOwnerStage) {
+            MoleculeDataModel tmpMolecule = (MoleculeDataModel) this.getItems().get(tmpFocusedCell.getRow());
+            this.contextMenu.getItems().setAll(GuiUtil.createStructureMenuItems(tmpMolecule, tmpOwnerStage));
+        } else {
+            //selection column: no context menu
+            return;
+        }
+        this.contextMenu.show(this, aContextMenuEvent.getScreenX(), aContextMenuEvent.getScreenY());
+    }
+    //</editor-fold>
     //
     //<editor-fold desc="public methods" defaultstate="collapsed">
     /**
