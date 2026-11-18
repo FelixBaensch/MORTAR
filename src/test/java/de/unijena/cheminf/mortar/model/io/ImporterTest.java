@@ -41,6 +41,7 @@ import org.openscience.cdk.smiles.SmilesParser;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -49,6 +50,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 /**
  * Tests some functionalities of the {@link Importer} class.
@@ -228,6 +232,117 @@ public class ImporterTest extends Importer {
         Assertions.assertEquals("Mirabilin B", tmpMolecules.getFirst().getName());
         Assertions.assertEquals("N=C1N=C2C3=C(N1)CCC3CC(C)C2CCCC", tmpMolecules.getFirst().getUniqueSmiles());
     }
+    /**
+     * Test importing an SD file with the setting to keep the atom containers in the data models switched on and testing
+     * that the names and unique SMILES codes equal those of the default import and that the atom containers are kept.
+     * The setting is deprecated and its getter always returns false, so it is switched on by overriding the getter.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    @SuppressWarnings("deprecation")
+    public void testImportedNamesAndSmilesOfSDFileWithKeptAtomContainers() throws Exception {
+        URL tmpURL = this.getClass().getResource("ChEBI_three_entries.sdf");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        SettingsContainer tmpSettingsContainer = new SettingsContainer() {
+            @Override
+            public boolean getKeepAtomContainerInDataModelSetting() {
+                return true;
+            }
+        };
+        List<MoleculeDataModel> tmpMolecules = new Importer(tmpSettingsContainer).importMoleculeFile(tmpResourceFile, true, true, false);
+        Assertions.assertEquals(List.of("(-)-epicatechin", "(1S,4R)-fenchone", "1-alkyl-2-acylglycerol"),
+                tmpMolecules.stream().map(MoleculeDataModel::getName).toList());
+        Assertions.assertEquals(List.of(
+                "C1=CC(=C(C=C1[C@@H]2[C@@H](CC3=C(C=C(C=C3O2)O)O)O)O)O",
+                "CC1(C)[C@@H]2CC[C@@](C)(C2)C1=O",
+                "*OCC(OC(*)=O)CO"),
+                tmpMolecules.stream().map(MoleculeDataModel::getUniqueSmiles).toList());
+        for (MoleculeDataModel tmpMolecule : tmpMolecules) {
+            Assertions.assertTrue(tmpMolecule.isKeepAtomContainer());
+            //a kept atom container is returned as such instead of being parsed anew from the SMILES code
+            Assertions.assertSame(tmpMolecule.getAtomContainer(), tmpMolecule.getAtomContainer());
+        }
+    }
+    /**
+     * Test importing an SD file whose second of three entries cannot be read and testing that the other two entries
+     * are imported and that the summarising warning counts exactly one failed structure.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testImportOfSDFileWithUnreadableEntry() throws Exception {
+        Logger tmpImporterLogger = Logger.getLogger(Importer.class.getName());
+        List<LogRecord> tmpLogRecordList = new ArrayList<>();
+        Handler tmpLogRecordCollector = new Handler() {
+            @Override
+            public void publish(LogRecord aRecord) {
+                tmpLogRecordList.add(aRecord);
+            }
+            @Override
+            public void flush() {
+                //nothing to flush
+            }
+            @Override
+            public void close() {
+                //nothing to close
+            }
+        };
+        tmpImporterLogger.addHandler(tmpLogRecordCollector);
+        List<MoleculeDataModel> tmpMolecules;
+        try {
+            tmpMolecules = this.importTestResource("ChEBI_three_entries_second_unreadable.sdf");
+        } finally {
+            tmpImporterLogger.removeHandler(tmpLogRecordCollector);
+        }
+        Assertions.assertEquals(List.of("(-)-epicatechin", "1-alkyl-2-acylglycerol"),
+                tmpMolecules.stream().map(MoleculeDataModel::getName).toList());
+        Assertions.assertEquals(List.of(
+                "C1=CC(=C(C=C1[C@@H]2[C@@H](CC3=C(C=C(C=C3O2)O)O)O)O)O",
+                "*OCC(OC(*)=O)CO"),
+                tmpMolecules.stream().map(MoleculeDataModel::getUniqueSmiles).toList());
+        List<LogRecord> tmpFailedImportsRecords = tmpLogRecordList.stream()
+                .filter(aRecord -> aRecord.getMessage().contains("failed for a total of")).toList();
+        Assertions.assertEquals(1, tmpFailedImportsRecords.size());
+        Assertions.assertEquals(1, tmpFailedImportsRecords.getFirst().getParameters()[0]);
+    }
+    /**
+     * Test importing an SD file with a single entry that is not closed by the record delimiter "$$$$", so counting the
+     * delimiters yields 0, and testing that no progress report states a total of 0, which would make the progress
+     * 0 of 0, i.e. undefined. Instead, the total is reported as unknown (-1) until the entry has been read.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testImportProgressNeverReportsZeroTotalForSDFileWithoutAnyDelimiter() throws Exception {
+        URL tmpURL = this.getClass().getResource("ChEBI_one_entry_no_delimiter.sdf");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        Importer tmpImporter = new Importer(new SettingsContainer());
+        List<int[]> tmpImportProgressList = new ArrayList<>();
+        tmpImporter.setProgressListener((aPhase, aProcessedCount, aTotalCount) -> {
+            Assertions.assertNotEquals(0, aTotalCount, String.format("Phase %s reported a total of 0", aPhase));
+            if (aPhase == Importer.ImportPhase.IMPORTING) {
+                tmpImportProgressList.add(new int[]{aProcessedCount, aTotalCount});
+            }
+        });
+        tmpImporter.importMoleculeFile(tmpResourceFile, false, true, false);
+        Assertions.assertArrayEquals(new int[]{1, 1}, tmpImportProgressList.getLast());
+    }
+    /**
+     * Test importing a SMILES file that consists of a headline only and testing that the import is rejected as not
+     * being a SMILES file before any progress with a total of 0 (headline excluded) could be reported.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testImportOfSMILESFileWithOnlyHeadlineFailsWithoutReportingZeroTotal() throws Exception {
+        URL tmpURL = this.getClass().getResource("SMILESTestFileHeadlineOnly.txt");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        Importer tmpImporter = new Importer(new SettingsContainer());
+        tmpImporter.setProgressListener((aPhase, aProcessedCount, aTotalCount) ->
+                Assertions.assertNotEquals(0, aTotalCount, String.format("Phase %s reported a total of 0", aPhase)));
+        Assertions.assertThrows(IOException.class, () -> tmpImporter.importMoleculeFile(tmpResourceFile, false, true, false));
+    }
     //</editor-fold>
     //
     // <editor-fold desc="private methods">
@@ -264,28 +379,6 @@ public class ImporterTest extends Importer {
         });
         tmpImporter.importMoleculeFile(tmpResourceFile, false, true, false);
         return tmpImportProgressList;
-    }
-    /**
-     * Test importing an SD file with a single entry that is not closed by the record delimiter "$$$$", so counting the
-     * delimiters yields 0, and testing that no progress report states a total of 0, which would make the progress
-     * 0 of 0, i.e. undefined. Instead, the total is reported as unknown (-1) until the entry has been read.
-     *
-     * @throws Exception if anything goes wrong
-     */
-    @Test
-    public void testImportProgressNeverReportsZeroTotalForSDFileWithoutAnyDelimiter() throws Exception {
-        URL tmpURL = this.getClass().getResource("ChEBI_one_entry_no_delimiter.sdf");
-        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
-        Importer tmpImporter = new Importer(new SettingsContainer());
-        List<int[]> tmpReadingProgressList = new ArrayList<>();
-        tmpImporter.setProgressListener((aPhase, aProcessedCount, aTotalCount) -> {
-            Assertions.assertNotEquals(0, aTotalCount, String.format("Phase %s reported a total of 0", aPhase));
-            if (aPhase == Importer.ImportPhase.IMPORTING) {
-                tmpReadingProgressList.add(new int[]{aProcessedCount, aTotalCount});
-            }
-        });
-        tmpImporter.importMoleculeFile(tmpResourceFile, false, true, false);
-        Assertions.assertArrayEquals(new int[]{1, 1}, tmpReadingProgressList.getLast());
     }
     //</editor-fold>
 }
