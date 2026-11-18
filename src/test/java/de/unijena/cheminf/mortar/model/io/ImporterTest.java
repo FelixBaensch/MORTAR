@@ -156,5 +156,27 @@ public class ImporterTest extends Importer {
         }
         Assertions.assertArrayEquals(new int[]{3, 3}, tmpReadingProgressList.getLast());
     }
+    /**
+     * Test importing an SD file with a single entry that is not closed by the record delimiter "$$$$", so counting the
+     * delimiters yields 0, and testing that no progress report states a total of 0, which would make the progress
+     * 0 of 0, i.e. undefined. Instead, the total is reported as unknown (-1) until the entry has been read.
+     *
+     * @throws Exception if anything goes wrong
+     */
+    @Test
+    public void testImportProgressNeverReportsZeroTotalForSDFileWithoutAnyDelimiter() throws Exception {
+        URL tmpURL = this.getClass().getResource("ChEBI_one_entry_no_delimiter.sdf");
+        File tmpResourceFile = Paths.get(tmpURL.toURI()).toFile();
+        Importer tmpImporter = new Importer(new SettingsContainer());
+        List<int[]> tmpReadingProgressList = new ArrayList<>();
+        tmpImporter.setProgressListener((aPhase, aProcessedCount, aTotalCount) -> {
+            Assertions.assertNotEquals(0, aTotalCount, String.format("Phase %s reported a total of 0", aPhase));
+            if (aPhase == Importer.ImportPhase.READING) {
+                tmpReadingProgressList.add(new int[]{aProcessedCount, aTotalCount});
+            }
+        });
+        tmpImporter.importMoleculeFile(tmpResourceFile, false, true, false);
+        Assertions.assertArrayEquals(new int[]{1, 1}, tmpReadingProgressList.getLast());
+    }
     //</editor-fold>
 }

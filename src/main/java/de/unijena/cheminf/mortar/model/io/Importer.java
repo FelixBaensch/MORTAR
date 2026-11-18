@@ -573,7 +573,8 @@ public class Importer {
     /**
      * Notifies the progress listener, if one is set. To keep the overhead low for large files, the listener is only
      * notified every time another thousandth of the total count has been processed (or another 1,000 entries if the
-     * total is unknown) or if the report is forced, e.g. at the end of a phase.
+     * total is unknown) or if the report is forced, e.g. at the end of a phase. A total of 0, e.g. for an SD file
+     * without any record delimiter, is reported as unknown (-1) because a progress of 0 of 0 is undefined.
      *
      * @param aPhase current import phase
      * @param aProcessedCount number of entries processed in the current phase so far
@@ -584,9 +585,10 @@ public class Importer {
         if (Objects.isNull(this.progressListener)) {
             return;
         }
-        int tmpStep = aTotalCount > 0 ? Math.max(1, aTotalCount / 1000) : 1000;
+        int tmpTotalCount = aTotalCount > 0 ? aTotalCount : -1;
+        int tmpStep = tmpTotalCount > 0 ? Math.max(1, tmpTotalCount / 1000) : 1000;
         if (isReportForced || aProcessedCount % tmpStep == 0) {
-            this.progressListener.progressChanged(aPhase, aProcessedCount, aTotalCount);
+            this.progressListener.progressChanged(aPhase, aProcessedCount, tmpTotalCount);
         }
     }
     //
