@@ -66,6 +66,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.RadioMenuItem;
@@ -73,6 +74,7 @@ import javafx.scene.control.SortEvent;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TableView;
+import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
@@ -83,7 +85,6 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
@@ -858,6 +859,15 @@ public class MainViewController {
                 this.fragmentationService.setSelectedFragmenterDisplayName(((RadioMenuItem) newValue).getText());
             }
         });
+        //keeps the menu in sync if the fragmenter is selected elsewhere, i.e. via the combo box in the molecules tab
+        this.fragmentationService.selectedFragmenterDisplayNameProperty().addListener((observableValue, oldValue, newValue) -> {
+            for (Toggle tmpToggle : tmpToggleGroup.getToggles()) {
+                if (((RadioMenuItem) tmpToggle).getText().equals(newValue)) {
+                    tmpToggleGroup.selectToggle(tmpToggle);
+                    break;
+                }
+            }
+        });
     }
     //
     /**
@@ -1042,26 +1052,40 @@ public class MainViewController {
         tmpFragmentationButtonsHBox.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE, GuiDefinitions.GUI_INSETS_VALUE));
         tmpFragmentationButtonsHBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
         tmpFragmentationButtonsHBox.setAlignment(Pos.CENTER_LEFT);
-        this.fragmentationButton = new Button();
-        this.fragmentationButton.textProperty().bind(this.fragmentationService.selectedFragmenterDisplayNameProperty());
-        Tooltip tmpTooltip = GuiUtil.createTooltip("");
-        tmpTooltip.textProperty().bind(Bindings.format(Message.get("MainTabPane.moleculesTab.fragmentButton.text"), this.fragmentationService.selectedFragmenterDisplayNameProperty()));
-        this.fragmentationButton.setTooltip(tmpTooltip);
-        double tmpTextWidth = new Text(this.fragmentationService.getSelectedFragmenterDisplayName()).getLayoutBounds().getWidth() + 20;
-        this.fragmentationButton.setPrefWidth(tmpTextWidth);
-        this.fragmentationButton.setMinWidth(tmpTextWidth);
-        this.fragmentationButton.setMaxWidth(tmpTextWidth);
-        this.fragmentationButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
-        this.fragmentationService.selectedFragmenterDisplayNameProperty().addListener((observable, oldValue, newValue) -> {
-            double tmpTextWidthChange = new Text(newValue).getLayoutBounds().getWidth() + 20;
-            this.fragmentationButton.setPrefWidth(tmpTextWidthChange);
-            this.fragmentationButton.setMinWidth(tmpTextWidthChange);
-            this.fragmentationButton.setMaxWidth(tmpTextWidthChange);
+        ComboBox<String> tmpFragmentationAlgorithmComboBox = new ComboBox<>();
+        for (IMoleculeFragmenter tmpFragmenter : this.fragmentationService.getFragmenters()) {
+            tmpFragmentationAlgorithmComboBox.getItems().add(tmpFragmenter.getFragmentationAlgorithmDisplayName());
+        }
+        tmpFragmentationAlgorithmComboBox.setVisibleRowCount(tmpFragmentationAlgorithmComboBox.getItems().size());
+        tmpFragmentationAlgorithmComboBox.setPrefWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_PREF_WIDTH_VALUE);
+        tmpFragmentationAlgorithmComboBox.setMinWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_PREF_WIDTH_VALUE);
+        tmpFragmentationAlgorithmComboBox.setMaxWidth(GuiDefinitions.GUI_SETTING_COMBO_BOX_PREF_WIDTH_VALUE);
+        tmpFragmentationAlgorithmComboBox.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
+        tmpFragmentationAlgorithmComboBox.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.moleculesTab.fragmentationAlgorithmComboBox.tooltip")));
+        //bidirectional bindings use weak listeners, so the box of a discarded molecules tab does not stay registered
+        // at the fragmentation service; the box also follows a selection made in the settings menu this way
+        tmpFragmentationAlgorithmComboBox.valueProperty().bindBidirectional(this.fragmentationService.selectedFragmenterDisplayNameProperty());
+        //the binding only updates the display name property, the fragmenter itself must be set separately
+        tmpFragmentationAlgorithmComboBox.setOnAction(event -> {
+            String tmpSelectedDisplayName = tmpFragmentationAlgorithmComboBox.getValue();
+            if (!Objects.isNull(tmpSelectedDisplayName)) {
+                this.fragmentationService.setSelectedFragmenter(tmpSelectedDisplayName);
+            }
         });
+        tmpFragmentationButtonsHBox.getChildren().add(tmpFragmentationAlgorithmComboBox);
+        this.fragmentationButton = GuiUtil.getButtonOfStandardSize(Message.get("MainTabPane.moleculesTab.fragmentButton.text"));
+        Tooltip tmpTooltip = GuiUtil.createTooltip("");
+        tmpTooltip.textProperty().bind(Bindings.format(Message.get("MainTabPane.moleculesTab.fragmentButton.tooltip"), this.fragmentationService.selectedFragmenterDisplayNameProperty()));
+        this.fragmentationButton.setTooltip(tmpTooltip);
         tmpFragmentationButtonsHBox.getChildren().add(this.fragmentationButton);
         this.cancelFragmentationButton = GuiUtil.getButtonOfStandardSize(Message.get("MainTabPane.moleculesTab.cancelFragmentationButton.text"));
         this.cancelFragmentationButton.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.moleculesTab.cancelFragmentationButton.tooltip")));
         this.cancelFragmentationButton.setVisible(false);
+        //the cancel button takes the place of the fragmentation button while a fragmentation is running, both next to
+        // each other would overlap with the pagination control at minimum window width
+        this.cancelFragmentationButton.managedProperty().bind(this.cancelFragmentationButton.visibleProperty());
+        this.fragmentationButton.visibleProperty().bind(this.cancelFragmentationButton.visibleProperty().not());
+        this.fragmentationButton.managedProperty().bind(this.fragmentationButton.visibleProperty());
         tmpFragmentationButtonsHBox.getChildren().add(this.cancelFragmentationButton);
         tmpMoleculesTab.addNodeToGridPane(tmpFragmentationButtonsHBox, 0, 1, 1, 1);
         this.fragmentationButton.setOnAction(event -> this.startFragmentation());
