@@ -376,7 +376,7 @@ public class GuiUtil {
      * Creates a horizontal box with the GUI's standard padding and spacing and the given alignment that holds the
      * given buttons.
      *
-     * @param anAlignment the alignment of the nodes in the box
+     * @param anAlignment the alignment of the buttons in the box
      * @param aButtonArray the buttons to place in the box, in the given order
      * @return new HBox instance containing the given buttons
      */
@@ -928,7 +928,7 @@ public class GuiUtil {
     }
     //
     /**
-     * Creates a horizontal box that holds the given nodes aligned to the
+     * Creates a horizontal box that holds the given buttons aligned to the
      * left.
      *
      * @param aButtonArray the buttons to place in the box, in the given order
@@ -939,7 +939,7 @@ public class GuiUtil {
     }
     //
     /**
-     * Creates a horizontal box that holds the given nodes aligned to the right.
+     * Creates a horizontal box that holds the given buttons aligned to the right.
      *
      * @param aButtonArray the buttons to place in the box, in the given order
      * @return new HBox instance containing the given buttons
