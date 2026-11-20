@@ -27,6 +27,7 @@ package de.unijena.cheminf.mortar.gui.util;
 
 import de.unijena.cheminf.mortar.configuration.Configuration;
 import de.unijena.cheminf.mortar.configuration.IConfiguration;
+import de.unijena.cheminf.mortar.gui.controls.CustomPaginationSkin;
 import de.unijena.cheminf.mortar.gui.views.FragmentsDataTableView;
 import de.unijena.cheminf.mortar.gui.views.IDataTableView;
 import de.unijena.cheminf.mortar.gui.views.ItemizationDataTableView;
@@ -57,6 +58,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -109,18 +111,8 @@ public class GuiUtil {
     }
     //</editor-fold>
     //
-    //<editor-fold desc="Private constructor">
     /**
-     * Private parameter-less constructor.
-     * Introduced because javadoc build complained about classes without declared default constructor.
-     */
-    private GuiUtil() {
-    }
-    //</editor-fold>
-    //
-    //<editor-fold desc="public static methods" defaultstate="collapsed">
-    /**
-     * Sealed interface that defines a contract for different types of content that can be displayed
+     * Private interface that defines a contract for different types of content that can be displayed
      * in JavaFX Alert dialogs. Each implementation encapsulates the logic for configuring a specific
      * content type within an Alert's dialog pane.
      * <p>
@@ -134,7 +126,7 @@ public class GuiUtil {
      * </ul>
      * </p>
      */
-    private interface Content {
+    private interface IContent {
         /**
          * Applies this content configuration to the given Alert dialog pane.
          * <p>
@@ -147,13 +139,16 @@ public class GuiUtil {
          */
         void applyTo(Alert anAlert);
     }
+    //</editor-fold>
+    //
+    //<editor-fold desc="private records" defaultstate="collapsed">
     /**
-     * Record implementation of {@link Content} for displaying simple text content in an Alert.
+     * Record implementation of {@link IContent} for displaying simple text content in an Alert.
      *
      * @param aContentText the text content to display in the alert. May contain newlines for
      *                     multi-line text. Must not be null.
      */
-    private record StringContent(String aContentText) implements Content {
+    private record StringContent(String aContentText) implements IContent {
         /**
          * Applies the text content to the Alert by setting its content text property.
          *
@@ -165,11 +160,11 @@ public class GuiUtil {
         }
     }
     /**
-     * Record implementation of {@link Content} for displaying an interactive Hyperlink in an Alert.
+     * Record implementation of {@link IContent} for displaying an interactive Hyperlink in an Alert.
      *
      * @param aHyperlink the Hyperlink node to display in the alert. Must not be null.
      */
-    private record HyperlinkContent(Hyperlink aHyperlink) implements Content {
+    private record HyperlinkContent(Hyperlink aHyperlink) implements IContent {
         /**
          * Applies the hyperlink content to the Alert by adding it to the dialog pane.
          *
@@ -181,7 +176,7 @@ public class GuiUtil {
         }
     }
     /**
-     * Record implementation of {@link Content} for displaying text content with an interactive checkbox.
+     * Record implementation of {@link IContent} for displaying text content with an interactive checkbox.
      *
      * @param aContentText the main text content to display above the checkbox. Will be wrapped
      *                     if it exceeds the available width. Must not be null.
@@ -190,7 +185,7 @@ public class GuiUtil {
      * @param aCheckbox the CheckBox control whose selected state will be queried after the alert
      *                  is dismissed. Must not be null.
      */
-    private record CheckboxContent(String aContentText, String aCheckboxText, CheckBox aCheckbox) implements Content {
+    private record CheckboxContent(String aContentText, String aCheckboxText, CheckBox aCheckbox) implements IContent {
         /**
          * Applies the checkbox content to the Alert by creating a layout with wrapped text and
          * a checkbox, and adding it to the dialog pane.
@@ -210,20 +205,20 @@ public class GuiUtil {
             tmpContentLabel.setWrapText(true);
             tmpContentLabel.maxWidthProperty().bind(anAlert.getDialogPane().widthProperty().subtract(40));
             VBox.setVgrow(tmpContentLabel, Priority.ALWAYS);
-            VBox tmpContentBox = new VBox(20, tmpContentLabel, aCheckbox);
+            VBox tmpContentBox = new VBox(GuiDefinitions.GUI_SPACING_VALUE, tmpContentLabel, aCheckbox);
             tmpContentBox.setFillWidth(true);
             anAlert.getDialogPane().setContent(tmpContentBox);
         }
     }
     /**
-     * Record implementation of {@link Content} for displaying text content with custom button types.
+     * Record implementation of {@link IContent} for displaying text content with custom button types.
      *
-     * @param aContentText the text content to display in the alert. Must not be null.
-     * @param anButtonTypeArray an array of ButtonType objects representing the buttons to display
+     * @param contentText the text content to display in the alert. Must not be null.
+     * @param buttonTypesArray an array of ButtonType objects representing the buttons to display
      *                          in the alert. The order in the array determines the button layout.
      *                          Must not be null or empty.
      */
-    private record MultiButtonContent(String aContentText, ButtonType[] anButtonTypeArray) implements Content {
+    private record MultiButtonContent(String contentText, ButtonType[] buttonTypesArray) implements IContent {
         /**
          * Applies the text content and custom button types to the Alert.
          *
@@ -231,12 +226,12 @@ public class GuiUtil {
          */
         @Override
         public void applyTo(Alert anAlert) {
-            anAlert.setContentText(aContentText);
-            anAlert.getButtonTypes().setAll(anButtonTypeArray);
+            anAlert.setContentText(this.contentText);
+            anAlert.getButtonTypes().setAll(this.buttonTypesArray);
         }
     }
     /**
-     * Record implementation of {@link Content} for displaying text content with an expandable text area.
+     * Record implementation of {@link IContent} for displaying text content with an expandable text area.
      * <p>
      * The layout consists of:
      * <ul>
@@ -248,19 +243,19 @@ public class GuiUtil {
      * triangle in the dialog pane.
      * </p>
      *
-     * @param aContentText the main text content to display in the alert. Must not be null.
-     * @param aLabelText the label text displayed above the expandable text area, typically describing
+     * @param contentText the main text content to display in the alert. Must not be null.
+     * @param labelText the label text displayed above the expandable text area, typically describing
      *                   the type of information in the expandable section (e.g., "Stack Trace").
      *                   Must not be null.
-     * @param anExpandableString the detailed text content to display in the expandable area. This is
+     * @param expandableString the detailed text content to display in the expandable area. This is
      *                           typically a stack trace, error details, or other verbose information.
      *                           Must not be null.
      */
     private record ExpandableContent(
-            String aContentText,
-            String aLabelText,
-            String anExpandableString
-    ) implements Content {
+            String contentText,
+            String labelText,
+            String expandableString
+    ) implements IContent {
         /**
          * Applies the expandable content to the Alert by creating a GridPane layout with a label
          * and read-only TextArea, and setting it as the dialog pane's expandable content.
@@ -277,8 +272,8 @@ public class GuiUtil {
          */
         @Override
         public void applyTo(Alert anAlert) {
-            Label tmpLabel = new Label(aLabelText);
-            TextArea tmpExpandableTextArea = new TextArea(anExpandableString);
+            Label tmpLabel = new Label(this.labelText);
+            TextArea tmpExpandableTextArea = new TextArea(this.expandableString);
             tmpExpandableTextArea.setEditable(false);
             tmpExpandableTextArea.setWrapText(true);
             tmpExpandableTextArea.setMaxWidth(Double.MAX_VALUE);
@@ -293,9 +288,30 @@ public class GuiUtil {
             anAlert.getDialogPane().setExpandableContent(tmpGridPane);
         }
     }
+    //
+    /**
+     * Small utility type to return the result of a gui confirmation dialogue with a checkbox and the button type
+     * that was pressed.
+     *
+     * @param checkboxChecked true if the checkbox is checked upon closing the window.
+     * @param buttonType the button tye that was pressed by the user
+     */
+    public record CheckboxAndButtonResult(boolean checkboxChecked, ButtonType buttonType) {}
+    //</editor-fold>
+    //
+    //<editor-fold desc="Private constructor">
+    /**
+     * Private parameter-less constructor.
+     * Introduced because javadoc build complained about classes without declared default constructor.
+     */
+    private GuiUtil() {
+    }
+    //</editor-fold>
+    //
+    //<editor-fold desc="private static methods" defaultstate="collapsed">
     /**
      * Generic factory method that creates and configures a fully-initialized Alert dialog with
-     * specific content handling based on the {@link Content#applyTo} method of the passed {@link Content}.
+     * specific content handling based on the {@link IContent#applyTo} method of the passed {@link IContent}.
      * <p>
      * The method performs the following configuration steps:
      * <ol>
@@ -307,8 +323,6 @@ public class GuiUtil {
      * </ol>
      * </p>
      *
-     * @param <T> a type parameter bounded by {@link Content}, ensuring type safety while allowing
-     *            any Content implementation to be passed
      * @param anAlertType the AlertType that determines the default styling and button configuration
      *                    of the Alert. Common values include:
      *                    <ul>
@@ -323,7 +337,7 @@ public class GuiUtil {
      *                    appears above the content area.
      *                    Must not be null.
      * @param aContent a Content implementation that encapsulates the specific content type and
-     *                 configuration logic for this Alert. The content's {@link Content#applyTo(Alert)}
+     *                 configuration logic for this Alert. The content's {@link IContent#applyTo(Alert)}
      *                 method will be invoked to configure the Alert's dialog pane. Must not be null.
      *
      * @return a fully-configured and initialized Alert dialog ready to be displayed. The returned
@@ -337,11 +351,11 @@ public class GuiUtil {
      *         The Alert is not yet displayed; call {@link Alert#showAndWait()} or
      *         {@link Alert#show()} to display it to the user.
      */
-    private static <T extends Content> Alert createGenericAlert(
+    private static Alert createAlert(
             Alert.AlertType anAlertType,
             String aTitle,
             String aHeaderText,
-            T aContent
+            IContent aContent
     ) {
         Alert tmpAlert = new Alert(anAlertType);
         tmpAlert.setTitle(aTitle);
@@ -356,6 +370,9 @@ public class GuiUtil {
         tmpAlertStage.getIcons().add(new Image(tmpIconURL));
         return tmpAlert;
     }
+    //</editor-fold>
+    //
+    //<editor-fold desc="public static methods" defaultstate="collapsed">
     /**
      * Creates and shows an alert with arbitrary alert type.
      *
@@ -373,7 +390,7 @@ public class GuiUtil {
             String aHeaderText,
             String aContentText
     ) {
-        Alert tmpAlert = createGenericAlert(anAlertType, aTitle, aHeaderText, new StringContent(aContentText));
+        Alert tmpAlert = GuiUtil.createAlert(anAlertType, aTitle, aHeaderText, new StringContent(aContentText));
         return tmpAlert.showAndWait();
     }
     //
@@ -392,7 +409,7 @@ public class GuiUtil {
                                                                     String aTitle,
                                                                     String aHeaderText,
                                                                     Hyperlink aHyperlink) {
-        Alert tmpAlert = createGenericAlert(
+        Alert tmpAlert = GuiUtil.createAlert(
                 anAlertType,
                 aTitle,
                 aHeaderText,
@@ -411,7 +428,7 @@ public class GuiUtil {
      * @return ButtonType selected by user - ButtonType.OK or ButtonType.CANCEL
      */
     public static ButtonType guiConfirmationAlert(String aTitle, String aHeaderText, String aContentText) {
-        Alert tmpAlert = createGenericAlert(
+        Alert tmpAlert = GuiUtil.createAlert(
                 Alert.AlertType.CONFIRMATION,
                 aTitle,
                 aHeaderText,
@@ -421,18 +438,8 @@ public class GuiUtil {
     }
     //
     /**
-     * Small utility type to return the result of a gui confirmation dialogue with a checkbox and the button type
-     * that was pressed.
-     *
-     * @param checkboxChecked true if the checkbox is checked upon closing the window.
-     * @param buttonType the button tye that was pressed by the user
-     */
-    public record CheckboxAndButtonResult(boolean checkboxChecked, ButtonType buttonType) {}
-    //
-    /**
-     * Creates and shows confirmation type alert and returns the button selected by user as ButtonType.
-     * It also checks a global setting and also has the possibility to change that setting
-     * if the checkbox in the alert window was checked.
+     * Creates and shows confirmation type alert and returns the button selected by user as ButtonType with
+     * an additional checkbox.
      *
      * @param aTitle Title of the confirmation alert
      * @param aHeaderText Header of the confirmation alert
@@ -448,7 +455,7 @@ public class GuiUtil {
             String aCheckboxText
     ) {
         CheckBox tmpCheckBox = new CheckBox(aCheckboxText);
-        Alert tmpAlert = createGenericAlert(
+        Alert tmpAlert = GuiUtil.createAlert(
                 Alert.AlertType.CONFIRMATION,
                 aTitle, aHeaderText,
                 new CheckboxContent(
@@ -477,7 +484,7 @@ public class GuiUtil {
             String aHeaderText,
             String aContentText
     ) {
-        Alert tmpAlert = createGenericAlert(
+        Alert tmpAlert = GuiUtil.createAlert(
                 Alert.AlertType.CONFIRMATION,
                 aTitle, aHeaderText,
                 new MultiButtonContent(
@@ -533,7 +540,7 @@ public class GuiUtil {
             String anExpandableString
     ) {
         try {
-            Alert tmpAlert = createGenericAlert(
+            Alert tmpAlert = GuiUtil.createAlert(
                     Alert.AlertType.ERROR,
                     aTitle,
                     aHeaderText,
@@ -901,6 +908,35 @@ public class GuiUtil {
         tmpTooltip.setWrapText(true);
         tmpTooltip.setShowDuration(Duration.seconds(GuiDefinitions.GUI_TOOLTIP_SHOW_DURATION));
         return tmpTooltip;
+    }
+    //
+    /**
+     * Creates a new JavaFX pagination control configured with a suitable page count for the given number
+     * of items taking into account the rows per page setting.
+     *
+     * <p>Also sets the MORTAR custom pagination skin as the skin of the new pagination instance and configures
+     * its growth behavior. The page factory is <strong>NOT</strong> set.
+     *
+     * @param aListSize the number of items to display; must be &gt;= 0
+     * @param aRowsPerPageSetting the rows per page setting; must be &gt; 0
+     *
+     * @return a configured {@link Pagination} control instance; never null
+     *
+     * @throws IllegalArgumentException if aListSize is negative or aRowsPerPageSetting is &lt;= 0
+     */
+    public static Pagination createPaginationWithSuitablePageCount(int aListSize, int aRowsPerPageSetting) {
+        int tmpPageCount = aListSize / aRowsPerPageSetting;
+        if (aListSize % aRowsPerPageSetting > 0) {
+            tmpPageCount++;
+        }
+        if (aListSize == 0) {
+            tmpPageCount = 1;
+        }
+        Pagination tmpPagination = new Pagination(tmpPageCount, 0);
+        tmpPagination.setSkin(new CustomPaginationSkin(tmpPagination));
+        VBox.setVgrow(tmpPagination, Priority.ALWAYS);
+        HBox.setHgrow(tmpPagination, Priority.ALWAYS);
+        return tmpPagination;
     }
     //</editor-fold>
 }

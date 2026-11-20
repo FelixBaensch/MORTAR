@@ -26,7 +26,6 @@
 package de.unijena.cheminf.mortar.gui.views;
 
 import de.unijena.cheminf.mortar.controller.TabNames;
-import de.unijena.cheminf.mortar.gui.controls.CustomPaginationSkin;
 import de.unijena.cheminf.mortar.gui.controls.GridTabForTableView;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
@@ -44,8 +43,6 @@ import javafx.scene.control.Pagination;
 import javafx.scene.control.SortEvent;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
 
 import java.util.function.Consumer;
 
@@ -70,7 +67,8 @@ import java.util.function.Consumer;
  * <p>This tab is closable and created for each unique fragmentation job, with the tab title including
  * the fragmentation name for identification.
  *
- * @author Felix Bänsch, Tom Weiß
+ * @author Felix Bänsch
+ * @author Tom Weiß
  * @version 1.0
  */
 public class ItemizationTabView extends GridTabForTableView {
@@ -156,12 +154,9 @@ public class ItemizationTabView extends GridTabForTableView {
      *                                  must not be null
      * @param aFragmentationName a unique string identifier for the fragmentation job; used in the tab title;
      *                           must not be null or empty
-     * @param aObservableItemsList an observable list of itemization data models (MoleculeDataModel instances)
+     * @param anObservableItemsList an observable list of itemization data models (MoleculeDataModel instances)
      *                             to be displayed; must not be null
      * @param aRowsPerPageSetting the number of rows to display per page for pagination; must be greater than 0
-     *
-     * @throws IllegalArgumentException if any required parameter is null, if aFragmentationName is empty,
-     *                                  or if aRowsPerPageSetting is &lt;= 0
      *
      * @see Pagination
      * @see ItemizationDataTableView
@@ -170,7 +165,7 @@ public class ItemizationTabView extends GridTabForTableView {
     public ItemizationTabView(
             ItemizationDataTableView aItemizationDataTableView,
             String aFragmentationName,
-            ObservableList<MoleculeDataModel> aObservableItemsList,
+            ObservableList<MoleculeDataModel> anObservableItemsList,
             int aRowsPerPageSetting
     ) {
         super(
@@ -181,15 +176,15 @@ public class ItemizationTabView extends GridTabForTableView {
         this.setClosable(true);
         this.closeTabItem = new MenuItem(Message.get("MainView.tabMenuBar.closeTab.text"));
         this.closeAllTabsItem = new MenuItem(Message.get("MainView.tabMenuBar.closeAll.text"));
-        aItemizationDataTableView.setContextMenu(
+        this.setContextMenu(
                 new ContextMenu(this.closeTabItem, this.closeAllTabsItem)
         );
-        for (MoleculeDataModel tmpModel : aObservableItemsList) {
+        for (MoleculeDataModel tmpModel : anObservableItemsList) {
             tmpModel.setStructureImageWidth(aItemizationDataTableView.getMoleculeStructureColumn().getWidth());
         }
-        aItemizationDataTableView.setItemsList(aObservableItemsList);
-        this.pagination = this.createPaginationWithSuitablePageCount(
-                aObservableItemsList.size(),
+        aItemizationDataTableView.setItemsList(anObservableItemsList);
+        this.pagination = GuiUtil.createPaginationWithSuitablePageCount(
+                anObservableItemsList.size(),
                 aRowsPerPageSetting
         );
         this.addPaginationToGridPane(this.pagination);
@@ -219,7 +214,7 @@ public class ItemizationTabView extends GridTabForTableView {
         this.openHistogramViewButton.setTooltip(
                 GuiUtil.createTooltip(Message.get("MainView.showHistogramViewButton.tooltip"))
         );
-        if (aObservableItemsList.isEmpty()) {
+        if (anObservableItemsList.isEmpty()) {
             this.openHistogramViewButton.setDisable(true);
         }
         HBox tmpViewButtonsHBox = this.createViewButtonsBox();
@@ -275,35 +270,6 @@ public class ItemizationTabView extends GridTabForTableView {
         tmpBox.setMaxWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
         tmpBox.getChildren().add(this.openHistogramViewButton);
         return tmpBox;
-    }
-
-    /**
-     * Creates a new JavaFX pagination control configured with a suitable page count for the given number
-     * of items taking into account the rows per page setting.
-     *
-     * <p>Also sets the MORTAR custom pagination skin as the skin of the new pagination instance and configures
-     * its growth behavior. The page factory is <strong>NOT</strong> set.
-     *
-     * @param aListSize the number of items to display; must be &gt;= 0
-     * @param aRowsPerPageSetting the rows per page setting; must be &gt; 0
-     *
-     * @return a configured {@link Pagination} control instance; never null
-     *
-     * @throws IllegalArgumentException if aListSize is negative or aRowsPerPageSetting is &lt;= 0
-     */
-    private Pagination createPaginationWithSuitablePageCount(int aListSize, int aRowsPerPageSetting) {
-        int tmpPageCount = aListSize / aRowsPerPageSetting;
-        if (aListSize % aRowsPerPageSetting > 0) {
-            tmpPageCount++;
-        }
-        if (aListSize == 0) {
-            tmpPageCount = 1;
-        }
-        Pagination tmpPagination = new Pagination(tmpPageCount, 0);
-        tmpPagination.setSkin(new CustomPaginationSkin(tmpPagination));
-        VBox.setVgrow(tmpPagination, Priority.ALWAYS);
-        HBox.setHgrow(tmpPagination, Priority.ALWAYS);
-        return tmpPagination;
     }
 
     /**
@@ -459,7 +425,7 @@ public class ItemizationTabView extends GridTabForTableView {
     }
 
     /**
-     * Binds the provided boolean property to set the visibility of the cancel button for fragmentations.
+     * Binds the provided boolean property to set the visibility of the cancel button of the export.
      *
      * @param aProperty the property that describes if the button should be visible.
      */

@@ -26,7 +26,6 @@
 package de.unijena.cheminf.mortar.gui.views;
 
 import de.unijena.cheminf.mortar.controller.TabNames;
-import de.unijena.cheminf.mortar.gui.controls.CustomPaginationSkin;
 import de.unijena.cheminf.mortar.gui.controls.GridTabForTableView;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
@@ -45,8 +44,6 @@ import javafx.scene.control.SortEvent;
 import javafx.scene.control.TableView;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 
 import java.util.function.Consumer;
@@ -61,18 +58,17 @@ import java.util.function.Consumer;
  * <p>The view supports the following features:
  * <ul>
  *     <li>Paginated display of molecule data with configurable rows per page</li>
- *     <li>Fragmentation and cancel fragmentation buttons with dynamic sizing based on fragmentation service name</li>
+ *     <li>Fragmentation and cancel fragmentation buttons with dynamic sizing based on fragmentation algorithm name</li>
  *     <li>Overview button to display all molecules in a separate window</li>
  *     <li>Event callbacks for fragmentation, cancellation, overview, sorting, and table width changes</li>
  *     <li>Binding of cancel button visibility to external properties</li>
  * </ul>
  *
- * @author Felix Bänsch, Tom Weiß
+ * @author Felix Bänsch
+ * @author Tom Weiß
  * @version 1.0
  */
 public class MoleculesTabView extends GridTabForTableView {
-    //</editor-fold>
-    //
     //<editor-fold desc="private final instance variables">
     /**
      * The pagination component used to navigate through pages of molecules.
@@ -102,7 +98,7 @@ public class MoleculesTabView extends GridTabForTableView {
     private Button overviewButton;
 
     /**
-     * the function that runsupon pressing.
+     * the function that runs upon pressing.
      */
     private Runnable onFragmentation;
 
@@ -134,7 +130,7 @@ public class MoleculesTabView extends GridTabForTableView {
      * <p>This constructor initializes the view with a molecules data table, sets up pagination
      * based on the provided rows per page setting, and creates control buttons for fragmentation
      * and overview operations. The fragmentation button text is dynamically bound to the currently
-     * selected fragmentation service display name.
+     * selected fragmentation algorithm display name.
      *
      * @param aMoleculesDataTableView the molecules data table view to be displayed in this tab;
      *                                must not be null
@@ -160,7 +156,7 @@ public class MoleculesTabView extends GridTabForTableView {
         );
         this.moleculesDataTableView = aMoleculesDataTableView;
         aMoleculesDataTableView.setItemsList(aMoleculeDataModelList);
-        this.pagination = this.createPaginationWithSuitablePageCount(
+        this.pagination = GuiUtil.createPaginationWithSuitablePageCount(
                 aMoleculeDataModelList.size(),
                 aRowsPerPageSetting
         );
@@ -175,6 +171,12 @@ public class MoleculesTabView extends GridTabForTableView {
     //</editor-fold>
     //
     //<editor-fold desc="private helper methods">
+    /**
+     * Creates the button to start and cancel a fragmentation.
+     *
+     * @param aFragmentationDisplayNameProperty name of the currently selected fragmentation algorithm
+     * @return the created buttons with the cancel button being hidden
+     */
     private HBox createFragmentationButtonsBox(StringProperty aFragmentationDisplayNameProperty) {
         HBox tmpBox = new HBox();
         tmpBox.setPadding(new Insets(
@@ -207,15 +209,24 @@ public class MoleculesTabView extends GridTabForTableView {
         tmpBox.getChildren().addAll(this.fragmentationButton, this.cancelFragmentationButton);
         return tmpBox;
     }
-
+    /**
+     * Adjusts the size of the fragmentation button to fit the text description of the selected fragmentation
+     * algorithm name.
+     *
+     * @param aFragmenterDisplayName the text to be placed in the button
+     */
     private void updateFragmentationButtonSize(String aFragmenterDisplayName) {
-        double tmpTextWidth = new Text(aFragmenterDisplayName).getLayoutBounds().getWidth() + 20;
+        double tmpTextWidth = new Text(aFragmenterDisplayName).getLayoutBounds().getWidth() + GuiDefinitions.GUI_BUTTON_INSETS_VALUE;
         this.fragmentationButton.setPrefWidth(tmpTextWidth);
         this.fragmentationButton.setMinWidth(tmpTextWidth);
         this.fragmentationButton.setMaxWidth(tmpTextWidth);
         this.fragmentationButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
     }
-
+    /**
+     * Creates an overview button.
+     *
+     * @return the created overview button
+     */
     private HBox createViewButtonsBox() {
         HBox tmpBox = new HBox();
         tmpBox.setPadding(new Insets(
@@ -236,22 +247,6 @@ public class MoleculesTabView extends GridTabForTableView {
         tmpBox.getChildren().add(this.overviewButton);
         return tmpBox;
     }
-
-    private Pagination createPaginationWithSuitablePageCount(int aListSize, int aRowsPerPageSetting) {
-        int tmpPageCount = aListSize / aRowsPerPageSetting;
-        if (aListSize % aRowsPerPageSetting > 0) {
-            tmpPageCount++;
-        }
-        if (aListSize == 0) {
-            tmpPageCount = 1;
-        }
-        Pagination tmpPagination = new Pagination(tmpPageCount, 0);
-        tmpPagination.setSkin(new CustomPaginationSkin(tmpPagination));
-        VBox.setVgrow(tmpPagination, Priority.ALWAYS);
-        HBox.setHgrow(tmpPagination, Priority.ALWAYS);
-        return tmpPagination;
-    }
-
     //</editor-fold>
     //
     //<editor-fold desc="public getters">
@@ -264,18 +259,16 @@ public class MoleculesTabView extends GridTabForTableView {
     public Pagination getPagination() {
         return this.pagination;
     }
-
     /**
      * Retrieves the button that initiates a fragmentation operation.
      *
-     * <p>The button text is dynamically bound to the selected fragmentation service's display name.
+     * <p>The button text is dynamically bound to the selected fragmentation algorithm's display name.
      *
      * @return the fragmentation {@link Button}; never null
      */
     public Button getFragmentationButton() {
         return this.fragmentationButton;
     }
-
     /**
      * Retrieves the button that cancels an ongoing fragmentation operation.
      *
@@ -287,7 +280,6 @@ public class MoleculesTabView extends GridTabForTableView {
     public Button getCancelFragmentationButton() {
         return this.cancelFragmentationButton;
     }
-
     /**
      * Retrieves the button that opens an overview window of all molecules in this tab.
      *
@@ -299,21 +291,15 @@ public class MoleculesTabView extends GridTabForTableView {
     //</editor-fold>
     //
     //<editor-fold desc="public callback setters">
-
     /**
      * Sets the callback function to be executed when the fragmentation button is pressed.
      *
      * @param aCallback the callback to execute on fragmentation button action; must not be null
-     *
-     * @throws IllegalArgumentException if aCallback is null
-     *
-     * @see #setOnCancelFragmentation(Runnable)
      */
     public void setOnFragmentation(Runnable aCallback) {
         this.onFragmentation = aCallback;
         this.fragmentationButton.setOnAction(event -> aCallback.run());
     }
-
     /**
      * Sets the callback function to be executed when the cancel fragmentation button is pressed.
      *
@@ -327,7 +313,6 @@ public class MoleculesTabView extends GridTabForTableView {
         this.onCancelFragmentation = aCallback;
         this.cancelFragmentationButton.setOnAction(event -> aCallback.run());
     }
-
     /**
      * Sets the callback function to be executed when the overview button is pressed.
      *
@@ -339,7 +324,6 @@ public class MoleculesTabView extends GridTabForTableView {
         this.onOverview = aCallback;
         this.overviewButton.setOnAction(event -> aCallback.run());
     }
-
     /**
      * Sets the callback function to be executed when the table view sort order changes.
      *
@@ -351,7 +335,6 @@ public class MoleculesTabView extends GridTabForTableView {
     public void setOnSort(Consumer<SortEvent<TableView>> aCallback) {
         this.onSort = aCallback;
     }
-
     /**
      * Sets the callback function to be executed when the table view width changes and establishes
      * a listener on the underlying molecules data table view's width property.
@@ -361,8 +344,6 @@ public class MoleculesTabView extends GridTabForTableView {
      *
      * @param aCallback the callback to execute on table width change; receives the new width value;
      *                  must not be null
-     *
-     * @throws IllegalArgumentException if aCallback is null
      */
     public void setOnTableWidthChanged(Consumer<Number> aCallback) {
         this.onTableWidthChanged = aCallback;
@@ -370,7 +351,6 @@ public class MoleculesTabView extends GridTabForTableView {
                 (observable, oldValue, newValue) -> aCallback.accept(newValue)
         );
     }
-
     /**
      * Binds the visibility of the cancel fragmentation button to an external boolean property.
      *

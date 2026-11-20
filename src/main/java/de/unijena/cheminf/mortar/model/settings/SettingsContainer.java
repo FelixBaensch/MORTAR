@@ -68,7 +68,7 @@ public class SettingsContainer {
     /**
      * Number of different settings wrapped by the container.
      */
-    public static final int NUMBER_OF_SETTINGS = 8;
+    public static final int NUMBER_OF_SETTINGS = 9;
 
     /**
      * Name of the settings container file that persists the global settings.
@@ -125,7 +125,7 @@ public class SettingsContainer {
      */
     public static final boolean KEEP_LAST_FRAGMENT_SETTING_DEFAULT = false;
     /**
-     * Default value of whether to show a warning if upon closing tabs or the entire application
+     * Default value of whether to show a warning if closing tabs or the entire application
      * would result in a loss of data.
      */
     public static final boolean SHOW_WARNING_FOR_DATA_LOSS_SETTING_DEFAULT = true;
@@ -423,6 +423,24 @@ public class SettingsContainer {
     }
 
     /**
+     * Query if a warning should be displayed if a data loss would occur.
+     *
+     * @return true if the user has turned on the warning messages, false otherwise.
+     */
+    public boolean getShowDataWillBeLostWarningSetting() {
+        return this.showDataWillBeLostWarningSetting.get();
+    }
+
+    /**
+     * Gets the setting of whether a warning should be shown upon data loss.
+     *
+     * @return the setting to control whether warning should pop up if a data loss is confirmed.
+     */
+    public SimpleBooleanProperty getShowDataWillBeLostSettingProperty() {
+        return this.showDataWillBeLostWarningSetting;
+    }
+
+    /**
      * Returns the property wrapping the regard stereochemistry setting.
      *
      * @return regard stereochemistry setting property
@@ -581,24 +599,6 @@ public class SettingsContainer {
     public void setKeepLastFragmentSetting(boolean aBoolean){
         this.keepLastFragmentSetting.set(aBoolean);
     }
-    //
-    /**
-     * Query if a warning should be displayed if a data loss would occur.
-     *
-     * @return true if the user has turned on the warning messages, false otherwise.
-     */
-    public boolean getShowDataWillBeLostWarningSetting() {
-        return this.showDataWillBeLostWarningSetting.get();
-    }
-    //
-    /**
-     * Gets the setting of whether a warning should be shown upon data loss.
-     *
-     * @return the setting to control whether warning should pop up if a data loss is confirmed.
-     */
-    public SimpleBooleanProperty getShowDataWillBeLostSettingProperty() {
-        return this.showDataWillBeLostWarningSetting;
-    }
     /**
      * Sets the setting for whether there should always be a warning if data will be lost.
      *
@@ -710,7 +710,7 @@ public class SettingsContainer {
      * to the list of settings for display to the user.
      */
     private void initialiseSettings() {
-        int tmpNumberOfSettings = 8;
+        int tmpNumberOfSettings = NUMBER_OF_SETTINGS;
         int tmpInitialCapacityForSettingNameMaps = CollectionUtil.calculateInitialHashCollectionCapacity(
                 tmpNumberOfSettings,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);

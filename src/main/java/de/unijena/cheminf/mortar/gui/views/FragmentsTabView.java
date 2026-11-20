@@ -26,7 +26,6 @@
 package de.unijena.cheminf.mortar.gui.views;
 
 import de.unijena.cheminf.mortar.controller.TabNames;
-import de.unijena.cheminf.mortar.gui.controls.CustomPaginationSkin;
 import de.unijena.cheminf.mortar.gui.controls.GridTabForTableView;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
@@ -46,8 +45,6 @@ import javafx.scene.control.Pagination;
 import javafx.scene.control.SortEvent;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
 
 import java.util.List;
 
@@ -73,7 +70,8 @@ import java.util.List;
  * <p>This tab is closable and created for each unique fragmentation job, with the tab title including
  * the fragmentation name for identification.
  *
- * @author Felix Bänsch, Tom Weiß
+ * @author Felix Bänsch
+ * @author Tom Weiß
  * @version 1.0
  * @see GridTabForTableView
  * @see FragmentsDataTableView
@@ -172,17 +170,14 @@ public class FragmentsTabView extends GridTabForTableView {
      *                                must not be null
      * @param aFragmentationName a unique string identifier for the fragmentation job; used in the tab title;
      *                           must not be null or empty
-     * @param aObservableFragmentsList an observable list of fragment data models (MoleculeDataModel instances)
+     * @param anObservableFragmentsList an observable list of fragment data models (MoleculeDataModel instances)
      *                                 to be displayed; must not be null
      * @param aRowsPerPageSetting the number of rows to display per page for pagination; must be greater than 0
-     *
-     * @throws IllegalArgumentException if any required parameter is null, if aFragmentationName is empty,
-     *                                  or if aRowsPerPageSetting is &lt;= 0
      */
     public FragmentsTabView(
             FragmentsDataTableView aFragmentsDataTableView,
             String aFragmentationName,
-            ObservableList<? extends MoleculeDataModel> aObservableFragmentsList,
+            ObservableList<? extends MoleculeDataModel> anObservableFragmentsList,
             int aRowsPerPageSetting
     ) {
         super(Message.get(
@@ -193,13 +188,13 @@ public class FragmentsTabView extends GridTabForTableView {
         this.setClosable(true);
         this.closeTabItem = new MenuItem(Message.get("MainView.tabMenuBar.closeTab.text"));
         this.closeAllTabsItem = new MenuItem(Message.get("MainView.tabMenuBar.closeAll.text"));
-        aFragmentsDataTableView.setContextMenu(new ContextMenu(this.closeTabItem, this.closeAllTabsItem));
-        for (MoleculeDataModel tmpMoleculeDataModel : aObservableFragmentsList) {
+        this.setContextMenu(new ContextMenu(this.closeTabItem, this.closeAllTabsItem));
+        for (MoleculeDataModel tmpMoleculeDataModel : anObservableFragmentsList) {
             tmpMoleculeDataModel.setStructureImageWidth(aFragmentsDataTableView.getStructureColumn().getWidth());
         }
-        aFragmentsDataTableView.setItemsList((List<MoleculeDataModel>) aObservableFragmentsList);
-        this.pagination = this.createPaginationWithSuitablePageCount(
-                aObservableFragmentsList.size(),
+        aFragmentsDataTableView.setItemsList((List<MoleculeDataModel>) anObservableFragmentsList);
+        this.pagination = GuiUtil.createPaginationWithSuitablePageCount(
+                anObservableFragmentsList.size(),
                 aRowsPerPageSetting
         );
         super.addPaginationToGridPane(this.pagination);
@@ -215,7 +210,7 @@ public class FragmentsTabView extends GridTabForTableView {
         this.overviewButton.setTooltip(GuiUtil.createTooltip(Message.get("MainView.showOverviewViewButton.tooltip")));
         this.histogramButton = GuiUtil.getButtonOfStandardSize(Message.get("MainView.showHistogramViewButton.text"));
         this.histogramButton.setTooltip(GuiUtil.createTooltip(Message.get("MainView.showHistogramViewButton.tooltip")));
-        if (aObservableFragmentsList.isEmpty()) {
+        if (anObservableFragmentsList.isEmpty()) {
             this.overviewButton.setDisable(true);
             this.histogramButton.setDisable(true);
         }
@@ -452,29 +447,5 @@ public class FragmentsTabView extends GridTabForTableView {
      */
     public void bindCancelButtonVisibility(BooleanProperty aProperty) {
         this.cancelExportButton.visibleProperty().bind(aProperty);
-    }
-
-    /**
-     * Creates a new JavaFx pagination control that is configured with a suitable page count for the given number
-     * of molecules/fragments taking into account the rows per page setting. Also sets the MORTAR custom pagination skin
-     * as skin of the new pagination instance and configures its growth behavior. The page factory is *NOT* set.
-     *
-     * @param aListSize number of molecules/fragments to display
-     * @param aRowsPerPageSetting rows per page setting
-     * @return configured pagination control instance
-     */
-    private Pagination createPaginationWithSuitablePageCount(int aListSize, int aRowsPerPageSetting) {
-        int tmpPageCount = aListSize / aRowsPerPageSetting;
-        if (aListSize % aRowsPerPageSetting > 0) {
-            tmpPageCount++;
-        }
-        if (aListSize == 0) {
-            tmpPageCount = 1;
-        }
-        Pagination tmpPagination = new Pagination(tmpPageCount, 0);
-        tmpPagination.setSkin(new CustomPaginationSkin(tmpPagination));
-        VBox.setVgrow(tmpPagination, Priority.ALWAYS);
-        HBox.setHgrow(tmpPagination, Priority.ALWAYS);
-        return tmpPagination;
     }
 }

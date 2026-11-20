@@ -26,7 +26,6 @@
 package de.unijena.cheminf.mortar.controller;
 
 import de.unijena.cheminf.mortar.configuration.IConfiguration;
-import de.unijena.cheminf.mortar.gui.controls.CustomPaginationSkin;
 import de.unijena.cheminf.mortar.gui.controls.GridTabForTableView;
 import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
@@ -67,7 +66,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.Pagination;
 import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.SortEvent;
 import javafx.scene.control.Tab;
@@ -79,9 +77,6 @@ import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.TransferMode;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
@@ -1045,7 +1040,6 @@ public class MainViewController {
                 this.settingsContainer.getRowsPerPageSetting(),
                 this.fragmentationService.selectedFragmenterDisplayNameProperty()
         );
-        this.mainTabPane.getTabs().add(tmpMoleculesTab);
         tmpMoleculesTab.getPagination().setPageFactory(
                 pageIndex -> tmpMoleculesDataTableView.createMoleculeTableViewPage(pageIndex, this.settingsContainer)
         );
@@ -1077,31 +1071,8 @@ public class MainViewController {
                 GuiUtil.copySelectedTableViewCellsToClipboard(tmpMoleculesDataTableView);
             }
         });
+        this.mainTabPane.getTabs().add(tmpMoleculesTab);
         this.moleculesDataTableView = tmpMoleculesDataTableView;
-    }
-    //
-    /**
-     * Creates a new JavaFx pagination control that is configured with a suitable page count for the given number
-     * of molecules/fragments taking into account the rows per page setting. Also sets the MORTAR custom pagination skin
-     * as skin of the new pagination instance and configures its growth behavior. The page factory is *NOT* set.
-     *
-     * @param aListSize number of molecules/fragments to display
-     * @return configured pagination control instance
-     */
-    private Pagination createPaginationWithSuitablePageCount(int aListSize) {
-        int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
-        int tmpPageCount = aListSize / tmpRowsPerPage;
-        if (aListSize % tmpRowsPerPage > 0) {
-            tmpPageCount++;
-        }
-        if (aListSize == 0) {
-            tmpPageCount = 1;
-        }
-        Pagination tmpPagination = new Pagination(tmpPageCount, 0);
-        tmpPagination.setSkin(new CustomPaginationSkin(tmpPagination));
-        VBox.setVgrow(tmpPagination, Priority.ALWAYS);
-        HBox.setHgrow(tmpPagination, Priority.ALWAYS);
-        return tmpPagination;
     }
     //
     /**
@@ -1262,13 +1233,11 @@ public class MainViewController {
                 tmpFragmentsDataTableView,
                 aFragmentationName,
                 this.mapOfFragmentDataModelLists.get(aFragmentationName),
-                // (ObservableList<MoleculeDataModel>) (ObservableList<? extends MoleculeDataModel>)this.mapOfFragmentDataModelLists.get(aFragmentationName),
                 this.settingsContainer.getRowsPerPageSetting()
         );
-        this.mainTabPane.getTabs().add(tmpFragmentsTab);
-        tmpFragmentsTab.setOnCloseRequest(tmpEvent -> this.closeTabWithEvent(tmpEvent, tmpFragmentsTab));
-        tmpFragmentsTab.getCloseAllTabsItem().setOnAction(event -> this.closeAllTabs());
-        tmpFragmentsTab.getCloseTabItem().setOnAction(event -> this.closeTab(tmpFragmentsTab));
+        tmpFragmentsTab.setOnCloseRequest(tmpEvent -> this.closeTab(tmpEvent, tmpFragmentsTab));
+        tmpFragmentsTab.getCloseAllTabsItem().setOnAction(this::closeAllTabs);
+        tmpFragmentsTab.getCloseTabItem().setOnAction(tmpEvent -> this.closeTab(tmpEvent, tmpFragmentsTab));
         tmpFragmentsTab.getPagination().setPageFactory(
                 pageIndex -> tmpFragmentsDataTableView.createFragmentsTableViewPage(pageIndex, this.settingsContainer)
         );
@@ -1303,13 +1272,23 @@ public class MainViewController {
                 GuiUtil.copySelectedTableViewCellsToClipboard(tmpFragmentsDataTableView);
             }
         });
+        this.mainTabPane.getTabs().add(tmpFragmentsTab);
         return tmpFragmentsTab;
     }
     //
     /**
      * Closes all tabs that are closeable (everything except the molecules tab) and cleans up the data.
      */
-    private void closeAllTabs() {
+    private void closeAllTabs(Event aClosingEvent) {
+        if (this.isExportRunningProperty.get() || this.isFragmentationRunning) {
+            GuiUtil.guiMessageAlert(Alert.AlertType.WARNING,
+                    Message.get("MainViewController.Warning.ClosingWhileExporting.Title"),
+                    Message.get("MainViewController.Warning.ClosingWhileExporting.Header"),
+                    Message.get("MainViewController.Warning.ClosingWhileExporting.Content")
+            );
+            aClosingEvent.consume();
+            return;
+        }
         if (this.settingsContainer.getShowDataWillBeLostWarningSetting()) {
             GuiUtil.CheckboxAndButtonResult tmpCheckboxAndConfirmationResult = GuiUtil.guiConfirmationAlertWithCheckbox(
                     Message.get("MainViewController.Warning.CloseAllTabs.Title"),
@@ -1347,50 +1326,45 @@ public class MainViewController {
     /**
      * Closes the tab of the grid table and cleans up the referenced data if possible.
      *
-     * @param aGridTableView the tab to remove.
+     * @param anEvent the closing event
+     * @param aGridTableView the tab to remove
      * @throws NullPointerException if the given {@link GridTabForTableView} is null.
      */
-    private void closeTab(GridTabForTableView aGridTableView) {
+    private void closeTab(Event anEvent, GridTabForTableView aGridTableView) {
         Objects.requireNonNull(aGridTableView, "The tab which should be closed can not be null");
-        if (this.isGridTabDataCleanable(aGridTableView)) {
-            if (this.settingsContainer.getShowDataWillBeLostWarningSetting()) {
-                GuiUtil.CheckboxAndButtonResult tmpCheckboxAndConfirmationResult = GuiUtil.guiConfirmationAlertWithCheckbox(
-                        Message.get("MainViewController.Warning.CloseTab.Title"),
-                        Message.get("MainViewController.Warning.CloseTab.Header"),
-                        Message.get("MainViewController.Warning.CloseTab.Content"),
-                        Message.get("SettingsContainer.showDataWillBeLostWarning.checkbox.text")
-                );
-                if (tmpCheckboxAndConfirmationResult.buttonType() != ButtonType.OK) {
-                    return;
-                }
-                if (tmpCheckboxAndConfirmationResult.checkboxChecked()) {
-                    this.settingsContainer.setShowDataWillBeLostWarningSetting(false);
-                }
-            }
-            this.mainTabPane.getTabs().remove(aGridTableView);
-            this.cleanupGridTabData(aGridTableView);
-        } else {
-            this.mainTabPane.getTabs().remove(aGridTableView);
+        if (this.isExportRunningProperty.get() || this.isFragmentationRunning) {
+            GuiUtil.guiMessageAlert(Alert.AlertType.WARNING,
+                    Message.get("MainViewController.Warning.ClosingWhileExporting.Title"),
+                    Message.get("MainViewController.Warning.ClosingWhileExporting.Header"),
+                    Message.get("MainViewController.Warning.ClosingWhileExporting.Content")
+            );
+            anEvent.consume();
+            return;
         }
-
+        if (this.settingsContainer.getShowDataWillBeLostWarningSetting()) {
+            GuiUtil.CheckboxAndButtonResult tmpCheckboxAndConfirmationResult = GuiUtil.guiConfirmationAlertWithCheckbox(
+                    Message.get("MainViewController.Warning.CloseTab.Title"),
+                    Message.get("MainViewController.Warning.CloseTab.Header"),
+                    Message.get("MainViewController.Warning.CloseTab.Content"),
+                    Message.get("SettingsContainer.showDataWillBeLostWarning.checkbox.text")
+            );
+            if (tmpCheckboxAndConfirmationResult.buttonType() != ButtonType.OK) {
+                return;
+            }
+            if (tmpCheckboxAndConfirmationResult.checkboxChecked()) {
+                this.settingsContainer.setShowDataWillBeLostWarningSetting(false);
+            }
+        }
+        this.mainTabPane.getTabs().remove(aGridTableView);
+        if (this.isGridTabDataCleanable(aGridTableView)) {
+            this.cleanupGridTabData(aGridTableView);
+        }
         // Check if all fragmentation tabs were closed to disable the buttons for
         // fragmentation results (here namely the export and histogram buttons)
         if (this.mainTabPane.getTabs().size() <= 1) {
             this.mainView.getMainMenuBar().getExportMenu().setDisable(true);
             this.mainView.getMainMenuBar().getHistogramViewerMenuItem().setDisable(true);
         }
-    }
-    /**
-     * Closes the tab of the grid table and cleans up the referenced data if possible after
-     * the warning dialogue of data loss is acknowledged by the user with pressing OK on the
-     * information popup.
-     *
-     * @param anEvent the Event to consume if cancel gets pressed on the warning window.
-     * @param aGridTableView the tab to remove.
-     */
-    private void closeTabWithEvent(Event anEvent, GridTabForTableView aGridTableView) {
-        closeTab(aGridTableView);
-        anEvent.consume();
     }
     //
     /**
@@ -1429,23 +1403,25 @@ public class MainViewController {
         this.mapOfFragmentDataModelLists.remove(tmpFragmentationName);
         this.fragmentationService.clearFragmentation(tmpFragmentationName);
     }
+    //
     /**
      * Creates and returns a tab which visualizes the resulting fragments of each molecule that has undergone the
      * fragmentation with the given name.
      *
      * @param aFragmentationName String, unique name for the fragmentation job
-     * @return Tab
+     * @return the tab view of the items
      */
     private ItemizationTabView createItemsTab(String aFragmentationName) {
-        List<MoleculeDataModel> tmpItemsList = this.moleculeDataModelList.stream()
+        ObservableList<MoleculeDataModel> tmpObservableItemsList = FXCollections.observableArrayList(
+                this.moleculeDataModelList.stream()
                 .filter(x -> x.hasMoleculeUndergoneSpecificFragmentation(aFragmentationName))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
         ItemizationDataTableView tmpItemizationDataTableView =
                 new ItemizationDataTableView(aFragmentationName, this.configuration);
         ItemizationTabView tmpItemizationTab = new ItemizationTabView(
                 tmpItemizationDataTableView,
                 aFragmentationName,
-                FXCollections.observableArrayList(tmpItemsList),
+                tmpObservableItemsList,
                 this.settingsContainer.getRowsPerPageSetting()
         );
         tmpItemizationTab.getPagination().setPageFactory(
@@ -1455,19 +1431,13 @@ public class MainViewController {
                         this.settingsContainer
                 )
         );
-        tmpItemizationTab.setOnCloseRequest(event -> this.closeTabWithEvent(event, tmpItemizationTab));
+        tmpItemizationTab.setOnCloseRequest(tmpEvent -> this.closeTab(tmpEvent, tmpItemizationTab));
         tmpItemizationTab.setOnExportCsv(() -> this.exportFile(Exporter.ExportTypes.ITEM_CSV_FILE));
         tmpItemizationTab.setOnExportPdf(() -> this.exportFile(Exporter.ExportTypes.ITEM_PDF_FILE));
         tmpItemizationTab.setOnCancelExport(this::interruptExport);
         tmpItemizationTab.setOnOpenHistogramView(this::openHistogramView);
-        tmpItemizationTab.getCloseTabItem().setOnAction(
-                event -> this.closeTabWithEvent(new Event(
-                        tmpItemizationTab,
-                        tmpItemizationTab,
-                        Tab.TAB_CLOSE_REQUEST_EVENT
-                ), tmpItemizationTab)
-        );
-        tmpItemizationTab.getCloseAllTabsItem().setOnAction(event -> this.closeAllTabs());
+        tmpItemizationTab.getCloseAllTabsItem().setOnAction(this::closeAllTabs);
+        tmpItemizationTab.getCloseTabItem().setOnAction(tmpEvent -> this.closeTab(tmpEvent ,tmpItemizationTab));
         tmpItemizationTab.bindCancelButtonVisibility(this.isExportRunningProperty);
         int tmpRowsPerPage = this.settingsContainer.getRowsPerPageSetting();
         tmpItemizationDataTableView.setOnSort((EventHandler<SortEvent<TableView>>) event ->
