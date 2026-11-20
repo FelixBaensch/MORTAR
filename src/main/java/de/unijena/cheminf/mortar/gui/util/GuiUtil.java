@@ -139,7 +139,6 @@ public class GuiUtil {
          */
         void applyTo(Alert anAlert);
     }
-    //</editor-fold>
     //
     //<editor-fold desc="private records" defaultstate="collapsed">
     /**
