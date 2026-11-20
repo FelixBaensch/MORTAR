@@ -17,8 +17,8 @@ import org.gradle.api.Project
  * compatibility with the configuration cache.
  *
  * Registered Tasks:
- * - `localMacDmgIntel`: Creates a DMG for Intel architecture. Depends on the standard fatJar task.
- * - `localMacDmgArm`: Creates a DMG for ARM (Apple Silicon) architecture. Depends on the fatJarAarch64 task.
+ * - `localMacDmgIntel`: Creates a DMG for Intel architecture. Depends on the installDist task.
+ * - `localMacDmgArm`: Creates a DMG for ARM (Apple Silicon) architecture. Depends on the installDist task.
  *
  * Task Configuration:
  * - The `LocalMacDeploy` task type is used for the DMG packaging process.
@@ -27,7 +27,7 @@ import org.gradle.api.Project
  * Preconditions for Task Execution:
  * - The operating system must be macOS.
  * - A valid `jpackage` installation must be accessible on the system PATH (provided by JDK 14+).
- * - The required application fat jar (standard or for aarch64) must be pre-built.
+ * - The installed distribution (installDist) must be pre-built.
  * - The application icon file (icns format) must be present in the expected location.
  *
  * This plugin is part of the series of deployment plugins in the MORTAR framework, similar to the LinuxDeploymentPlugin and WindowsDeploymentPlugin.
@@ -43,7 +43,7 @@ class MacDeploymentPlugin : Plugin<Project> {
      * - `localMacDmgArm`: Builds a DMG package for ARM (Apple Silicon) architectures.
      *
      * Both tasks use the `LocalMacDeploy` task type, configure the target architecture,
-     * and specify dependencies on the appropriate `fatJar` tasks. Caching is disabled
+     * and depend on the `installDist` task. Caching is disabled
      * for these tasks to ensure fresh builds for deployment.
      *
      * @param project the Gradle project to which the plugin is applied, used for registering and configuring deployment tasks
@@ -54,15 +54,15 @@ class MacDeploymentPlugin : Plugin<Project> {
                 // Use receiver syntax; avoid implicit 'it' which is not available in Kotlin DSL configuration lambdas
                 arch = "intel"
                 outputs.cacheIf { false }
-                // Standard fatJar for Intel
-                dependsOn(tasks.named("fatJar"))
+                // Installed distribution; LocalMacDeploy keeps only the "mac" JavaFX jars
+                dependsOn(tasks.named("installDist"))
             }
             tasks.register("localMacDmgArm", LocalMacDeploy::class.java) {
                 // Use receiver syntax; avoid implicit 'it' which is not available in Kotlin DSL configuration lambdas
                 arch = "arm"
                 outputs.cacheIf { false }
-                // AArch64 fat jar for Apple Silicon
-                dependsOn(tasks.named("fatJarAarch64"))
+                // Installed distribution; LocalMacDeploy keeps only the "mac-aarch64" JavaFX jars
+                dependsOn(tasks.named("installDist"))
             }
         }
     }
