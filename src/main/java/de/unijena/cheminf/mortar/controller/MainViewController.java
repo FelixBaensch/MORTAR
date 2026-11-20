@@ -67,6 +67,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Pagination;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.SortEvent;
 import javafx.scene.control.Tab;
@@ -520,6 +521,12 @@ public class MainViewController {
         this.importTask = new Task<>() {
             @Override
             protected List<MoleculeDataModel> call() throws Exception {
+                //note: updateMessage() and updateProgress() coalesce the updates for the JavaFX GUI thread;
+                // a total count of -1 results in an indeterminate progress
+                tmpImporter.setProgressListener((aPhase, aProcessedCount, aTotalCount) -> {
+                    this.updateMessage(Message.get(aPhase.getMessageKey()));
+                    this.updateProgress(aProcessedCount, aTotalCount);
+                });
                 List<MoleculeDataModel> tmpSet = tmpImporter.importMoleculeFile(aFile, tmpIsRegardStereo, tmpIsFillOpenValences, tmpIsKekulizationEnforced);
                 return tmpSet;
             }
@@ -528,6 +535,7 @@ public class MainViewController {
             //note: setOnSucceeded() takes place in the JavaFX GUI thread again but still runLater() is necessary to wait
             // for the thread to be free for the update
             Platform.runLater(() -> {
+                this.resetImportProgress((Task<?>) event.getSource());
                 List<MoleculeDataModel> tmpImportedMoleculeDataModels = null;
                 try {
                     tmpImportedMoleculeDataModels = this.importTask.get();
@@ -565,10 +573,12 @@ public class MainViewController {
             })
         );
         this.importTask.setOnCancelled(event -> {
+            this.resetImportProgress((Task<?>) event.getSource());
             this.updateStatusBar(this.importerThread, Message.get("Status.canceled"));
             this.isImportRunningProperty.setValue(false);
         });
         this.importTask.setOnFailed(event -> {
+            this.resetImportProgress((Task<?>) event.getSource());
             Exception tmpCause = (Exception) event.getSource().getException();
             MainViewController.LOGGER.log(Level.SEVERE, tmpCause.toString(), tmpCause);
             this.updateStatusBar(this.importerThread, Message.get("Status.importFailed"));
@@ -579,6 +589,13 @@ public class MainViewController {
                         Message.get("Importer.FileImportExceptionAlert.Text"),
                         tmpCause);
             });
+        });
+        Task<List<MoleculeDataModel>> tmpImportTask = this.importTask;
+        this.mainView.getStatusBar().getProgressBar().progressProperty().bind(tmpImportTask.progressProperty());
+        tmpImportTask.messageProperty().addListener((anObservable, anOldMessage, aNewMessage) -> {
+            if (tmpImportTask.isRunning() && aNewMessage != null && !aNewMessage.isBlank()) {
+                this.mainView.getStatusBar().getStatusLabel().setText(aNewMessage);
+            }
         });
         this.importerThread = new Thread(importTask);
         this.importerThread.setName(ThreadType.IMPORT_THREAD.getThreadName());
@@ -1106,6 +1123,21 @@ public class MainViewController {
     private void interruptImport() {
         this.importTask.cancel();
         this.importerThread.interrupt();
+    }
+    //
+    /**
+     * Unbinds the status bar progress bar from the given import task and resets it to an indeterminate progress, as
+     * shown for all other background tasks. Does nothing if a newer import task has replaced the given one already.
+     *
+     * @param anImportTask the finished, failed, or cancelled import task
+     */
+    private void resetImportProgress(Task<?> anImportTask) {
+        if (this.importTask != anImportTask) {
+            return;
+        }
+        ProgressBar tmpProgressBar = this.mainView.getStatusBar().getProgressBar();
+        tmpProgressBar.progressProperty().unbind();
+        tmpProgressBar.setProgress(ProgressBar.INDETERMINATE_PROGRESS);
     }
     //
     /**

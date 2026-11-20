@@ -1,0 +1,430 @@
+
+  Marvin  01211310252D          
+
+ 22 24  0  0  0  0            999 V2000
+   -2.8644   -0.2905    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.8656   -1.1176    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1509   -1.5304    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1527    0.1221    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4377   -0.2868    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4343   -1.1151    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7192   -1.5240    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0030   -1.1092    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+   -0.0064   -0.2809    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+   -0.7260    0.1325    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7066    0.1336    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4211   -0.2790    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1336    0.1349    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1315    0.9606    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4109    1.3705    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7014    0.9543    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8489   -0.2755    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8438    1.3760    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7124   -1.5197    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1504   -2.3552    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.5788    0.1217    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0064    0.5438    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  4  1  1  0  0  0  0
+  1 21  1  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3 20  1  0  0  0  0
+  3  6  2  0  0  0  0
+  5  4  2  0  0  0  0
+  5 10  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8 19  1  6  0  0  0
+  8  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+  9 11  1  0  0  0  0
+  9 22  1  1  0  0  0
+ 16 11  1  0  0  0  0
+ 11 12  2  0  0  0  0
+ 12 13  1  0  0  0  0
+ 13 17  1  0  0  0  0
+ 13 14  2  0  0  0  0
+ 14 18  1  0  0  0  0
+ 14 15  1  0  0  0  0
+ 15 16  2  0  0  0  0
+M  END
+> <ChEBI ID>
+CHEBI:90
+
+> <ChEBI Name>
+(-)-epicatechin
+
+> <Star>
+3
+
+> <Definition>
+A catechin with (2R,3R)-configuration.
+
+> <Secondary ChEBI ID>
+CHEBI:18484
+
+> <InChI>
+InChI=1S/C15H14O6/c16-8-4-11(18)9-6-13(20)15(21-14(9)5-8)7-1-2-10(17)12(19)3-7/h1-5,13,15-20H,6H2/t13-,15-/m1/s1
+
+> <InChIKey>
+PFTAWBLQPZVEMU-UKRRQHHQSA-N
+
+> <SMILES>
+[H][C@@]1(Oc2cc(O)cc(O)c2C[C@H]1O)c1ccc(O)c(O)c1
+
+> <Formulae>
+C15H14O6
+
+> <Charge>
+0
+
+> <Mass>
+290.26810
+
+> <Monoisotopic Mass>
+290.07904
+
+> <IUPAC Names>
+(2R,3R)-2-(3,4-dihydroxyphenyl)-3,4-dihydro-2H-chromene-3,5,7-triol
+
+> <Synonyms>
+(-)-Epicatechin
+
+> <CAS Registry Numbers>
+490-46-0
+
+> <KEGG COMPOUND Database Links>
+C09727
+
+> <KNApSAcK Database Links>
+C00000956
+
+> <LINCS Database Links>
+LSM-20956
+
+> <LIPID MAPS instance Database Links>
+LMPK12020003
+
+> <MetaCyc Database Links>
+CPD-7630
+
+> <PubMed citation Links>
+7655336
+10427682
+
+> <Reaxys Registry Numbers>
+92760
+
+> <ACToR Database Links>
+2545-08-6
+
+> <BKMS-react Database Links>
+1846
+42738
+30120
+23425
+93808
+224987
+
+> <BRENDA Database Links>
+2.3.1.85
+1.1.1.146
+1.2.3.1
+1.3.1.77
+1.3.1.112
+1.5.1.3
+1.6.2.2
+1.6.3.1
+1.10.3.1
+1.10.3.2
+1.11.2.2
+1.13.11.34
+1.14.18.1
+1.17.1.3
+1.17.4.1
+2.1.1.6
+2.1.1.42
+2.4.1.4
+2.4.1.7
+2.7.7.49
+2.7.11.18
+2.8.2.1
+3.1.1.20
+3.4.15.1
+3.4.21.26
+3.5.3.1
+5.6.2.2
+
+> <BRENDALigand Database Links>
+93808
+224987
+23425
+30120
+42738
+1846
+
+> <BindingDB Database Links>
+23417
+
+> <ChEMBL Database Links>
+CHEMBL583912
+
+> <CompTox Database Links>
+DTXSID4045133
+
+> <MetaboLights Database Links>
+MTBLS7584
+MTBLS784
+MTBLS8729
+MTBLS773
+MTBLS871
+MTBLS897
+MTBLS898
+MTBLS1115
+MTBLS962
+MTBLS1443
+MTBLS129
+MTBLS1326
+MTBLS1677
+MTBLS1906
+MTBLS1803
+MTBLS2145
+MTBLS2205
+MTBLS2401
+MTBLS3358
+MTBLS3320
+MTBLS3683
+MTBLS3487
+MTBLS3854
+MTBLS1405
+MTBLS4861
+MTBLS4099
+MTBLS4567
+MTBLS4722
+MTBLS4932
+MTBLS4894
+MTBLS2413
+MTBLS5148
+MTBLS2772
+MTBLS2870
+MTBLS2633
+MTBLS2776
+MTBLS2806
+MTBLS2737
+MTBLS5572
+MTBLS55
+MTBLS2876
+MTBLS59
+MTBLS6667
+MTBLS8183
+MTBLS353
+
+> <NMRShiftDB Database Links>
+60021291
+
+> <PDB Database Links>
+4ma6
+6awt
+6awv
+6ax0
+
+> <PubChem Database Links>
+CID: 72276
+SID: 160709352
+
+> <SABIO-RK Database Links>
+6118
+8083
+
+> <SureChEMBL Database Links>
+SCHEMBL19412
+
+> <UniProt Database Links>
+Q9SEV0
+
+> <Last Modified>
+22 Sep 2021
+
+$$$$
+
+  Marvin  02151210452D          
+
+ 11 12  0  0  0  0            999 V2000
+    0.0000   -0.8250    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0
+   -0.7145   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7145    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.8250    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+   -0.4125    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    1.6500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5395   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1270   -1.1270    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4290    0.8250    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  5 10  1  0  0  0  0
+  5  3  1  0  0  0  0
+ 10  4  1  0  0  0  0
+  4  1  1  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  5  6  1  1  0  0  0
+  1  6  1  1  0  0  0
+  5  7  1  0  0  0  0
+  4  8  1  0  0  0  0
+  4  9  1  0  0  0  0
+ 10 11  2  0  0  0  0
+M  END
+> <ChEBI ID>
+CHEBI:165
+
+> <ChEBI Name>
+(1S,4R)-fenchone
+
+> <Star>
+3
+
+> <Definition>
+A fenchone that has 1S,4R stereochemistry. A colourless, oily liquid found in fennel oil, it is used in perfumery and as flavour in foods.
+
+> <Secondary ChEBI ID>
+CHEBI:63901
+
+> <SMILES>
+CC1(C)[C@@H]2CC[C@@](C)(C2)C1=O
+
+> <InChIKey>
+LHXDLQBQYFFVNW-XCBNKYQSSA-N
+
+> <InChI>
+InChI=1S/C10H16O/c1-9(2)7-4-5-10(3,6-7)8(9)11/h7H,4-6H2,1-3H3/t7-,10+/m1/s1
+
+> <Formulae>
+C10H16O
+
+> <Charge>
+0
+
+> <Mass>
+152.23340
+
+> <Monoisotopic Mass>
+152.12012
+
+> <IUPAC Names>
+(1S,4R)-fenchan-2-one
+
+> <Synonyms>
+(+)-2-fenchanone
+(+)-fenchan-2-one
+(+)-fenchone
+(1S)-(+)-fenchone
+(1S)-fenchone
+(1S,4R)-(+)-2-fenchanone
+(1S,4R)-(+)-fenchan-2-one
+(1S,4R)-(+)-fenchone
+(1S,4R)-1,3,3-trimethylbicyclo[2.2.1]heptan-2-one
+(1S,4R)-2-fenchanone
+(1S,4R)-fenchan-2-one
+(1S,4R)-fenchone
+d-fenchone
+
+> <CAS Registry Numbers>
+4695-62-9
+
+> <KEGG COMPOUND Database Links>
+C11387
+
+> <Reaxys Registry Numbers>
+2206555
+
+> <CompTox Database Links>
+DTXSID60858862
+
+> <IntEnz Database Links>
+EC 1.1.1.322
+
+> <NMRShiftDB Database Links>
+60021333
+
+> <PubChem Database Links>
+SID: 17425496
+CID: 1201521
+
+> <Rhea Database Links>
+RHEA:32331
+RHEA:32335
+
+> <SureChEMBL Database Links>
+SCHEMBL856607
+
+> <Last Modified>
+10 Mar 2012
+
+$$$$
+
+  Mrv0541 12031312382D          
+
+ 10  9  0  0  0  0            999 V2000
+   -3.4915    0.0159    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+   -4.2059   -0.3966    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.3493    0.0159    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.0638   -0.3966    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.6349   -0.3966    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.9204    0.0159    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.6348   -1.2216    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.9203   -1.6340    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.9202   -2.4590    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.2059   -1.2214    0.0000 R   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  4  3  1  0  0  0  0
+  5  3  1  0  0  0  0
+  5  7  1  0  0  0  0
+  5  6  1  0  0  0  0
+  2  6  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  2  0  0  0  0
+  8 10  1  0  0  0  0
+M  RGP  1   1   1
+M  END
+> <ChEBI ID>
+CHEBI:598
+
+> <ChEBI Name>
+1-alkyl-2-acylglycerol
+
+> <Star>
+3
+
+> <Definition>
+A glycerol ether having an alkyl substituent at the oxygen at the 1-position and an acyl substituent at the oxygen at the 2-position.
+
+> <Secondary ChEBI ID>
+CHEBI:19009
+
+> <SMILES>
+OCC(CO[*])OC([*])=O
+
+> <Formulae>
+C4H6O4R2
+
+> <Charge>
+0
+
+> <Mass>
+118.08800
+
+> <Monoisotopic Mass>
+118.02661
+
+> <Synonyms>
+1-alkyl-2-acylglycerols
+2-Acyl-1-alkyl-sn-glycerol
+
+> <PubChem Database Links>
+SID: 172120883
+
+> <Last Modified>
+18 May 2016
+
+$$$$
