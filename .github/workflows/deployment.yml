@@ -101,7 +101,9 @@ jobs:
           hdiutil attach -nobrowse -readonly -mountpoint "$tmpMountDir" build/jpackage/out/*.dmg
           tmpPid=""
           # stops the app and detaches the DMG on every way out of this step, including the early exits below
-          trap '[ -n "$tmpPid" ] && kill -9 "$tmpPid" 2> /dev/null; hdiutil detach -force "$tmpMountDir" > /dev/null 2>&1 || true' EXIT
+          # (every command ends in "|| true": under "bash -e", a failing command, e.g. kill on an app that has already
+          # exited, would otherwise make the trap fail a passed step)
+          trap 'if [ -n "$tmpPid" ]; then kill -9 "$tmpPid" 2> /dev/null || true; fi; hdiutil detach -force "$tmpMountDir" > /dev/null 2>&1 || true' EXIT
           # MORTAR logs to the console only until its logging is set up, then only to files in this folder. On macOS,
           # FileUtil.getAppDirPath() puts the app data under Library/Application Support in the user home (+
           # mortar.vendor.name/mortar.dataDirectory.name/mortar.logDirectory.name). It is emptied first so that only
