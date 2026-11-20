@@ -27,6 +27,7 @@ package de.unijena.cheminf.mortar.gui.util;
 
 import de.unijena.cheminf.mortar.configuration.Configuration;
 import de.unijena.cheminf.mortar.configuration.IConfiguration;
+import de.unijena.cheminf.mortar.gui.controls.CustomPaginationSkin;
 import de.unijena.cheminf.mortar.gui.views.FragmentsDataTableView;
 import de.unijena.cheminf.mortar.gui.views.IDataTableView;
 import de.unijena.cheminf.mortar.gui.views.ItemizationDataTableView;
@@ -36,9 +37,12 @@ import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Control;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
@@ -56,9 +60,11 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
@@ -107,6 +113,193 @@ public class GuiUtil {
     }
     //</editor-fold>
     //
+    /**
+     * Private interface that defines a contract for different types of content that can be displayed
+     * in JavaFX Alert dialogs. Each implementation encapsulates the logic for configuring a specific
+     * content type within an Alert's dialog pane.
+     * <p>
+     * Currently Permitted implementations (26.03.2026):
+     * <ul>
+     *     <li>{@link StringContent} - Simple text content</li>
+     *     <li>{@link HyperlinkContent} - Interactive hyperlink content</li>
+     *     <li>{@link CheckboxContent} - Text content with an interactive checkbox</li>
+     *     <li>{@link MultiButtonContent} - Text content with custom button types</li>
+     *     <li>{@link ExpandableContent} - Text content with an expandable text area</li>
+     * </ul>
+     * </p>
+     */
+    private interface IContent {
+        /**
+         * Applies this content configuration to the given Alert dialog pane.
+         * <p>
+         * Implementations are responsible for configuring the Alert's dialog pane with their
+         * specific content type and layout. This may include setting text content, adding custom
+         * nodes, configuring buttons, or setting expandable content.
+         * </p>
+         *
+         * @param anAlert the Alert dialog to configure with this content. Must not be null.
+         */
+        void applyTo(Alert anAlert);
+    }
+    //
+    //<editor-fold desc="private records" defaultstate="collapsed">
+    /**
+     * Record implementation of {@link IContent} for displaying simple text content in an Alert.
+     *
+     * @param aContentText the text content to display in the alert. May contain newlines for
+     *                     multi-line text. Must not be null.
+     */
+    private record StringContent(String aContentText) implements IContent {
+        /**
+         * Applies the text content to the Alert by setting its content text property.
+         *
+         * @param anAlert the Alert dialog to configure. Must not be null.
+         */
+        @Override
+        public void applyTo(Alert anAlert) {
+            anAlert.setContentText(aContentText);
+        }
+    }
+    /**
+     * Record implementation of {@link IContent} for displaying an interactive Hyperlink in an Alert.
+     *
+     * @param aHyperlink the Hyperlink node to display in the alert. Must not be null.
+     */
+    private record HyperlinkContent(Hyperlink aHyperlink) implements IContent {
+        /**
+         * Applies the hyperlink content to the Alert by adding it to the dialog pane.
+         *
+         * @param anAlert the Alert dialog to configure. Must not be null.
+         */
+        @Override
+        public void applyTo(Alert anAlert) {
+            anAlert.getDialogPane().setContent(aHyperlink);
+        }
+    }
+    /**
+     * Record implementation of {@link IContent} for displaying text content with an interactive checkbox.
+     *
+     * @param aContentText the main text content to display above the checkbox. Will be wrapped
+     *                     if it exceeds the available width. Must not be null.
+     * @param aCheckboxText the label text for the checkbox, displayed to the right of the checkbox.
+     *                      Must not be null.
+     * @param aCheckbox the CheckBox control whose selected state will be queried after the alert
+     *                  is dismissed. Must not be null.
+     */
+    private record CheckboxContent(String aContentText, String aCheckboxText, CheckBox aCheckbox) implements IContent {
+        /**
+         * Applies the checkbox content to the Alert by creating a layout with wrapped text and
+         * a checkbox, and adding it to the dialog pane.
+         * <p>
+         * The layout is structured as:
+         * <ul>
+         *     <li>Wrapped text label (grows to fill available space)</li>
+         *     <li>Checkbox with associated label text</li>
+         * </ul>
+         * </p>
+         *
+         * @param anAlert the Alert dialog to configure. Must not be null.
+         */
+        @Override
+        public void applyTo(Alert anAlert) {
+            Label tmpContentLabel = new Label(aContentText);
+            tmpContentLabel.setWrapText(true);
+            tmpContentLabel.maxWidthProperty().bind(anAlert.getDialogPane().widthProperty().subtract(40));
+            VBox.setVgrow(tmpContentLabel, Priority.ALWAYS);
+            VBox tmpContentBox = new VBox(GuiDefinitions.GUI_SPACING_VALUE, tmpContentLabel, aCheckbox);
+            tmpContentBox.setFillWidth(true);
+            anAlert.getDialogPane().setContent(tmpContentBox);
+        }
+    }
+    /**
+     * Record implementation of {@link IContent} for displaying text content with custom button types.
+     *
+     * @param contentText the text content to display in the alert. Must not be null.
+     * @param buttonTypesArray an array of ButtonType objects representing the buttons to display
+     *                          in the alert. The order in the array determines the button layout.
+     *                          Must not be null or empty.
+     */
+    private record MultiButtonContent(String contentText, ButtonType[] buttonTypesArray) implements IContent {
+        /**
+         * Applies the text content and custom button types to the Alert.
+         *
+         * @param anAlert the Alert dialog to configure. Must not be null.
+         */
+        @Override
+        public void applyTo(Alert anAlert) {
+            anAlert.setContentText(this.contentText);
+            anAlert.getButtonTypes().setAll(this.buttonTypesArray);
+        }
+    }
+    /**
+     * Record implementation of {@link IContent} for displaying text content with an expandable text area.
+     * <p>
+     * The layout consists of:
+     * <ul>
+     *     <li>Main content text (displayed in the alert's header/content area)</li>
+     *     <li>A label describing the expandable content</li>
+     *     <li>A read-only, word-wrapped TextArea containing the expandable information</li>
+     * </ul>
+     * The expandable section is collapsed by default and can be expanded by the user via a disclosure
+     * triangle in the dialog pane.
+     * </p>
+     *
+     * @param contentText the main text content to display in the alert. Must not be null.
+     * @param labelText the label text displayed above the expandable text area, typically describing
+     *                   the type of information in the expandable section (e.g., "Stack Trace").
+     *                   Must not be null.
+     * @param expandableString the detailed text content to display in the expandable area. This is
+     *                           typically a stack trace, error details, or other verbose information.
+     *                           Must not be null.
+     */
+    private record ExpandableContent(
+            String contentText,
+            String labelText,
+            String expandableString
+    ) implements IContent {
+        /**
+         * Applies the expandable content to the Alert by creating a GridPane layout with a label
+         * and read-only TextArea, and setting it as the dialog pane's expandable content.
+         * <p>
+         * The TextArea is configured to:
+         * <ul>
+         *     <li>Be read-only (non-editable)</li>
+         *     <li>Wrap text to the available width</li>
+         *     <li>Grow to fill available space both horizontally and vertically</li>
+         * </ul>
+         * </p>
+         *
+         * @param anAlert the Alert dialog to configure. Must not be null.
+         */
+        @Override
+        public void applyTo(Alert anAlert) {
+            Label tmpLabel = new Label(this.labelText);
+            TextArea tmpExpandableTextArea = new TextArea(this.expandableString);
+            tmpExpandableTextArea.setEditable(false);
+            tmpExpandableTextArea.setWrapText(true);
+            tmpExpandableTextArea.setMaxWidth(Double.MAX_VALUE);
+            tmpExpandableTextArea.setMaxHeight(Double.MAX_VALUE);
+            GridPane.setVgrow(tmpExpandableTextArea, Priority.ALWAYS);
+            GridPane.setHgrow(tmpExpandableTextArea, Priority.ALWAYS);
+            GridPane tmpGridPane = new GridPane();
+            tmpGridPane.setMaxWidth(Double.MAX_VALUE);
+            tmpGridPane.add(tmpLabel, 0, 0);
+            tmpGridPane.add(tmpExpandableTextArea, 0, 1);
+            //Add expandable text to the dialog/alert pane
+            anAlert.getDialogPane().setExpandableContent(tmpGridPane);
+        }
+    }
+    //
+    /**
+     * Small utility type to return the result of a gui confirmation dialogue with a checkbox and the button type
+     * that was pressed.
+     *
+     * @param checkboxChecked true if the checkbox is checked upon closing the window.
+     * @param buttonType the button tye that was pressed by the user
+     */
+    public record CheckboxAndButtonResult(boolean checkboxChecked, ButtonType buttonType) {}
+    //</editor-fold>
+    //
     //<editor-fold desc="Private constructor">
     /**
      * Private parameter-less constructor.
@@ -114,6 +307,86 @@ public class GuiUtil {
      */
     private GuiUtil() {
     }
+    //</editor-fold>
+    //
+    //<editor-fold desc="private static methods" defaultstate="collapsed">
+    /**
+     * Generic factory method that creates and configures a fully-initialized Alert dialog with
+     * specific content handling based on the {@link IContent#applyTo} method of the passed {@link IContent}.
+     * <p>
+     * The method performs the following configuration steps:
+     * <ol>
+     *     <li>Creates an Alert with the specified AlertType</li>
+     *     <li>Sets the title and header text</li>
+     *     <li>Delegates content configuration to the provided Content implementation</li>
+     *     <li>Configures the dialog pane to use preferred sizing (auto-sizing)</li>
+     *     <li>Retrieves the underlying Stage and applies the application icon</li>
+     * </ol>
+     * </p>
+     *
+     * @param anAlertType the AlertType that determines the default styling and button configuration
+     *                    of the Alert. Common values include:
+     *                    <ul>
+     *                        <li>{@link Alert.AlertType#INFORMATION} - for informational messages</li>
+     *                        <li>{@link Alert.AlertType#WARNING} - for warning messages</li>
+     *                        <li>{@link Alert.AlertType#ERROR} - for error messages</li>
+     *                        <li>{@link Alert.AlertType#CONFIRMATION} - for confirmation dialogs</li>
+     *                    </ul>
+     *                    Must not be null.
+     * @param aTitle the title text displayed in the Alert window's title bar. Must not be null.
+     * @param aHeaderText the header text displayed prominently in the Alert dialog pane. This text
+     *                    appears above the content area.
+     *                    Must not be null.
+     * @param aContent a Content implementation that encapsulates the specific content type and
+     *                 configuration logic for this Alert. The content's {@link IContent#applyTo(Alert)}
+     *                 method will be invoked to configure the Alert's dialog pane. Must not be null.
+     *
+     * @return a fully-configured and initialized Alert dialog ready to be displayed. The returned
+     *         Alert has:
+     *         <ul>
+     *             <li>The specified title and header text</li>
+     *             <li>Content configured by the provided Content implementation</li>
+     *             <li>Dialog pane sized to fit its content (preferred sizing)</li>
+     *             <li>The application icon set on the window stage</li>
+     *         </ul>
+     *         The Alert is not yet displayed; call {@link Alert#showAndWait()} or
+     *         {@link Alert#show()} to display it to the user.
+     */
+    private static Alert createAlert(
+            Alert.AlertType anAlertType,
+            String aTitle,
+            String aHeaderText,
+            IContent aContent
+    ) {
+        Alert tmpAlert = new Alert(anAlertType);
+        tmpAlert.setTitle(aTitle);
+        tmpAlert.setHeaderText(aHeaderText);
+        aContent.applyTo(tmpAlert);
+        //tmpAlert.setResizable(true);
+        tmpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+        tmpAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
+        Stage tmpAlertStage = (Stage) tmpAlert.getDialogPane().getScene().getWindow();
+        String tmpIconURL = GuiUtil.class.getClassLoader().getResource(
+                GuiUtil.CONFIGURATION.getProperty("mortar.imagesFolder") + GuiUtil.CONFIGURATION.getProperty("mortar.logo.icon.name")).toExternalForm();
+        tmpAlertStage.getIcons().add(new Image(tmpIconURL));
+        return tmpAlert;
+    }
+    //
+    /**
+     * Creates a horizontal box with the GUI's standard padding and spacing and the given alignment that holds the
+     * given buttons.
+     *
+     * @param anAlignment the alignment of the buttons in the box
+     * @param aButtonArray the buttons to place in the box, in the given order
+     * @return new HBox instance containing the given buttons
+     */
+    private static HBox createButtonBox(Pos anAlignment, Button[] aButtonArray) {
+        HBox tmpBox = new HBox(GuiDefinitions.GUI_SPACING_VALUE, aButtonArray);
+        tmpBox.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+        tmpBox.setAlignment(anAlignment);
+        return tmpBox;
+    }
+    //
     //</editor-fold>
     //
     //<editor-fold desc="public static methods" defaultstate="collapsed">
@@ -128,18 +401,13 @@ public class GuiUtil {
      * @return ButtonType selected by user, options depend on the given alert type (INFORMATION, WARNING, ERROR -> OK,
      * CONFIRMATION -> OK / CANCEL)
      */
-    public static Optional<ButtonType> guiMessageAlert(Alert.AlertType anAlertType, String aTitle, String aHeaderText, String aContentText) {
-        Alert tmpAlert = new Alert(anAlertType);
-        tmpAlert.setTitle(aTitle);
-        tmpAlert.setHeaderText(aHeaderText);
-        tmpAlert.setContentText(aContentText);
-        //tmpAlert.setResizable(true);
-        tmpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
-        tmpAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
-        Stage tmpAlertStage = (Stage) tmpAlert.getDialogPane().getScene().getWindow();
-        String tmpIconURL = GuiUtil.class.getClassLoader().getResource(
-                GuiUtil.CONFIGURATION.getProperty("mortar.imagesFolder") + GuiUtil.CONFIGURATION.getProperty("mortar.logo.icon.name")).toExternalForm();
-        tmpAlertStage.getIcons().add(new Image(tmpIconURL));
+    public static Optional<ButtonType> guiMessageAlert(
+            Alert.AlertType anAlertType,
+            String aTitle,
+            String aHeaderText,
+            String aContentText
+    ) {
+        Alert tmpAlert = GuiUtil.createAlert(anAlertType, aTitle, aHeaderText, new StringContent(aContentText));
         return tmpAlert.showAndWait();
     }
     //
@@ -158,17 +426,12 @@ public class GuiUtil {
                                                                     String aTitle,
                                                                     String aHeaderText,
                                                                     Hyperlink aHyperlink) {
-        Alert tmpAlert = new Alert(anAlertType);
-        tmpAlert.setTitle(aTitle);
-        tmpAlert.setHeaderText(aHeaderText);
-        tmpAlert.getDialogPane().setContent(aHyperlink);
-        //tmpAlert.setResizable(true);
-        tmpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
-        tmpAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
-        Stage tmpAlertStage = (Stage) tmpAlert.getDialogPane().getScene().getWindow();
-        String tmpIconURL = GuiUtil.class.getClassLoader().getResource(
-                GuiUtil.CONFIGURATION.getProperty("mortar.imagesFolder") + GuiUtil.CONFIGURATION.getProperty("mortar.logo.icon.name")).toExternalForm();
-        tmpAlertStage.getIcons().add(new Image(tmpIconURL));
+        Alert tmpAlert = GuiUtil.createAlert(
+                anAlertType,
+                aTitle,
+                aHeaderText,
+                new HyperlinkContent(aHyperlink)
+        );
         return tmpAlert.showAndWait();
     }
     //
@@ -182,18 +445,46 @@ public class GuiUtil {
      * @return ButtonType selected by user - ButtonType.OK or ButtonType.CANCEL
      */
     public static ButtonType guiConfirmationAlert(String aTitle, String aHeaderText, String aContentText) {
-        Alert tmpAlert = new Alert(Alert.AlertType.CONFIRMATION);
-        //tmpAlert.setResizable(true);
-        tmpAlert.setTitle(aTitle);
-        tmpAlert.setHeaderText(aHeaderText);
-        tmpAlert.setContentText(aContentText);
-        tmpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
-        tmpAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
-        Stage tmpAlertStage = (Stage) tmpAlert.getDialogPane().getScene().getWindow();
-        String tmpIconURL = GuiUtil.class.getClassLoader().getResource(
-                GuiUtil.CONFIGURATION.getProperty("mortar.imagesFolder") + GuiUtil.CONFIGURATION.getProperty("mortar.logo.icon.name")).toExternalForm();
-        tmpAlertStage.getIcons().add(new Image(tmpIconURL));
+        Alert tmpAlert = GuiUtil.createAlert(
+                Alert.AlertType.CONFIRMATION,
+                aTitle,
+                aHeaderText,
+                new StringContent(aContentText)
+        );
         return tmpAlert.showAndWait().orElse(ButtonType.CANCEL);
+    }
+    //
+    /**
+     * Creates and shows confirmation type alert and returns the button selected by user as ButtonType with
+     * an additional checkbox.
+     *
+     * @param aTitle Title of the confirmation alert
+     * @param aHeaderText Header of the confirmation alert
+     * @param aContentText Text that the confirmation alert contains
+     * @param aCheckboxText Explanation to display on the right side of the checkbox
+     * @return a {@link CheckboxAndButtonResult} containing a boolean specifying if the checkbox was marked
+     * and the button type selected by user - ButtonType.OK or ButtonType.CANCEL
+     */
+    public static CheckboxAndButtonResult guiConfirmationAlertWithCheckbox(
+            String aTitle,
+            String aHeaderText,
+            String aContentText,
+            String aCheckboxText
+    ) {
+        CheckBox tmpCheckBox = new CheckBox(aCheckboxText);
+        Alert tmpAlert = GuiUtil.createAlert(
+                Alert.AlertType.CONFIRMATION,
+                aTitle, aHeaderText,
+                new CheckboxContent(
+                        aContentText,
+                        aCheckboxText,
+                        tmpCheckBox
+                )
+        );
+
+        Optional<ButtonType> result = tmpAlert.showAndWait();
+        return new CheckboxAndButtonResult(tmpCheckBox.isSelected(),
+                result.orElse(ButtonType.CANCEL));
     }
     //
     /**
@@ -205,18 +496,19 @@ public class GuiUtil {
      * @param aContentText Text that the confirmation alert contains
      * @return ButtonType selected by user - ButtonType.YES, ButtonType.NO, or ButtonType.CANCEL.
      */
-    public static ButtonType guiYesNoCancelConfirmationAlert(String aTitle, String aHeaderText, String aContentText) {
-        Alert tmpAlert = new Alert(Alert.AlertType.CONFIRMATION);
-        tmpAlert.setTitle(aTitle);
-        tmpAlert.setHeaderText(aHeaderText);
-        tmpAlert.setContentText(aContentText);
-        tmpAlert.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO, ButtonType.CANCEL);
-        tmpAlert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
-        tmpAlert.getDialogPane().setMinWidth(Region.USE_PREF_SIZE);
-        Stage tmpAlertStage = (Stage) tmpAlert.getDialogPane().getScene().getWindow();
-        String tmpIconURL = GuiUtil.class.getClassLoader().getResource(
-                GuiUtil.CONFIGURATION.getProperty("mortar.imagesFolder") + GuiUtil.CONFIGURATION.getProperty("mortar.logo.icon.name")).toExternalForm();
-        tmpAlertStage.getIcons().add(new Image(tmpIconURL));
+    public static ButtonType guiYesNoCancelConfirmationAlert(
+            String aTitle,
+            String aHeaderText,
+            String aContentText
+    ) {
+        Alert tmpAlert = GuiUtil.createAlert(
+                Alert.AlertType.CONFIRMATION,
+                aTitle, aHeaderText,
+                new MultiButtonContent(
+                        aContentText,
+                        new ButtonType[]{ButtonType.YES, ButtonType.NO, ButtonType.CANCEL}
+                )
+        );
         return tmpAlert.showAndWait().orElse(ButtonType.CANCEL);
     }
     //
@@ -229,7 +521,12 @@ public class GuiUtil {
      * @param aContentText Text of the alert dialog
      * @param anException exception to report, may be null
      */
-    public static void guiExceptionAlert(String aTitle, String aHeaderText, String aContentText, Exception anException) {
+    public static void guiExceptionAlert(
+            String aTitle,
+            String aHeaderText,
+            String aContentText,
+            Exception anException
+    ) {
         String tmpExceptionString;
         if (Objects.isNull(anException)) {
             tmpExceptionString = "Exception is null.";
@@ -252,30 +549,24 @@ public class GuiUtil {
      * @param aLabelText Text to show above expandable area
      * @param anExpandableString Text to show in expandable area
      */
-    public static void guiExpandableAlert(String aTitle, String aHeaderText, String aContentText, String aLabelText, String anExpandableString) {
+    public static void guiExpandableAlert(
+            String aTitle,
+            String aHeaderText,
+            String aContentText,
+            String aLabelText,
+            String anExpandableString
+    ) {
         try {
-            Alert tmpAlert = new Alert(Alert.AlertType.ERROR);
-            tmpAlert.setTitle(aTitle);
-            tmpAlert.setHeaderText(aHeaderText);
-            tmpAlert.setContentText(aContentText);
-            Label tmpLabel = new Label(aLabelText);
-            TextArea tmpExpandableTextArea = new TextArea(anExpandableString);
-            tmpExpandableTextArea.setEditable(false);
-            tmpExpandableTextArea.setWrapText(true);
-            tmpExpandableTextArea.setMaxWidth(Double.MAX_VALUE);
-            tmpExpandableTextArea.setMaxHeight(Double.MAX_VALUE);
-            GridPane.setVgrow(tmpExpandableTextArea, Priority.ALWAYS);
-            GridPane.setHgrow(tmpExpandableTextArea, Priority.ALWAYS);
-            GridPane tmpGridPane = new GridPane();
-            tmpGridPane.setMaxWidth(Double.MAX_VALUE);
-            tmpGridPane.add(tmpLabel, 0, 0);
-            tmpGridPane.add(tmpExpandableTextArea, 0, 1);
-            //Add expandable text to the dialog/alert pane
-            tmpAlert.getDialogPane().setExpandableContent(tmpGridPane);
-            Stage tmpAlertStage = (Stage) tmpAlert.getDialogPane().getScene().getWindow();
-            String tmpIconURL = GuiUtil.class.getClassLoader().getResource(
-                    GuiUtil.CONFIGURATION.getProperty("mortar.imagesFolder") + GuiUtil.CONFIGURATION.getProperty("mortar.logo.icon.name")).toExternalForm();
-            tmpAlertStage.getIcons().add(new Image(tmpIconURL));
+            Alert tmpAlert = GuiUtil.createAlert(
+                    Alert.AlertType.ERROR,
+                    aTitle,
+                    aHeaderText,
+                    new ExpandableContent(
+                            aContentText,
+                            aLabelText,
+                            anExpandableString
+                    )
+            );
             //Show and wait alert
             tmpAlert.showAndWait();
         } catch(Exception aNewThrownException) {
@@ -634,6 +925,57 @@ public class GuiUtil {
         tmpTooltip.setWrapText(true);
         tmpTooltip.setShowDuration(Duration.seconds(GuiDefinitions.GUI_TOOLTIP_SHOW_DURATION));
         return tmpTooltip;
+    }
+    //
+    /**
+     * Creates a horizontal box that holds the given buttons aligned to the
+     * left.
+     *
+     * @param aButtonArray the buttons to place in the box, in the given order
+     * @return new HBox instance containing the given buttons
+     */
+    public static HBox createLeftAlignedButtonBox(Button[] aButtonArray) {
+        return GuiUtil.createButtonBox(Pos.CENTER_LEFT, aButtonArray);
+    }
+    //
+    /**
+     * Creates a horizontal box that holds the given buttons aligned to the right.
+     *
+     * @param aButtonArray the buttons to place in the box, in the given order
+     * @return new HBox instance containing the given buttons
+     */
+    public static HBox createRightAlignedButtonBox(Button[] aButtonArray) {
+        HBox tmpBox = GuiUtil.createButtonBox(Pos.CENTER_RIGHT, aButtonArray);
+        tmpBox.setMaxWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
+        return tmpBox;
+    }
+    /**
+     * Creates a new JavaFX pagination control configured with a suitable page count for the given number
+     * of items taking into account the rows per page setting.
+     *
+     * <p>Also sets the MORTAR custom pagination skin as the skin of the new pagination instance and configures
+     * its growth behavior. The page factory is <strong>NOT</strong> set.
+     *
+     * @param aListSize the number of items to display; must be &gt;= 0
+     * @param aRowsPerPageSetting the rows per page setting; must be &gt; 0
+     *
+     * @return a configured {@link Pagination} control instance; never null
+     *
+     * @throws IllegalArgumentException if aListSize is negative or aRowsPerPageSetting is &lt;= 0
+     */
+    public static Pagination createPaginationWithSuitablePageCount(int aListSize, int aRowsPerPageSetting) {
+        int tmpPageCount = aListSize / aRowsPerPageSetting;
+        if (aListSize % aRowsPerPageSetting > 0) {
+            tmpPageCount++;
+        }
+        if (aListSize == 0) {
+            tmpPageCount = 1;
+        }
+        Pagination tmpPagination = new Pagination(tmpPageCount, 0);
+        tmpPagination.setSkin(new CustomPaginationSkin(tmpPagination));
+        VBox.setVgrow(tmpPagination, Priority.ALWAYS);
+        HBox.setHgrow(tmpPagination, Priority.ALWAYS);
+        return tmpPagination;
     }
     //</editor-fold>
 }

@@ -377,7 +377,7 @@ public class Exporter {
      * @throws IOException if the given file cannot be found or an error occurs while writing to it
      */
     public List<String> exportCsvFile(File aFile,
-                                      List<MoleculeDataModel> aMoleculeDataModelList,
+                                      List<? extends MoleculeDataModel> aMoleculeDataModelList,
                                       String aFragmentationName,
                                       char aSeparator,
                                       TabNames aTabName)
@@ -439,7 +439,7 @@ public class Exporter {
      * @throws FileNotFoundException if the given file cannot be found
      */
     public List<String> exportPdfFile(File aFile,
-                                      List<MoleculeDataModel> aFragmentDataModelList,
+                                      List<FragmentDataModel> aFragmentDataModelList,
                                       ObservableList<MoleculeDataModel> aMoleculeDataModelList,
                                       String aFragmentationName,
                                       String anImportedFileName,
@@ -471,7 +471,7 @@ public class Exporter {
      * @throws IOException if sth goes wrong
      */
     public List<String> exportFragmentsAsChemicalFile(File aFile,
-                                                      List<MoleculeDataModel> aFragmentDataModelList,
+                                                      List<FragmentDataModel> aFragmentDataModelList,
                                                       ChemFileTypes aChemFileType,
                                                       boolean aGenerate2dAtomCoordinates)
             throws IOException {
@@ -495,7 +495,7 @@ public class Exporter {
      * @throws IOException if sth goes wrong
      */
     public List<String> exportFragmentsAsChemicalFile(File aFile,
-                                                      List<MoleculeDataModel> aFragmentDataModelList,
+                                                      List<FragmentDataModel> aFragmentDataModelList,
                                                       ChemFileTypes aChemFileType,
                                                       boolean aGenerate2dAtomCoordinates,
                                                       boolean anIsSingleExport) throws IOException {
@@ -529,7 +529,7 @@ public class Exporter {
      * @author Betül Sevindik
      */
     private List<String> createItemizationTabCsvFile(File aCsvFile,
-                                             List<MoleculeDataModel> aMoleculeDataModelList,
+                                             List<? extends MoleculeDataModel> aMoleculeDataModelList,
                                              String aFragmentationName,
                                              char aSeparator) throws IOException {
         if (aCsvFile == null || aMoleculeDataModelList == null || aFragmentationName == null) {
@@ -601,7 +601,7 @@ public class Exporter {
      * @throws IOException if given file cannot be found or an error occurs while writing to it
      * @author Betül Sevindik
      */
-    private List<String> createFragmentsTabCsvFile(File aCsvFile, List<MoleculeDataModel> aList, char aSeparator)
+    private List<String> createFragmentsTabCsvFile(File aCsvFile, List<? extends MoleculeDataModel> aList, char aSeparator)
             throws IOException {
         if (aCsvFile == null || aList == null) {
             return null;
@@ -616,13 +616,13 @@ public class Exporter {
                     Message.get("Exporter.fragmentationTab.csvHeader.moleculeFrequency") + aSeparator +
                     Message.get("Exporter.fragmentationTab.csvHeader.moleculePercentage");
             tmpWriter.write(tmpFragmentationCsvHeader);
-            for (MoleculeDataModel tmpDataModel : aList) {
+            for (MoleculeDataModel tmpMoleculeDataModel : aList) {
                 if (Thread.currentThread().isInterrupted()) {
                     return null;
                 }
                 String tmpFragmentLine;
                 try {
-                    FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpDataModel;
+                    FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpMoleculeDataModel;
                     tmpFragmentLine = String.format("%n%s%s%d%s%.4f%s%d%s%.4f",
                             tmpFragmentDataModel.getUniqueSmiles(), aSeparator,
                             tmpFragmentDataModel.getAbsoluteFrequency(), aSeparator,
@@ -630,8 +630,8 @@ public class Exporter {
                             tmpFragmentDataModel.getMoleculeFrequency(), aSeparator,
                             tmpFragmentDataModel.getMoleculePercentage());
                 } catch (Exception anException) {
-                    Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpDataModel.getName()), anException);
-                    tmpFailedExportFragments.add(tmpDataModel.getUniqueSmiles());
+                    Logger.getLogger(MoleculeDataModel.class.getName()).log(Level.SEVERE, String.format("%s molecule name: %s", anException.toString(), tmpMoleculeDataModel.getName()), anException);
+                    tmpFailedExportFragments.add(tmpMoleculeDataModel.getUniqueSmiles());
                     continue;
                 }
                 tmpWriter.write(tmpFragmentLine);
@@ -714,7 +714,7 @@ public class Exporter {
      * @author Betül Sevindik
      */
     private List<String> createFragmentsTabPdfFile(File aPdfFile,
-                                                   List<MoleculeDataModel> aFragmentDataModelList,
+                                                   List<FragmentDataModel> aFragmentDataModelList,
                                                    int aMoleculeDataModelListSize,
                                                    String aFragmentationName,
                                                    String anImportedFileName) throws FileNotFoundException, DocumentException {
@@ -745,11 +745,10 @@ public class Exporter {
             tmpFragmentationTable.addCell(tmpMolFrequencyCell);
             tmpFragmentationTable.addCell(tmpMolPercentageCell);
             DecimalFormat tmpPercentageForm = new DecimalFormat("#.##%");
-            for (MoleculeDataModel tmpModel : aFragmentDataModelList) {
+            for (FragmentDataModel tmpFragmentDataModel : aFragmentDataModelList) {
                 if (Thread.currentThread().isInterrupted()) {
                     return null;
                 }
-                FragmentDataModel tmpFragmentDataModel = (FragmentDataModel) tmpModel;
                 int tmpAbsoluteFrequency = tmpFragmentDataModel.getAbsoluteFrequency();
                 String tmpStringAbsoluteFrequency = String.format("%d", tmpAbsoluteFrequency);
                 double tmpAbsolutePercentage = tmpFragmentDataModel.getAbsolutePercentage();
@@ -956,7 +955,7 @@ public class Exporter {
      * @author Samuel Behr
      */
     private List<String> createFragmentationTabSingleSDFile(File aFile,
-                                                            List<MoleculeDataModel> aFragmentDataModelList,
+                                                            List<FragmentDataModel> aFragmentDataModelList,
                                                             boolean generate2DCoordinates,
                                                             boolean alwaysMDLV3000) throws IOException {
         if (aFile == null || aFragmentDataModelList == null) {
@@ -1054,7 +1053,7 @@ public class Exporter {
      * @author Samuel Behr
      */
     private List<String> createFragmentationTabSeparateSDFiles(File aDirectory,
-                                                               List<MoleculeDataModel> aFragmentDataModelList,
+                                                               List<FragmentDataModel> aFragmentDataModelList,
                                                                boolean generate2DCoordinates,
                                                                boolean isAlwaysV3000MOLfile) throws IOException {
         if (aDirectory == null || !aDirectory.isDirectory() || aFragmentDataModelList == null) {
@@ -1156,7 +1155,7 @@ public class Exporter {
      * @author Samuel Behr
      */
     private List<String> createFragmentationTabPDBFiles(File aDirectory,
-                                                        List<MoleculeDataModel> aFragmentDataModelList,
+                                                        List<FragmentDataModel> aFragmentDataModelList,
                                                         boolean generate2DCoordinates) throws IOException {
         if (aDirectory == null || !aDirectory.isDirectory() || aFragmentDataModelList == null) {
             return null;

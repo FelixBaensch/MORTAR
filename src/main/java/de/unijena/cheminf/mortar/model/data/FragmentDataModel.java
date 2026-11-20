@@ -52,7 +52,7 @@ public class FragmentDataModel extends MoleculeDataModel {
     /**
      * Absolute frequency of the fragment.
      */
-    private AtomicInteger absoluteFrequency;
+    private final AtomicInteger absoluteFrequency;
     //
     /**
      * Absolute frequency of the fragment as a percentage.
@@ -62,7 +62,7 @@ public class FragmentDataModel extends MoleculeDataModel {
     /**
      * Molecule frequency of the fragment.
      */
-    private AtomicInteger moleculeFrequency;
+    private final AtomicInteger moleculeFrequency;
     //
     /**
      * Molecule frequency of the fragment as a percentage.
