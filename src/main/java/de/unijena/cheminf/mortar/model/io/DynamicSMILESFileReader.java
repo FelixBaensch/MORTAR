@@ -42,6 +42,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -264,12 +265,28 @@ public class DynamicSMILESFileReader {
      * @throws IOException if the given file cannot be found
      */
     public IAtomContainerSet readFile(File aFile, DynamicSMILESFileFormat aFormat) throws IOException {
+        IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
+        this.readFile(aFile, aFormat, tmpAtomContainerSet::addAtomContainer);
+        return tmpAtomContainerSet;
+    }
+    //
+    /**
+     * Reads SMILES file according to the given format like {@link #readFile(File, DynamicSMILESFileFormat)} but passes
+     * every parsed molecule to the given consumer right away instead of collecting them in an atom container set.
+     * This way, the caller can process and discard one molecule after the other, keeping the memory footprint low.
+     * The skipped lines counter is up-to-date whenever the consumer is called.
+     *
+     * @param aFile a SMILES file
+     * @param aFormat the determined format of the file
+     * @param aMoleculeConsumer consumer that each parsed molecule is passed to, in the order of the file
+     * @throws IOException if the given file cannot be found
+     */
+    public void readFile(File aFile, DynamicSMILESFileFormat aFormat, Consumer<IAtomContainer> aMoleculeConsumer) throws IOException {
         try (
                 // throws FileNotFoundException if file cannot be found, see catch block below
                 FileReader tmpSmilesFileReader = new FileReader(aFile);
                 BufferedReader tmpSmilesFileBufferedReader = new BufferedReader(tmpSmilesFileReader, BasicDefinitions.BUFFER_SIZE)
         ) {
-            IAtomContainerSet tmpAtomContainerSet = new AtomContainerSet();
             // AtomContainer to save the parsed SMILES in
             IAtomContainer tmpMolecule;
             String tmpSmilesFileCurrentLine;
@@ -320,9 +337,8 @@ public class DynamicSMILESFileReader {
                     tmpName = FileUtil.getFileNameWithoutExtension(aFile) + tmpLineInFileCounter;
                 }
                 tmpMolecule.setProperty(Importer.MOLECULE_NAME_PROPERTY_KEY, tmpName);
-                tmpAtomContainerSet.addAtomContainer(tmpMolecule);
+                aMoleculeConsumer.accept(tmpMolecule);
             }
-            return tmpAtomContainerSet;
         } catch (FileNotFoundException anException) {
             String tmpMessage = "File " + aFile.getPath() + " could not be found";
             DynamicSMILESFileReader.LOGGER.log(Level.SEVERE, tmpMessage);

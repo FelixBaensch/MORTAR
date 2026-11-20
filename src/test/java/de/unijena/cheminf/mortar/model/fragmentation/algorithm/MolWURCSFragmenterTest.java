@@ -51,7 +51,7 @@ import java.util.Locale;
 public class MolWURCSFragmenterTest {
 
     /**
-     * Constructor that sets the default locale to british english, which is important for the correct functioning of the
+     * Constructor that sets the default locale to British English, which is important for the correct functioning of the
      * fragmenter because the settings tooltips are imported from the message.properties file.
      */
     public MolWURCSFragmenterTest() {
