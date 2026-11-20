@@ -161,6 +161,8 @@ public class MainApp extends Application {
             //<editor-fold desc="start application" defaultstate="collapsed">
             MainView tmpMainView = new MainView(Configuration.getInstance());
             new MainViewController(aPrimaryStage, tmpMainView, tmpAppDir, Configuration.getInstance());
+            //note: the installer smoke tests in .github/workflows/deployment.yml check for this message, keep them in sync
+            MainApp.LOGGER.info("MORTAR startup completed, main window shown.");
             //</editor-fold>
         } catch (Exception | OutOfMemoryError anException){
             MainApp.LOGGER.log(Level.SEVERE, anException.toString(), anException);
