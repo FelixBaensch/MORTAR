@@ -36,8 +36,6 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.Tooltip;
@@ -151,15 +149,6 @@ public class MoleculesTabView extends GridTabForTableView {
      * @return the created buttons with the cancel button being hidden
      */
     private HBox createFragmentationButtonsBox(StringProperty aFragmentationDisplayNameProperty) {
-        HBox tmpBox = new HBox();
-        tmpBox.setPadding(new Insets(
-                GuiDefinitions.GUI_INSETS_VALUE,
-                GuiDefinitions.GUI_INSETS_VALUE,
-                GuiDefinitions.GUI_INSETS_VALUE,
-                GuiDefinitions.GUI_INSETS_VALUE
-        ));
-        tmpBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
-        tmpBox.setAlignment(Pos.CENTER_LEFT);
         this.fragmentationButton = new Button();
         this.fragmentationButton.textProperty().bind(aFragmentationDisplayNameProperty);
         Tooltip tmpTooltip = GuiUtil.createTooltip("");
@@ -179,8 +168,12 @@ public class MoleculesTabView extends GridTabForTableView {
                 Message.get("MainTabPane.moleculesTab.cancelFragmentationButton.tooltip")
         ));
         this.cancelFragmentationButton.setVisible(false);
-        tmpBox.getChildren().addAll(this.fragmentationButton, this.cancelFragmentationButton);
-        return tmpBox;
+        return GuiUtil.createLeftAlignedButtonBox(
+                new Button[]{
+                        this.fragmentationButton,
+                        this.cancelFragmentationButton
+                });
+
     }
     /**
      * Adjusts the size of the fragmentation button to fit the text description of the selected fragmentation
@@ -196,29 +189,22 @@ public class MoleculesTabView extends GridTabForTableView {
         this.fragmentationButton.setPrefHeight(GuiDefinitions.GUI_BUTTON_HEIGHT_VALUE);
     }
     /**
-     * Creates an overview button.
+     * Creates the overview button and the box holding it.
      *
-     * @return the created overview button
+     * @return the created box containing the overview button, aligned to the right
      */
     private HBox createViewButtonsBox() {
-        HBox tmpBox = new HBox();
-        tmpBox.setPadding(new Insets(
-                GuiDefinitions.GUI_INSETS_VALUE,
-                GuiDefinitions.GUI_INSETS_VALUE,
-                GuiDefinitions.GUI_INSETS_VALUE,
-                GuiDefinitions.GUI_INSETS_VALUE
-        ));
-        tmpBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
-        tmpBox.setAlignment(Pos.CENTER_RIGHT);
-        tmpBox.setMaxWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
         this.overviewButton = GuiUtil.getButtonOfStandardSize(
                 Message.get("MainView.showOverviewViewButton.text")
         );
         this.overviewButton.setTooltip(GuiUtil.createTooltip(
                 Message.get("MainView.showOverviewViewButton.tooltip")
         ));
-        tmpBox.getChildren().add(this.overviewButton);
-        return tmpBox;
+        return GuiUtil.createRightAlignedButtonBox(
+                new Button[]{
+                        this.overviewButton
+                }
+        );
     }
     //</editor-fold>
     //

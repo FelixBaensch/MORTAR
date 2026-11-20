@@ -128,7 +128,7 @@ public class ViewToolsManager {
      * @param aFragmentationName name of the fragmentation the fragments stem from, used for the proposed export file name
      * @throws NullPointerException if any param is null
      */
-    public void openHistogramView(Stage aMainStage, List< FragmentDataModel > aFragmentDataModelList, String aFragmentationName)
+    public void openHistogramView(Stage aMainStage, List<FragmentDataModel> aFragmentDataModelList, String aFragmentationName)
             throws NullPointerException {
         this.histogramViewController.openHistogramView(aMainStage, aFragmentDataModelList, aFragmentationName);
     }

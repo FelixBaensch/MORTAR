@@ -27,7 +27,6 @@ package de.unijena.cheminf.mortar.gui.views;
 
 import de.unijena.cheminf.mortar.controller.TabNames;
 import de.unijena.cheminf.mortar.gui.controls.GridTabForTableView;
-import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.message.Message;
 import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
@@ -36,8 +35,6 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
@@ -204,7 +201,13 @@ public class FragmentsTabView extends GridTabForTableView {
         this.exportPdfButton.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.fragments.buttonPDF.tooltip")));
         this.cancelExportButton = GuiUtil.getButtonOfStandardSize(Message.get("MainTabPane.fragments.buttonCancelExport.txt"));
         this.cancelExportButton.setTooltip(GuiUtil.createTooltip(Message.get("MainTabPane.fragments.buttonCancelExport.tooltip")));
-        HBox tmpExportButtonsHBox = this.createExportButtonsBox();
+        HBox tmpExportButtonsHBox = GuiUtil.createLeftAlignedButtonBox(
+                new Button[]{
+                        this.exportCsvButton,
+                        this.exportPdfButton,
+                        this.cancelExportButton
+                }
+        );
         this.addNodeToGridPane(tmpExportButtonsHBox, 0, 1, 1, 1);
         this.overviewButton = GuiUtil.getButtonOfStandardSize(Message.get("MainView.showOverviewViewButton.text"));
         this.overviewButton.setTooltip(GuiUtil.createTooltip(Message.get("MainView.showOverviewViewButton.tooltip")));
@@ -214,48 +217,12 @@ public class FragmentsTabView extends GridTabForTableView {
             this.overviewButton.setDisable(true);
             this.histogramButton.setDisable(true);
         }
-        HBox tmpViewButtonsHBox = this.createViewButtonsBox();
+        HBox tmpViewButtonsHBox = GuiUtil.createRightAlignedButtonBox(
+                new Button[]{
+                        this.overviewButton, this.histogramButton
+                }
+        );
         this.addNodeToGridPane(tmpViewButtonsHBox, 2, 1, 1, 1);
-    }
-
-    /**
-     * Creates the export buttons box containing CSV export, PDF export, and cancel export buttons.
-     *
-     * @return an HBox containing the export buttons arranged horizontally with standard spacing and padding
-     */
-    private HBox createExportButtonsBox() {
-        HBox tmpBox = new HBox();
-        tmpBox.setPadding(new Insets(
-                GuiDefinitions.GUI_INSETS_VALUE,
-                GuiDefinitions.GUI_INSETS_VALUE,
-                GuiDefinitions.GUI_INSETS_VALUE,
-                GuiDefinitions.GUI_INSETS_VALUE
-        ));
-        tmpBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
-        tmpBox.setAlignment(Pos.CENTER_LEFT);
-        tmpBox.getChildren().addAll(this.exportCsvButton, this.exportPdfButton, this.cancelExportButton);
-        return tmpBox;
-    }
-
-    /**
-     * Creates the view buttons box containing overview and histogram buttons.
-     *
-     * @return an HBox containing the view buttons arranged horizontally with standard spacing and padding,
-     *         aligned to the right
-     */
-    private HBox createViewButtonsBox() {
-        HBox tmpBox = new HBox();
-        tmpBox.setPadding(new Insets(
-                GuiDefinitions.GUI_INSETS_VALUE,
-                GuiDefinitions.GUI_INSETS_VALUE,
-                GuiDefinitions.GUI_INSETS_VALUE,
-                GuiDefinitions.GUI_INSETS_VALUE
-        ));
-        tmpBox.setSpacing(GuiDefinitions.GUI_SPACING_VALUE);
-        tmpBox.setAlignment(Pos.CENTER_RIGHT);
-        tmpBox.setMaxWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
-        tmpBox.getChildren().addAll(this.overviewButton, this.histogramButton);
-        return tmpBox;
     }
 
     /**

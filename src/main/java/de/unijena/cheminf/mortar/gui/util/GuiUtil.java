@@ -37,6 +37,8 @@ import de.unijena.cheminf.mortar.model.data.MoleculeDataModel;
 import de.unijena.cheminf.mortar.model.depict.DepictionUtil;
 import de.unijena.cheminf.mortar.model.util.CollectionUtil;
 
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -369,6 +371,22 @@ public class GuiUtil {
         tmpAlertStage.getIcons().add(new Image(tmpIconURL));
         return tmpAlert;
     }
+    //
+    /**
+     * Creates a horizontal box with the GUI's standard padding and spacing and the given alignment that holds the
+     * given buttons.
+     *
+     * @param anAlignment the alignment of the nodes in the box
+     * @param aButtonArray the buttons to place in the box, in the given order
+     * @return new HBox instance containing the given buttons
+     */
+    private static HBox createButtonBox(Pos anAlignment, Button[] aButtonArray) {
+        HBox tmpBox = new HBox(GuiDefinitions.GUI_SPACING_VALUE, aButtonArray);
+        tmpBox.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
+        tmpBox.setAlignment(anAlignment);
+        return tmpBox;
+    }
+    //
     //</editor-fold>
     //
     //<editor-fold desc="public static methods" defaultstate="collapsed">
@@ -909,6 +927,28 @@ public class GuiUtil {
         return tmpTooltip;
     }
     //
+    /**
+     * Creates a horizontal box that holds the given nodes aligned to the
+     * left.
+     *
+     * @param aButtonArray the buttons to place in the box, in the given order
+     * @return new HBox instance containing the given buttons
+     */
+    public static HBox createLeftAlignedButtonBox(Button[] aButtonArray) {
+        return GuiUtil.createButtonBox(Pos.CENTER_LEFT, aButtonArray);
+    }
+    //
+    /**
+     * Creates a horizontal box that holds the given nodes aligned to the right.
+     *
+     * @param aButtonArray the buttons to place in the box, in the given order
+     * @return new HBox instance containing the given buttons
+     */
+    public static HBox createRightAlignedButtonBox(Button[] aButtonArray) {
+        HBox tmpBox = GuiUtil.createButtonBox(Pos.CENTER_RIGHT, aButtonArray);
+        tmpBox.setMaxWidth(GuiDefinitions.GUI_GRIDPANE_FOR_NODE_ALIGNMENT_THIRD_COL_WIDTH);
+        return tmpBox;
+    }
     /**
      * Creates a new JavaFX pagination control configured with a suitable page count for the given number
      * of items taking into account the rows per page setting.
