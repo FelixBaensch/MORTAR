@@ -670,7 +670,7 @@ public class MainViewController {
         }
         //returns null if file chooser dialog was cancelled
         File tmpExportFile = tmpExporter.openFileChooserForExportFileOrDir(this.primaryStage, anExportType,
-                ((GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem()).getFragmentationNameOutOfTitle());
+                tmpFragmentationName);
         if (tmpExportFile == null) {
             return;
         }
@@ -740,7 +740,7 @@ public class MainViewController {
                             );
                     case Exporter.ExportTypes.ITEM_CSV_FILE -> tmpExporter.exportCsvFile(
                             tmpExportFile,
-                            tmpFragmentsList,
+                            MainViewController.this.moleculeDataModelList,
                             tmpFragmentationName,
                             MainViewController.this.settingsContainer.getCsvExportSeparatorSettingCharacter(),
                             TabNames.ITEMIZATION
@@ -835,6 +835,15 @@ public class MainViewController {
     private void openHistogramView()  {
         GridTabForTableView tmpSelectedTab = (GridTabForTableView) this.mainTabPane.getSelectionModel().getSelectedItem();
         String tmpFragmentationName = tmpSelectedTab.getFragmentationNameOutOfTitle();
+        if (tmpFragmentationName == null || this.mapOfFragmentDataModelLists.get(tmpFragmentationName) == null) {
+            GuiUtil.guiMessageAlert(
+                    Alert.AlertType.INFORMATION,
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.title"),
+                    Message.get("Exporter.MessageAlert.NoDataAvailable.header"),
+                    null
+            );
+            return;
+        }
         List<FragmentDataModel> tmpFragmentsList = new ArrayList<>(this.mapOfFragmentDataModelLists.get(tmpFragmentationName));
         this.viewToolsManager.openHistogramView(this.primaryStage, tmpFragmentsList);
     }
@@ -1277,15 +1286,30 @@ public class MainViewController {
     }
     //
     /**
-     * Closes all tabs that are closeable (everything except the molecules tab) and cleans up the data.
+     * Checks whether an export or fragmentation is currently running and, if so, warns the user that tabs cannot be
+     * closed in the meantime.
+     *
+     * @return true if closing tabs is blocked by a running export or fragmentation, false otherwise
+     */
+    private boolean isTabClosingBlockedByRunningTask() {
+        if (!this.isExportRunningProperty.get() && !this.isFragmentationRunning) {
+            return false;
+        }
+        GuiUtil.guiMessageAlert(Alert.AlertType.WARNING,
+                Message.get("MainViewController.Warning.ClosingWhileTaskRunning.Title"),
+                Message.get("MainViewController.Warning.ClosingWhileTaskRunning.Header"),
+                Message.get("MainViewController.Warning.ClosingWhileTaskRunning.Content")
+        );
+        return true;
+    }
+    //
+    /**
+     * Closes all fragmentation result tabs (everything except the molecules tab) and cleans up their data.
+     *
+     * @param aClosingEvent the triggered closing event
      */
     private void closeAllTabs(Event aClosingEvent) {
-        if (this.isExportRunningProperty.get() || this.isFragmentationRunning) {
-            GuiUtil.guiMessageAlert(Alert.AlertType.WARNING,
-                    Message.get("MainViewController.Warning.ClosingWhileExporting.Title"),
-                    Message.get("MainViewController.Warning.ClosingWhileExporting.Header"),
-                    Message.get("MainViewController.Warning.ClosingWhileExporting.Content")
-            );
+        if (this.isTabClosingBlockedByRunningTask()) {
             aClosingEvent.consume();
             return;
         }
@@ -1296,8 +1320,8 @@ public class MainViewController {
                     Message.get("MainViewController.Warning.CloseAllTabs.Content"),
                     Message.get("SettingsContainer.showDataWillBeLostWarning.checkbox.text")
             );
-
             if (tmpCheckboxAndConfirmationResult.buttonType() != ButtonType.OK) {
+                aClosingEvent.consume();
                 return;
             }
             if (tmpCheckboxAndConfirmationResult.checkboxChecked()) {
@@ -1324,21 +1348,16 @@ public class MainViewController {
     }
     //
     /**
-     * Closes the tab of the grid table and cleans up the referenced data if possible.
+     * Closes the given fragmentation result tab and cleans up the referenced data if possible.
      *
-     * @param anEvent the closing event
-     * @param aGridTableView the tab to remove
+     * @param aClosingEvent the closing event
+     * @param aGridTableView the fragmentation result tab to remove
      * @throws NullPointerException if the given {@link GridTabForTableView} is null.
      */
-    private void closeTab(Event anEvent, GridTabForTableView aGridTableView) {
+    private void closeTab(Event aClosingEvent, GridTabForTableView aGridTableView) {
         Objects.requireNonNull(aGridTableView, "The tab which should be closed can not be null");
-        if (this.isExportRunningProperty.get() || this.isFragmentationRunning) {
-            GuiUtil.guiMessageAlert(Alert.AlertType.WARNING,
-                    Message.get("MainViewController.Warning.ClosingWhileExporting.Title"),
-                    Message.get("MainViewController.Warning.ClosingWhileExporting.Header"),
-                    Message.get("MainViewController.Warning.ClosingWhileExporting.Content")
-            );
-            anEvent.consume();
+        if (this.isTabClosingBlockedByRunningTask()) {
+            aClosingEvent.consume();
             return;
         }
         if (this.settingsContainer.getShowDataWillBeLostWarningSetting()) {
@@ -1349,6 +1368,7 @@ public class MainViewController {
                     Message.get("SettingsContainer.showDataWillBeLostWarning.checkbox.text")
             );
             if (tmpCheckboxAndConfirmationResult.buttonType() != ButtonType.OK) {
+                aClosingEvent.consume();
                 return;
             }
             if (tmpCheckboxAndConfirmationResult.checkboxChecked()) {
@@ -1368,15 +1388,18 @@ public class MainViewController {
     }
     //
     /**
-     * Check if there is no other tab with the same fragmentation name.
+     * Check if there is no other fragmentation result tab with the same fragmentation name.
      * Because the fragments are used in the itemization tab as well as in the fragments tab
      * it is necessary to check if BOTH are closed to be able to clean up the underlying data.
      *
-     * @param aGridTab the tab to check if its data can be cleaned up
-     * @return true if the data can be cleaned up, false otherwise
+     * @param aGridTab the fragmentation result tab to check if its data can be cleaned up
+     * @return true if the data can be cleaned up, false otherwise (also if the fragmentation name is null)
      */
     private boolean isGridTabDataCleanable(GridTabForTableView aGridTab) {
         String tmpFragmentationName = aGridTab.getFragmentationNameOutOfTitle();
+        if (tmpFragmentationName == null) {
+            return false;
+        }
         for (Tab tmpTab : this.mainTabPane.getTabs()) {
             if (!(tmpTab instanceof GridTabForTableView tmpGridTableTab) || tmpTab == aGridTab) {
                 continue;

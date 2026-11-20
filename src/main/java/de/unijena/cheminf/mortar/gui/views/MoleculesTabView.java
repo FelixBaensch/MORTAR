@@ -40,8 +40,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Pagination;
-import javafx.scene.control.SortEvent;
-import javafx.scene.control.TableView;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.text.Text;
@@ -96,31 +94,6 @@ public class MoleculesTabView extends GridTabForTableView {
      * the button to open a new window with the overview of the molecules of this tab.
      */
     private Button overviewButton;
-
-    /**
-     * the function that runs upon pressing.
-     */
-    private Runnable onFragmentation;
-
-    /**
-     * The callback function that runs when the cancel fragmentation button is pressed.
-     */
-    private Runnable onCancelFragmentation;
-
-    /**
-     * The callback function that runs when the overview button is pressed.
-     */
-    private Runnable onOverview;
-
-    /**
-     * The callback function that runs when the table view sort order changes.
-     */
-    private Consumer<SortEvent<TableView>> onSort;
-
-    /**
-     * The callback function that runs when the table view width changes.
-     */
-    private Consumer<Number> onTableWidthChanged;
     //</editor-fold>
     //
     //<editor-fold desc="constructor">
@@ -297,7 +270,6 @@ public class MoleculesTabView extends GridTabForTableView {
      * @param aCallback the callback to execute on fragmentation button action; must not be null
      */
     public void setOnFragmentation(Runnable aCallback) {
-        this.onFragmentation = aCallback;
         this.fragmentationButton.setOnAction(event -> aCallback.run());
     }
     /**
@@ -310,7 +282,6 @@ public class MoleculesTabView extends GridTabForTableView {
      * @see #setOnFragmentation(Runnable)
      */
     public void setOnCancelFragmentation(Runnable aCallback) {
-        this.onCancelFragmentation = aCallback;
         this.cancelFragmentationButton.setOnAction(event -> aCallback.run());
     }
     /**
@@ -321,19 +292,7 @@ public class MoleculesTabView extends GridTabForTableView {
      * @throws IllegalArgumentException if aCallback is null
      */
     public void setOnOverview(Runnable aCallback) {
-        this.onOverview = aCallback;
         this.overviewButton.setOnAction(event -> aCallback.run());
-    }
-    /**
-     * Sets the callback function to be executed when the table view sort order changes.
-     *
-     * @param aCallback the callback to execute on table sort event; receives the sort event with the table view;
-     *                  must not be null
-     *
-     * @throws IllegalArgumentException if aCallback is null
-     */
-    public void setOnSort(Consumer<SortEvent<TableView>> aCallback) {
-        this.onSort = aCallback;
     }
     /**
      * Sets the callback function to be executed when the table view width changes and establishes
@@ -346,7 +305,6 @@ public class MoleculesTabView extends GridTabForTableView {
      *                  must not be null
      */
     public void setOnTableWidthChanged(Consumer<Number> aCallback) {
-        this.onTableWidthChanged = aCallback;
         this.moleculesDataTableView.widthProperty().addListener(
                 (observable, oldValue, newValue) -> aCallback.accept(newValue)
         );

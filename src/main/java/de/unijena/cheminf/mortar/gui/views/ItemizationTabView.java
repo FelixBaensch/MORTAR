@@ -40,8 +40,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Pagination;
-import javafx.scene.control.SortEvent;
-import javafx.scene.control.TableView;
 import javafx.scene.layout.HBox;
 
 import java.util.function.Consumer;
@@ -108,32 +106,6 @@ public class ItemizationTabView extends GridTabForTableView {
      * The context menu item to close all open itemization tabs.
      */
     private final MenuItem closeAllTabsItem;
-
-    /**
-     * The callback function that runs when the CSV export button is pressed.
-     */
-    private Runnable onExportCsv;
-
-    /**
-     * The callback function that runs when the PDF export button is pressed.
-     */
-    private Runnable onExportPdf;
-
-    /**
-     * The callback function that runs when the cancel export button is pressed.
-     */
-    private Runnable onCancelExport;
-
-    /**
-     * The callback function that runs when the histogram view button is pressed.
-     */
-    private Runnable onOpenHistogramView;
-
-    /**
-     * The callback function that runs when the table view sort order changes.
-     */
-    private Consumer<SortEvent<TableView>> onSort;
-
     /**
      * The callback function that runs when the table view width changes.
      */
@@ -351,7 +323,6 @@ public class ItemizationTabView extends GridTabForTableView {
      * @see #setOnCancelExport(Runnable)
      */
     public void setOnExportCsv(Runnable aCallback) {
-        this.onExportCsv = aCallback;
         this.exportCsvButton.setOnAction(event -> aCallback.run());
     }
 
@@ -366,7 +337,6 @@ public class ItemizationTabView extends GridTabForTableView {
      * @see #setOnCancelExport(Runnable)
      */
     public void setOnExportPdf(Runnable aCallback) {
-        this.onExportPdf = aCallback;
         this.exportPdfButton.setOnAction(event -> aCallback.run());
     }
 
@@ -381,7 +351,6 @@ public class ItemizationTabView extends GridTabForTableView {
      * @see #setOnExportPdf(Runnable)
      */
     public void setOnCancelExport(Runnable aCallback) {
-        this.onCancelExport = aCallback;
         this.cancelExportButton.setOnAction(event -> aCallback.run());
     }
 
@@ -393,20 +362,7 @@ public class ItemizationTabView extends GridTabForTableView {
      * @throws IllegalArgumentException if aCallback is null
      */
     public void setOnOpenHistogramView(Runnable aCallback) {
-        this.onOpenHistogramView = aCallback;
         this.openHistogramViewButton.setOnAction(event -> aCallback.run());
-    }
-
-    /**
-     * Sets the callback function to be executed when the table view sort order changes.
-     *
-     * @param aCallback the callback to execute on table sort event; receives the sort event with the table view;
-     *                  must not be null
-     *
-     * @throws IllegalArgumentException if aCallback is null
-     */
-    public void setOnSort(Consumer<SortEvent<TableView>> aCallback) {
-        this.onSort = aCallback;
     }
 
     /**
