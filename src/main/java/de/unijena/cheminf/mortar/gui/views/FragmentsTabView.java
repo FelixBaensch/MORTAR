@@ -219,7 +219,8 @@ public class FragmentsTabView extends GridTabForTableView {
         }
         HBox tmpViewButtonsHBox = GuiUtil.createRightAlignedButtonBox(
                 new Button[]{
-                        this.overviewButton, this.histogramButton
+                        this.overviewButton,
+                        this.histogramButton
                 }
         );
         this.addNodeToGridPane(tmpViewButtonsHBox, 2, 1, 1, 1);

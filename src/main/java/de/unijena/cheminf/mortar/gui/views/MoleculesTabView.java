@@ -172,8 +172,8 @@ public class MoleculesTabView extends GridTabForTableView {
                 new Button[]{
                         this.fragmentationButton,
                         this.cancelFragmentationButton
-                });
-
+                }
+        );
     }
     /**
      * Adjusts the size of the fragmentation button to fit the text description of the selected fragmentation

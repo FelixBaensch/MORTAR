@@ -193,7 +193,8 @@ public class ItemizationTabView extends GridTabForTableView {
             this.openHistogramViewButton.setDisable(true);
         }
         HBox tmpViewButtonsHBox = GuiUtil.createRightAlignedButtonBox(
-                new Button[]{this.openHistogramViewButton
+                new Button[]{
+                        this.openHistogramViewButton
                 }
         );
         this.addNodeToGridPane(tmpViewButtonsHBox, 2, 1, 1, 1);
