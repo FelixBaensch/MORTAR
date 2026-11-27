@@ -39,6 +39,8 @@ import javafx.beans.property.SimpleIntegerProperty;
 
 import org.openscience.cdk.fragment.ExhaustiveFragmenter;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.smiles.SmiFlavor;
+import org.openscience.cdk.smiles.SmilesGenerator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -282,13 +284,14 @@ public class CDKExhaustiveFragmenter implements IMoleculeFragmenter {
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
         this.settingNameDisplayNameMap = new HashMap<>(tmpInitialCapacityForSettingNameTooltipTextMap,
                 BasicDefinitions.DEFAULT_HASH_COLLECTION_LOAD_FACTOR);
-        this.cdkEFInstance = new ExhaustiveFragmenter();
-        // Keep underlying CDK fragmenter in sync with this wrapper's declared defaults
-        this.cdkEFInstance.setMinimumFragmentSize(CDKExhaustiveFragmenter.DEFAULT_MINIMUM_FRAGMENT_SIZE);
-        this.cdkEFInstance.setInclusiveMaxTreeDepth(CDKExhaustiveFragmenter.DEFAULT_INCLUSIVE_MAX_TREE_DEPTH);
-        this.cdkEFInstance.setSaturationSetting(CDKExhaustiveFragmenter.DEFAULT_SATURATION.getSaturationValue());
-        this.cdkEFInstance.setPreserveStereo(CDKExhaustiveFragmenter.DEFAULT_PRESERVE_STEREO_INFO);
-
+        // Keep underlying CDK fragmenter in sync with this wrapper's declared defaults and set a SmilesGenerator that
+        // differentiates stereo variants if stereo is preserved (flags match ChemUtil.createUniqueSmiles())
+        this.cdkEFInstance = new ExhaustiveFragmenter(
+                new SmilesGenerator(SmiFlavor.Unique | SmiFlavor.UseAromaticSymbols | SmiFlavor.Stereo),
+                CDKExhaustiveFragmenter.DEFAULT_MINIMUM_FRAGMENT_SIZE,
+                CDKExhaustiveFragmenter.DEFAULT_SATURATION.getSaturationValue(),
+                CDKExhaustiveFragmenter.DEFAULT_INCLUSIVE_MAX_TREE_DEPTH,
+                CDKExhaustiveFragmenter.DEFAULT_PRESERVE_STEREO_INFO);
         this.minimumFragmentSizeSetting = new SimpleIntegerProperty(this,
                 "Minimum Size for the returned fragments",
                 CDKExhaustiveFragmenter.DEFAULT_MINIMUM_FRAGMENT_SIZE) {

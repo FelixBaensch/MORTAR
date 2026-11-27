@@ -62,13 +62,16 @@ public class StatusBar extends FlowPane {
         this.statusLabel = new Label();
         this.progressBar = new ProgressBar();
         this.progressBar.visibleProperty().setValue(false);
+        //the hidden progress bar should not leave a gap in front of the status label
+        this.progressBar.managedProperty().bind(this.progressBar.visibleProperty());
         this.setMinHeight(GUI_STATUSBAR_HEIGHT_VALUE);
         this.setPrefHeight(GUI_STATUSBAR_HEIGHT_VALUE);
         this.setMaxHeight(GUI_STATUSBAR_HEIGHT_VALUE);
 //        this.setPadding(new Insets(GuiDefinitions.GUI_INSETS_VALUE));
         this.setPadding(new Insets( 3));
         this.setHgap(GuiDefinitions.GUI_INSETS_VALUE);
-        this.getChildren().addAll(statusLabel, progressBar);
+        //progress bar first so that it keeps its position while the status label changes its width
+        this.getChildren().addAll(progressBar, statusLabel);
     }
     //
     //<editor-fold desc="properties" defaultstate="collapsed">

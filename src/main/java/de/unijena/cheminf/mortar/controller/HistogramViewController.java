@@ -77,7 +77,7 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -1122,7 +1122,7 @@ public class HistogramViewController implements IViewToolController {
                     this.settingsContainer.getCsvExportSeparatorSettingCharacter(),
                     this.displayFrequencySetting.get().equals(HistogramViewController.FrequencyOption.ABSOLUTE_FREQUENCY));
             GuiUtil.guiExportFinishedAlert(tmpExportFile);
-        } catch (FileNotFoundException | RuntimeException anException) {
+        } catch (IOException | RuntimeException anException) {
             Logger.getLogger(HistogramViewController.class.getName()).log(Level.SEVERE, anException.toString(), anException);
             GuiUtil.guiMessageAlert(Alert.AlertType.ERROR, Message.get("Exporter.Histogram.ExportFailed.title"),
                     Message.get("Exporter.Histogram.ExportFailed.header"),
