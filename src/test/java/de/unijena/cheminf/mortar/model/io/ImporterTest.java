@@ -187,14 +187,15 @@ public class ImporterTest extends Importer {
     }
     /**
      * Test importing a SMILES file with a headline, empty lines, and no name column with default settings and testing
-     * the names (file name plus line index) and unique SMILES codes of the resulting data models.
+     * the names (the molecule IDs, i.e. file name plus consecutive number without gaps) and unique SMILES codes of the
+     * resulting data models.
      *
      * @throws Exception if anything goes wrong
      */
     @Test
     public void testImportedNamesAndSmilesOfSMILESFileWithEmptyLines() throws Exception {
         List<MoleculeDataModel> tmpMolecules = this.importTestResource("SMILESTestFileOne.txt");
-        Assertions.assertEquals(List.of("SMILESTestFileOne1", "SMILESTestFileOne3", "SMILESTestFileOne5"),
+        Assertions.assertEquals(List.of("SMILESTestFileOne_1", "SMILESTestFileOne_2", "SMILESTestFileOne_3"),
                 tmpMolecules.stream().map(MoleculeDataModel::getName).toList());
         Assertions.assertEquals(List.of(
                 "O=C1OC2=CC(=CC(OC3OC(CO)C(O)C(O)C3O)=C2C4=C1CCC4)C",

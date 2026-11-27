@@ -31,7 +31,6 @@ import de.unijena.cheminf.mortar.gui.util.GuiDefinitions;
 import de.unijena.cheminf.mortar.gui.util.GuiUtil;
 import de.unijena.cheminf.mortar.gui.views.AboutView;
 import de.unijena.cheminf.mortar.message.Message;
-import de.unijena.cheminf.mortar.model.util.FileUtil;
 import de.unijena.cheminf.mortar.model.util.LogUtil;
 
 import javafx.application.Platform;
@@ -148,7 +147,7 @@ public class AboutViewController {
         //close button
         this.aboutView.getCloseButton().setOnAction(actionEvent -> this.aboutViewStage.close());
         //log file button
-        this.aboutView.getLogFileButton().setOnAction(actionEvent -> FileUtil.openFilePathInExplorer(LogUtil.getLogFileDirectoryPath()));
+        this.aboutView.getLogFileButton().setOnAction(actionEvent -> GuiUtil.openFilePathInExplorerInBackground(new File(LogUtil.getLogFileDirectoryPath())));
         //gitHUb button
         this.aboutView.getGitHubButton().setOnAction(actionEvent -> this.openGitHubRepositoryInDefaultBrowser());
         //tutorial button
