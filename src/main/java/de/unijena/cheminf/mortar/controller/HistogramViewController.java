@@ -57,14 +57,11 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
@@ -80,7 +77,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -409,6 +408,11 @@ public class HistogramViewController implements IViewToolController {
      * Atom container to depict the respective structure when the cursor hovers over a bar.
      */
     private IAtomContainer atomContainerForDisplayCache;
+    /**
+     * Map of the fragments shown in the histogram by their unique SMILES code, used to create the harmonised
+     * structure context menu of the histogram bars.
+     */
+    private Map<String, FragmentDataModel> fragmentsBySmilesMap;
     //</editor-fold>
     //
     //<editor-fold desc="Constructors" defaultstate="collapsed">
@@ -586,6 +590,10 @@ public class HistogramViewController implements IViewToolController {
         Objects.requireNonNull(aFragmentDataModelList, "Fragment data model list is ´null");
         Objects.requireNonNull(aFragmentationName, "Fragmentation name is null.");
         //</editor-fold>
+        this.fragmentsBySmilesMap = new HashMap<>();
+        for (FragmentDataModel tmpFragment : aFragmentDataModelList) {
+            this.fragmentsBySmilesMap.putIfAbsent(tmpFragment.getUniqueSmiles(), tmpFragment);
+        }
         //
         //<editor-fold desc="initialisation of stage and view" defaultstate="collapsed">
         //note: these need to be reset to default here because the histogram view is re-initialised with default size and
@@ -976,19 +984,7 @@ public class HistogramViewController implements IViewToolController {
     private StackPane createStackPaneWithContextMenuAndStructureDisplayForBar(ImageView anImageView, String aSmiles) {
         StackPane tmpNodePane = new StackPane();
         tmpNodePane.setAlignment(Pos.CENTER_RIGHT);
-        MenuItem tmpCopySmilesMenuItem = new MenuItem(Message.get("HistogramViewController.MenuItemSmiles.text"));
-        MenuItem tmpCopyStructureMenuItem = new MenuItem(Message.get("HistogramViewController.MenuItemStructure.text"));
         ContextMenu tmpContextMenu = new ContextMenu();
-        tmpContextMenu.getItems().addAll(tmpCopySmilesMenuItem, tmpCopyStructureMenuItem);
-        try {
-            String tmpCopyIconURL = this.getClass().getClassLoader().getResource(
-                    this.configuration.getProperty("mortar.imagesFolder")
-                            + this.configuration.getProperty("mortar.icon.copy.name")).toExternalForm();
-            tmpCopySmilesMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
-            tmpCopyStructureMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
-        } catch(NullPointerException | IllegalArgumentException anException) {
-            HistogramViewController.LOGGER.log(Level.WARNING, "Copy icon for context menus could not be imported.");
-        }
         // Event to hover over histogram bars to display structure
         EventHandler<MouseEvent> tmpMouseHoverEventHandler = event -> {
             tmpNodePane.setStyle("-fx-bar-fill: " + HistogramViewController.HISTOGRAM_BARS_SELECTED_COLOR_HEX_VALUE);
@@ -1019,28 +1015,16 @@ public class HistogramViewController implements IViewToolController {
         /* Event to open context menu (right click) to copy SMILES string or structure.
            Context menu also opens, if  a right click on the frequency label is detected.
          */
-        EventHandler<ContextMenuEvent> tmpContextMenuEventHandler = event -> tmpContextMenu.show(tmpNodePane, event.getScreenX(), event.getScreenY());
+        EventHandler<ContextMenuEvent> tmpContextMenuEventHandler = event -> {
+            FragmentDataModel tmpFragment = this.fragmentsBySmilesMap.get(aSmiles);
+            if (tmpFragment == null || tmpNodePane.getScene() == null || !(tmpNodePane.getScene().getWindow() instanceof Stage tmpOwnerStage)) {
+                return;
+            }
+            tmpContextMenu.getItems().setAll(GuiUtil.createStructureMenuItems(tmpFragment, tmpOwnerStage));
+            tmpContextMenu.show(tmpNodePane, event.getScreenX(), event.getScreenY());
+        };
         tmpNodePane.addEventHandler(MouseEvent.MOUSE_ENTERED, tmpMouseHoverEventHandler);
         tmpNodePane.addEventHandler(ContextMenuEvent.CONTEXT_MENU_REQUESTED, tmpContextMenuEventHandler);
-        // Listener ContextMenuItems
-        tmpCopySmilesMenuItem.setOnAction(event -> {
-            ClipboardContent tmpSmilesClipboardContent = new ClipboardContent();
-            tmpSmilesClipboardContent.putString(aSmiles);
-            Clipboard.getSystemClipboard().setContent(tmpSmilesClipboardContent);
-        });
-        tmpCopyStructureMenuItem.setOnAction(event -> {
-            //note: making the background transparent leads to problems on Windows, where the background then appears black
-            Image tmpCopyImageOnBar = DepictionUtil.depictImage(
-                    this.atomContainerForDisplayCache,
-                    12.0,
-                    GuiDefinitions.GUI_COPY_IMAGE_IMAGE_WIDTH,
-                    GuiDefinitions.GUI_COPY_IMAGE_IMAGE_HEIGHT,
-                    true,
-                    true);
-            ClipboardContent tmpImageClipboardContent = new ClipboardContent();
-            tmpImageClipboardContent.putImage(tmpCopyImageOnBar);
-            Clipboard.getSystemClipboard().setContent(tmpImageClipboardContent);
-        });
         tmpNodePane.addEventHandler(MouseEvent.MOUSE_EXITED, event -> {
             tmpNodePane.setStyle("-fx-bar-fill: " + HistogramViewController.HISTOGRAM_BARS_COLOR_HEX_VALUE);
             anImageView.setImage(null);

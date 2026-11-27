@@ -185,7 +185,8 @@ public class FragmentationTask implements Callable<FragmentationTaskResult> {
                         continue;
                     }
                     if (!tmpNewFragmentsOfMolMap.containsKey(tmpSmiles)) {
-                        tmpNewFragmentsOfMolMap.put(tmpSmiles, new FragmentDataModel(tmpSmiles, tmpFragment.getTitle(), tmpFragment.getProperties()));
+                        String tmpFragmentName = tmpFragment.getTitle() != null ? tmpFragment.getTitle() : "[no fragment name available]";
+                        tmpNewFragmentsOfMolMap.put(tmpSmiles, new FragmentDataModel(tmpSmiles, tmpFragmentName, tmpFragment.getProperties()));
                     }
                     tmpFragmentFrequenciesOfMoleculeMap.merge(tmpSmiles, 1, Integer::sum);
                 }

@@ -36,6 +36,30 @@ import javafx.scene.input.KeyCombination;
  * @version 1.0.0.0
  */
 public final class GuiDefinitions {
+    /**
+     * Minimum value for the width of the enlarged structure view.
+     */
+    public static final double ENLARGED_STRUCTURE_VIEW_MIN_WIDTH_VALUE = 250.0;
+    /**
+     * Minimum value for the height of the enlarged structure view.
+     */
+    public static final double ENLARGED_STRUCTURE_VIEW_MIN_HEIGHT_VALUE = 200.0;
+    /**
+     * Initial width of the enlarged structure view's scene.
+     */
+    public static final double ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_WIDTH = 500.0;
+    /**
+     * Initial height of the enlarged structure view's scene.
+     */
+    public static final double ENLARGED_STRUCTURE_VIEW_SCENE_INITIAL_HEIGHT = 400.0;
+    /**
+     * Ratio of width and height of the enlarged structure view's structure image to the one of its parent stack pane.
+     */
+    public static final double ENLARGED_STRUCTURE_VIEW_IMAGE_TO_STACK_PANE_SIZE_RATIO = 0.9;
+    /**
+     * Width used to calculate the inner shadow effect of the enlarged structure view.
+     */
+    public static final double ENLARGED_STRUCTURE_VIEW_INNER_SHADOW_WIDTH = 8.0;
     //<editor-fold desc="Private constructor">
     /**
      * Private parameter-less constructor.

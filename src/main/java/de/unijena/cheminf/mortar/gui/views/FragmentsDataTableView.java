@@ -41,16 +41,20 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TablePosition;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
+import javafx.stage.Stage;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -295,20 +299,55 @@ public class FragmentsDataTableView extends TableView implements IDataTableView{
         this.getColumns().add(this.moleculePercentageColumn);
         //context menu
         this.contextMenu = new ContextMenu();
-        this.setContextMenu(this.contextMenu);
+        this.setOnContextMenuRequested(this::showContextMenuForFocusedCell);
         //-copyMenuItem
-        this.copyMenuItem = new MenuItem(Message.get("TableView.contextMenu.copyMenuItem"));
-        String tmpCopyIconURL = this.getClass().getClassLoader().getResource(
-                this.configuration.getProperty("mortar.imagesFolder")
-                        + this.configuration.getProperty("mortar.icon.copy.name")).toExternalForm();
-        this.copyMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
-        this.contextMenu.getItems().add(this.copyMenuItem);
-        //-separatorMenuItem
-        this.contextMenu.getItems().add(new SeparatorMenuItem());
+        this.copyMenuItem = GuiUtil.createCopyMenuItem();
         //-overviewViewMenuItem
         this.overviewViewMenuItem = new MenuItem(Message.get("TableView.contextMenu.fragmentsTab.overviewViewMenuItem"));
-        this.contextMenu.getItems().add(this.overviewViewMenuItem);
     }
+    //
+    //<editor-fold desc="private methods" defaultstate="collapsed">
+    /**
+     * Shows the context menu matching the right-clicked column: the harmonised structure context menu plus the parent
+     * structures overview item for the fragment structure column and (for the parent) the parent structure column,
+     * and a simple copy menu item for all other columns.
+     *
+     * @param aContextMenuEvent the context menu request event
+     */
+    private void showContextMenuForFocusedCell(ContextMenuEvent aContextMenuEvent) {
+        aContextMenuEvent.consume();
+        this.contextMenu.hide();
+        TablePosition<?, ?> tmpFocusedCell = this.getFocusModel().getFocusedCell();
+        if (tmpFocusedCell == null || tmpFocusedCell.getTableColumn() == null
+                || tmpFocusedCell.getRow() < 0 || tmpFocusedCell.getRow() >= this.getItems().size()) {
+            return;
+        }
+        if (!(this.getScene() != null && this.getScene().getWindow() instanceof Stage tmpOwnerStage)) {
+            return;
+        }
+        FragmentDataModel tmpFragment = (FragmentDataModel) this.getItems().get(tmpFocusedCell.getRow());
+        TableColumn<?, ?> tmpColumn = tmpFocusedCell.getTableColumn();
+        List<MenuItem> tmpMenuItems = new ArrayList<>();
+        if (tmpColumn == this.structureColumn) {
+            tmpMenuItems.addAll(GuiUtil.createStructureMenuItems(tmpFragment, tmpOwnerStage));
+            tmpMenuItems.add(new SeparatorMenuItem());
+            tmpMenuItems.add(this.overviewViewMenuItem);
+        } else if (tmpColumn == this.parentMolColumn) {
+            MoleculeDataModel tmpParentMolecule = tmpFragment.getFirstParentMolecule();
+            if (tmpParentMolecule == null) {
+                return;
+            }
+            tmpMenuItems.addAll(GuiUtil.createStructureMenuItems(tmpParentMolecule, tmpOwnerStage));
+            tmpMenuItems.add(new SeparatorMenuItem());
+            tmpMenuItems.add(this.overviewViewMenuItem);
+        } else {
+            //SMILES, parent name and frequency/percentage columns
+            tmpMenuItems.add(this.copyMenuItem);
+        }
+        this.contextMenu.getItems().setAll(tmpMenuItems);
+        this.contextMenu.show(this, aContextMenuEvent.getScreenX(), aContextMenuEvent.getScreenY());
+    }
+    //</editor-fold>
     //
     //<editor-fold desc="public methods" defaultstate="collapsed">
     /**

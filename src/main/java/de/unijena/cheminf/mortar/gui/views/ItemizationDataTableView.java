@@ -41,15 +41,19 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TablePosition;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.Stage;
 
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -157,19 +161,11 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
         this.getColumns().addAll(this.nameColumn, this.moleculeStructureColumn, this.fragmentStructureColumn);
         //context menu
         this.contextMenu = new ContextMenu();
-        this.setContextMenu(this.contextMenu);
+        this.setOnContextMenuRequested(this::showContextMenuForFocusedCell);
         //-copyMenuItem
-        this.copyMenuItem = new MenuItem(Message.get("TableView.contextMenu.copyMenuItem"));
-        String tmpCopyIconURL = this.getClass().getClassLoader().getResource(
-                this.configuration.getProperty("mortar.imagesFolder")
-                        + this.configuration.getProperty("mortar.icon.copy.name")).toExternalForm();
-        this.copyMenuItem.setGraphic(new ImageView(new Image(tmpCopyIconURL)));
-        this.contextMenu.getItems().add(this.copyMenuItem);
-        //-separatorMenuItem
-        this.contextMenu.getItems().add(new SeparatorMenuItem());
-        //-overviewViewMenuItem
+        this.copyMenuItem = GuiUtil.createCopyMenuItem();
+        //overviewViewMenuItem
         this.overviewViewMenuItem = new MenuItem(Message.get("TableView.contextMenu.itemsTab.overviewViewMenuItem"));
-        this.contextMenu.getItems().add(this.overviewViewMenuItem);
     }
     //
     //<editor-fold desc="public methods" defaultstate="collapsed">
@@ -215,6 +211,53 @@ public class ItemizationDataTableView extends TableView implements IDataTableVie
     //</editor-fold>
     //
     //<editor-fold desc="private methods" defaultstate="collapsed">
+    /**
+     * Shows the context menu matching the right-clicked column: a simple copy menu item for the name column, and the
+     * harmonised structure context menu plus the item overview item for the molecule structure column and (for the
+     * respective fragment) the fragment columns.
+     *
+     * @param aContextMenuEvent the context menu request event
+     */
+    private void showContextMenuForFocusedCell(ContextMenuEvent aContextMenuEvent) {
+        aContextMenuEvent.consume();
+        this.contextMenu.hide();
+        TablePosition<?, ?> tmpFocusedCell = this.getFocusModel().getFocusedCell();
+        if (tmpFocusedCell == null || tmpFocusedCell.getTableColumn() == null
+                || tmpFocusedCell.getRow() < 0 || tmpFocusedCell.getRow() >= this.getItems().size()) {
+            return;
+        }
+        if (!(this.getScene() != null && this.getScene().getWindow() instanceof Stage tmpOwnerStage)) {
+            return;
+        }
+        MoleculeDataModel tmpMolecule = (MoleculeDataModel) this.getItems().get(tmpFocusedCell.getRow());
+        TableColumn<?, ?> tmpColumn = tmpFocusedCell.getTableColumn();
+        List<MenuItem> tmpMenuItems = new ArrayList<>();
+        if (tmpColumn == this.nameColumn) {
+            tmpMenuItems.add(this.copyMenuItem);
+        } else if (tmpColumn == this.moleculeStructureColumn) {
+            tmpMenuItems.addAll(GuiUtil.createStructureMenuItems(tmpMolecule, tmpOwnerStage));
+            tmpMenuItems.add(new SeparatorMenuItem());
+            tmpMenuItems.add(this.overviewViewMenuItem);
+        } else if (tmpColumn.getParentColumn() == this.fragmentStructureColumn) {
+            //fragment columns: use the fragment shown in the right-clicked sub-column
+            int tmpFragmentIndex = this.fragmentStructureColumn.getColumns().indexOf(tmpColumn);
+            if (tmpFragmentIndex < 0 || !tmpMolecule.hasMoleculeUndergoneSpecificFragmentation(this.fragmentationName)) {
+                return;
+            }
+            List<FragmentDataModel> tmpFragments = tmpMolecule.getFragmentsOfSpecificFragmentation(this.fragmentationName);
+            if (tmpFragmentIndex >= tmpFragments.size()) {
+                return;
+            }
+            tmpMenuItems.addAll(GuiUtil.createStructureMenuItems(tmpFragments.get(tmpFragmentIndex), tmpOwnerStage));
+            tmpMenuItems.add(new SeparatorMenuItem());
+            tmpMenuItems.add(this.overviewViewMenuItem);
+        } else {
+            return;
+        }
+        this.contextMenu.getItems().setAll(tmpMenuItems);
+        this.contextMenu.show(this, aContextMenuEvent.getScreenX(), aContextMenuEvent.getScreenY());
+    }
+    //
     /**
      * Deletes the old columns of the fragment structures and adds new ones for the given number.
      *
